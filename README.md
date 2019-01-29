@@ -7,4 +7,5 @@ This is a draft of a stripped-down version of the Streamflow Prediction Tool (SP
 + More methods will be developed in the future.
 
 [Streamflow Prediction Tool](https://github.com/BYU-Hydroinformatics/tethysapp-streamflow_prediction_tool)
+
 [Streamflow Prediction Tool Documentation](https://byu-streamflow-prediction-tool.readthedocs.io/en/latest/)
