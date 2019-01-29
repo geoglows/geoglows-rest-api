@@ -1,5 +1,3 @@
-# /ai4e_api_tools has been added to the PYTHONPATH, so we can reference those
-# libraries directly.
 from flask import Flask, request#, jsonify
 from flask_restful import Api
 import json
@@ -18,6 +16,7 @@ app = Flask(__name__)
 
 api = Api(app)
 print(api_prefix)
+
 
 # create logger function
 def init_logger():
@@ -39,6 +38,7 @@ def post():
         return "Unable to parse the request body. Please request with valid json."
 
     return get_streamflow(json_body = post_body)
+
 
 def get_streamflow(**kwargs):
     init_logger()

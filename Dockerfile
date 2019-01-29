@@ -1,4 +1,3 @@
-#FROM nvidia/cuda:9.2-runtime-ubuntu16.04
 FROM ubuntu:16.04
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
@@ -22,9 +21,9 @@ RUN apt-get -qq update && apt-get -qq -y install curl bzip2 \
     && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log \ 
     && conda clean --all --yes
 
-RUN conda create -n ai4e_py_api python=3.6.6 \
-    && echo "source activate ai4e_py_api" >> ~/.bashrc \
-    && conda install -c conda-forge -n ai4e_py_api uwsgi flask flask-restful
+RUN conda create -n gsp_api python=3.6.6 \
+    && echo "source activate gsp_api" >> ~/.bashrc \
+    && conda install -c conda-forge -n gsp_api uwsgi flask flask-restful
 
 RUN apt-get update
 RUN apt-get install apt-transport-https -y
@@ -34,9 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		curl \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PATH /usr/local/envs/ai4e_py_api/bin:$PATH
-
-ENV PYTHONPATH="${PYTHONPATH}:/ai4e_api_tools"
+ENV PATH /usr/local/envs/gsp_api/bin:$PATH
 
 RUN apt-get update
 RUN apt-get -y install sudo
@@ -47,8 +44,8 @@ RUN sudo apt-key adv --keyserver packages.microsoft.com --recv-keys EB3E94ADBE12
 RUN apt-get update
 RUN apt-get install -y azcopy
 
-RUN echo "source activate ai4e_py_api" >> ~/.bashrc \
-    && conda install -c conda-forge -n ai4e_py_api numpy pandas xarray netCDF4
+RUN echo "source activate gsp_api" >> ~/.bashrc \
+    && conda install -c conda-forge -n gsp_api numpy pandas xarray netCDF4
 
 RUN sudo apt-get install vim -y
 

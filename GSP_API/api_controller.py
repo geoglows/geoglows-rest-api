@@ -14,6 +14,7 @@ def init_logger():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     
+
 def get_ecmwf_forecast(request):
     """
     Controller that will retrieve the ECMWF forecast data
