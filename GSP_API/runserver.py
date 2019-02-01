@@ -28,39 +28,22 @@ def init_logger():
     logger.addHandler(handler)
 
 
-# POST, API endpoint
-@app.route(api_prefix + '/', methods=['POST'])
-def post():
-    try:
-        post_body = json.loads(request.data)
-        
-    except:
-        return "Unable to parse the request body. Please request with valid json."
-
-    return get_streamflow(json_body = post_body)
-
-
-def get_streamflow(**kwargs):
+# GET, API ForecastStats endpoint
+@app.route(api_prefix + '/ForecastStats/', methods=['GET'])
+def forecast_stats():
     init_logger()
-    json_body = kwargs.get('json_body', None)
-    
-    if (not json_body):
-        logging.error("Body is missing")
-        return -1
 
-    if (not "region" in json_body):
+    if (request.args.get('region', '') == ''):
         logging.error("region is required as input.")
         return -1
 
-    if (not "reach_id" in json_body):
-        logging.error("reach_id is required as input.")
-        return -1
+    if (request.args.get('reach_id', '') == ''):
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return -1
 
     try:
-        request = {"region": json_body["region"], "reach_id": json_body["reach_id"],
-                   "stat": json_body["stat"], "return_format": json_body["return_format"]}
-
-        # Call the service endpoint
+        # Call the service
         results = api_controller.get_ecmwf_forecast(request)
 
         return results

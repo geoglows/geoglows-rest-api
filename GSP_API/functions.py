@@ -121,3 +121,15 @@ def get_units_title(unit_type):
     if unit_type == 'english':
         units_title = "ft"
     return units_title
+
+
+def shortest_dist(coor, df):
+    shortest_dist = None
+    index = None
+    for i in df.index:
+        dist = ((coor[0] - df.loc[i]["Lat"])**2 + (coor[1] - df.loc[i]["Lon"])**2)**0.5
+        print(dist,i)
+        if shortest_dist == None or dist < shortest_dist:
+            index = i
+            shortest_dist = dist
+    return index, shortest_dist

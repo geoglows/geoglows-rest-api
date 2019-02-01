@@ -6,7 +6,7 @@ from csv import writer as csv_writer
 from flask import make_response
 from io import StringIO
 
-from functions import get_units_title
+from functions import get_units_title, shortest_dist
 
 import logging
 
@@ -25,7 +25,7 @@ from functions import (ecmwf_find_most_current_files,
                        M3_TO_FT3)
 
 
-def get_forecast_streamflow_csv(params):
+def get_forecast_streamflow_csv(request):
     """
     Retrieve the forecasted streamflow as CSV
     """
@@ -33,7 +33,7 @@ def get_forecast_streamflow_csv(params):
     try:
         # retrieve statistics
         forecast_statistics, watershed_name, subbasin_name, river_id, units = \
-            get_ecmwf_forecast_statistics(params)
+            get_ecmwf_forecast_statistics(request)
 
         # prepare to write response for CSV
         si = StringIO()
@@ -63,20 +63,42 @@ def get_forecast_streamflow_csv(params):
         return "An unexpected error occured with the CSV response"
 
 
-def get_ecmwf_forecast_statistics(params):
+def get_ecmwf_forecast_statistics(request):
     """
     Returns the statistics for the 52 member forecast
     """
     
     init_logger()
-    blob_mapped_dir = "/mnt/output"
+    
+    params = {"region": request.args.get('region', ''),
+              "reach_id": request.args.get('reach_id', ''),
+              "lat": request.args.get('lat', ''),
+              "lon": request.args.get('lon', ''),
+              "stat": request.args.get('stat', ''),
+              "return_format": request.args.get('return_format', '')}
 
-    path_to_rapid_output = blob_mapped_dir
+    path_to_rapid_output = "/mnt/output"
 
     watershed_name = params["region"].split("-")[0]
     subbasin_name = params["region"].split("-")[1]
-    river_id = params["reach_id"]
-
+    
+    river_id = int(params["reach_id"])
+#    if params["reach_id"] != '':
+#        river_id = int(params["reach_id"])
+#    elif params["lat"] != '' and params["lon"] != '':
+#        coor = [float(params["lat"]), float(params["lon"])]
+#        df = pd.read_csv(
+#            f'/app/GSP_API/region_coordinate_files/{params["region"]}/comid_lat_lon_z.csv', 
+#            sep=',',
+#            header=0,
+#            index_col=0
+#        )
+#        
+#        river_id, distance = shortest_dist(coor, df)
+#
+#        if distance > 0.11:
+#            distance = "Nearest river is more than ~10km away."
+        
     units = "metric"
 
     forecast_folder = 'most_recent'
@@ -102,7 +124,7 @@ def get_ecmwf_forecast_statistics(params):
             int(os.path.basename(forecast_nc)[:-3].split("_")[-1])
         )
         qout_datasets.append(
-            xarray.open_dataset(forecast_nc, autoclose=True)
+            xarray.open_dataset(forecast_nc)
                   .sel(rivid=river_id).Qout
         )
 

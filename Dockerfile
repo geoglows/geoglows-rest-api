@@ -60,10 +60,13 @@ RUN chmod +x /startup.sh
 # Copy file connection information
 COPY ./file_mount.json /app/azcopy/file_mount.json
 
+# Copy sample output
+COPY ./output /mnt/output
+
 COPY ./file_mounter.py /app/azcopy/file_mounter.py
 RUN chmod +x /app/azcopy/file_mounter.py
 
-ENV API_PREFIX=/v1/global_streamflow_prediction/get_streamflow
+ENV API_PREFIX=/api
 
 # Expose the port that is to be used when calling your API
 EXPOSE 80

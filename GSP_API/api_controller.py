@@ -22,12 +22,12 @@ def get_ecmwf_forecast(request):
     """
     
     init_logger()
-    return_format = request['return_format']
+    
+    return_format = request.args.get('return_format', '')
 
     if return_format == 'csv':
         return get_forecast_streamflow_csv(request)
 
-    # return WaterML
     formatted_stat = {
         'high_res': 'High Resolution',
         'mean': 'Mean',
@@ -46,10 +46,9 @@ def get_ecmwf_forecast(request):
     if units_title == 'ft':
         units_title_long = 'feet'
 
-    try:
-        stat = request['stat']
-    except KeyError:
-        logging.error('Missing value for stat_type ...')
+    stat = request.args.get('stat', '')
+    if stat == '':
+        stat == 'mean'
 
     if stat not in formatted_stat:
         logging.error('Invalid value for stat_type ...')
@@ -76,7 +75,8 @@ def get_ecmwf_forecast(request):
         },
         'time_series': time_series,
         'Source': 'ECMWF GloFAS forecast',
-        'host': 'https://%s' % request.get_host(),
+#        'host': 'https://%s' % request.get_host(),
+        'host': request.host_url,
     }
 
     xml_response = \
