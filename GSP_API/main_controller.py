@@ -6,7 +6,10 @@ from csv import writer as csv_writer
 from flask import make_response
 from io import StringIO
 
-from functions import get_units_title, shortest_dist
+from functions import get_units_title
+
+from shapely.geometry import Point, MultiPoint
+from shapely.ops import nearest_points
 
 import logging
 
@@ -34,7 +37,7 @@ def get_forecast_streamflow_csv(request):
         # retrieve statistics
         forecast_statistics, watershed_name, subbasin_name, river_id, units = \
             get_ecmwf_forecast_statistics(request)
-
+        
         # prepare to write response for CSV
         si = StringIO()
 
@@ -82,23 +85,30 @@ def get_ecmwf_forecast_statistics(request):
     watershed_name = params["region"].split("-")[0]
     subbasin_name = params["region"].split("-")[1]
     
-    river_id = int(params["reach_id"])
-#    if params["reach_id"] != '':
-#        river_id = int(params["reach_id"])
-#    elif params["lat"] != '' and params["lon"] != '':
-#        coor = [float(params["lat"]), float(params["lon"])]
-#        df = pd.read_csv(
-#            f'/app/GSP_API/region_coordinate_files/{params["region"]}/comid_lat_lon_z.csv', 
-#            sep=',',
-#            header=0,
-#            index_col=0
-#        )
-#        
-#        river_id, distance = shortest_dist(coor, df)
-#
-#        if distance > 0.11:
-#            distance = "Nearest river is more than ~10km away."
+    if params["reach_id"] != '':
+        river_id = int(params["reach_id"])
+    elif params["lat"] != '' and params["lon"] != '':
+        point = Point(float(params["lat"]),float(params["lon"]))
+        df = pd.read_csv(
+            f"/app/GSP_API/region_coordinate_files/{params['region']}/comid_lat_lon_z.csv", 
+            sep=',',
+            header=0,
+            index_col=0
+        )
         
+        points_df = df.loc[:,"Lat":"Lon"].apply(Point,axis=1)
+        multi_pt = MultiPoint(points_df.tolist())
+        
+        nearest_pt = nearest_points(point, multi_pt)
+        river_id = int(points_df[points_df == nearest_pt[1]].index[0])
+
+        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
+            logging.debug("Nearest river is more than ~10km away.")
+            return -1
+    else:
+        logging.debug("No river_id or coordinates found in parameters.")
+        return -1
+    
     units = "metric"
 
     forecast_folder = 'most_recent'

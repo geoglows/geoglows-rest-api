@@ -45,7 +45,7 @@ RUN apt-get update
 RUN apt-get install -y azcopy
 
 RUN echo "source activate gsp_api" >> ~/.bashrc \
-    && conda install -c conda-forge -n gsp_api numpy pandas xarray netCDF4
+    && conda install -c conda-forge -n gsp_api numpy pandas xarray netCDF4 shapely
 
 RUN sudo apt-get install vim -y
 
