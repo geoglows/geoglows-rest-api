@@ -1,6 +1,5 @@
-from flask import Flask, request#, jsonify
+from flask import Flask, request, jsonify
 from flask_restful import Api
-import json
 import logging
 import sys
 from os import getenv
@@ -35,23 +34,50 @@ def forecast_stats():
 
     if (request.args.get('region', '') == ''):
         logging.error("region is required as input.")
-        return -1
+        return jsonify({"error": "region is required as input."})
 
     if (request.args.get('reach_id', '') == ''):
         if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return -1
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."})
 
     try:
         # Call the service
-        results = api_controller.get_ecmwf_forecast(request)
+        results = api_controller.forecast_stats_handler(request)
 
         return results
 
     except:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return "An unexpected error occured"
+        return jsonify({"error": "An unexpected error occured."})
+
+
+# GET, API ForecastEnsembles endpoint
+@app.route(api_prefix + '/ForecastEnsembles/', methods=['GET'])
+def forecast_ensembles():
+    init_logger()
+
+    if (request.args.get('region', '') == ''):
+        logging.error("region is required as input.")
+        return jsonify({"error": "region is required as input."})
+
+    if (request.args.get('reach_id', '') == ''):
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."})
+
+    try:
+        # Call the service
+        results = api_controller.forecast_ensembles_handler(request)
+
+        return results
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."})
+
 
 if __name__ == '__main__':
     app.debug = True
