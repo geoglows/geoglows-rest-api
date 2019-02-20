@@ -288,12 +288,19 @@ def get_ecmwf_ensemble(request):
             pass
     elif '-' in ensemble_number:
         # extract the ensembles & time
-        start = int(ensemble_number.split('-')[0])
-        stop = int(ensemble_number.split('-')[1])+1
-        if start == '': start = 1
-        if stop == '': stop = 53
-        if start > 53 and stop > 53:
+        if ensemble_number.split('-')[0] == '':
             start = 1
+        else:
+            start = int(ensemble_number.split('-')[0])
+        
+        if ensemble_number.split('-')[1] == '':
+            stop = 53
+        else:
+            stop = int(ensemble_number.split('-')[1])+1
+
+        if start > 53:
+            start = 1
+        if stop > 53:
             stop = 53
 
         try:
@@ -304,7 +311,7 @@ def get_ecmwf_ensemble(request):
             pass
     elif ',' in ensemble_number:
         # extract the ensembles & time
-        ens_list = ensemble_number.replace(' ', '').split(',')
+        ens_list = list(map(int,ensemble_number.replace(' ', '').split(',')))
         try:
             for i in ens_list:
                 ens = '{0:02}'.format(i)

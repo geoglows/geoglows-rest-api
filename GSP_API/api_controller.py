@@ -264,13 +264,20 @@ def forecast_ensembles_handler(request):
         
         elif (ensemble != '' and ensemble != 'all' and '-' in ensemble and ',' not in ensemble):
 
-            start = int(ensemble.split('-')[0])
-            if start == '': start = 1
-            stop = int(ensemble.split('-')[1])+1
-            if stop == '': stop = 53
-
-            if start > 53 and stop > 53:
+            
+            if ensemble.split('-')[0] == '':
                 start = 1
+            else:
+                start = int(ensemble.split('-')[0])
+            
+            if ensemble.split('-')[1] == '':
+                stop = 53
+            else:
+                stop = int(ensemble.split('-')[1])+1
+
+            if start > 53:
+                start = 1
+            if stop > 53:
                 stop = 53
 
             startdate = forecast_ensembles['ensemble_{0:02}'.format(start)].index[0]\
@@ -279,6 +286,30 @@ def forecast_ensembles_handler(request):
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
                 
             for i in range(start,stop):
+                ens_time_series = []
+
+                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
+                    ens_time_series.append({
+                        'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'val': value
+                    })
+                
+                ensemble_ts_dict['{0:02}'.format(i)] = ens_time_series
+                
+            context['ensembles'] = formatted_ensemble
+            context['startdate'] = startdate
+            context['enddate'] = enddate
+            
+        elif (ensemble != '' and ensemble != 'all' and '-' not in ensemble and ',' in ensemble):
+
+            ens_list = list(map(int, ensemble.replace(' ', '').split(',')))
+
+            startdate = forecast_ensembles['ensemble_{0:02}'.format(ens_list[0])].index[0]\
+                .strftime('%Y-%m-%dT%H:%M:%SZ')
+            enddate = forecast_ensembles['ensemble_{0:02}'.format(ens_list[0])].index[-1]\
+                .strftime('%Y-%m-%dT%H:%M:%SZ')
+                
+            for i in ens_list:
                 ens_time_series = []
 
                 for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
