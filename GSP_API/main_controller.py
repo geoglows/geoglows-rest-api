@@ -282,23 +282,23 @@ def get_ecmwf_ensemble(request):
         # extract the ensembles & time
         try:
             for i in range(1,53):
-                if len(str(i)) == 1:
-                    ens = '0{0}'.format(str(i))
-                else:
-                    ens = str(i)
+                ens = '{0:02}'.format(i)
                 return_dict['ensemble_{0}'.format(ens)] = merged_ds.sel(ensemble=i).dropna('time')
         except:
             pass
     elif '-' in ensemble_number:
         # extract the ensembles & time
         start = int(ensemble_number.split('-')[0])
-        stop = int(ensemble_number.split('-')[1])
+        stop = int(ensemble_number.split('-')[1])+1
+        if start == '': start = 1
+        if stop == '': stop = 53
+        if start > 53 and stop > 53:
+            start = 1
+            stop = 53
+
         try:
-            for i in range(start,stop+1):
-                if len(str(i)) == 1:
-                    ens = '0{0}'.format(str(i))
-                else:
-                    ens = str(i)
+            for i in range(start,stop):
+                ens = '{0:02}'.format(i)
                 return_dict['ensemble_{0}'.format(ens)] = merged_ds.sel(ensemble=i).dropna('time')
         except:
             pass
@@ -307,20 +307,14 @@ def get_ecmwf_ensemble(request):
         ens_list = ensemble_number.replace(' ', '').split(',')
         try:
             for i in ens_list:
-                if len(str(i)) == 1:
-                    ens = '0{0}'.format(str(i))
-                else:
-                    ens = str(i)
+                ens = '{0:02}'.format(i)
                 return_dict['ensemble_{0}'.format(ens)] = merged_ds.sel(ensemble=int(i)).dropna('time')
         except:
             pass
     else:
         # extract the ensemble & time
         try:
-            if len(str(ensemble_number)) == 1:
-                ens = '0{0}'.format(str(ensemble_number))
-            else:
-                ens = str(ensemble_number)
+            ens = '{0:02}'.format(int(ensemble_number))
             return_dict['ensemble_{0}'.format(ens)] = merged_ds.sel(ensemble=int(ens)).dropna('time')
         except:
             pass

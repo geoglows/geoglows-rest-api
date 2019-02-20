@@ -191,11 +191,11 @@ def forecast_ensembles_handler(request):
     elif (return_format == 'waterml' or return_format == 'json'):
     
         # retrieve statistics
-        forecast_statistics, watershed_name, subbasin_name, river_id, units = \
+        forecast_ensembles, watershed_name, subbasin_name, river_id, units = \
             get_ecmwf_ensemble(request)
 
         formatted_ensemble = {}
-        for ens in sorted(forecast_statistics.key()):
+        for ens in sorted(forecast_ensembles.keys()):
             formatted_ensemble[ens.split('_')[1]] = ens.title().replace('_', ' ')
 
         units_title = get_units_title(units)
@@ -216,95 +216,89 @@ def forecast_ensembles_handler(request):
             }
         }
     
-        stat_ts_dict = {}
+        ensemble_ts_dict = {}
         if (ensemble != '' and ensemble != 'all' and '-' not in ensemble and ',' not in ensemble):
     
             if int(ensemble) not in map(int, sorted(formatted_ensemble.keys())):
                 logging.error('Invalid value for ensemble ...')
                 return jsonify({"error": "Invalid value for ensemble parameter."})
-                
-            startdate = forecast_statistics['{0:02}'.format(ensemble)].index[0]\
+
+            startdate = forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].index[0]\
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_statistics['{0:02}'.format(ensemble)].index[-1]\
+            enddate = forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].index[-1]\
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
     
             time_series = []
-            for date, value in forecast_statistics['ensemble_{0:02}'.format(ensemble)].iteritems():
+            for date, value in forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].iteritems():
                 time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
                 })
     
-            context['ensembles'] = {'{0:02}'.format(ensemble): formatted_ensemble['ensemble_{0:02}'.format(ensemble)]}
+            context['ensembles'] = {'{0:02}'.format(int(ensemble)): formatted_ensemble['{0:02}'.format(int(ensemble))]}
             context['startdate'] = startdate
             context['enddate'] = enddate
-            stat_ts_dict['{0:02}'.format(ensemble)] = time_series
+            ensemble_ts_dict['{0:02}'.format(int(ensemble))] = time_series
             
-        else:
-            startdate = forecast_statistics['ensemble_01'].index[0]\
+        elif ((ensemble == '' or ensemble == 'all') and '-' not in ensemble and ',' not in ensemble):
+
+            startdate = forecast_ensembles['ensemble_01'].index[0]\
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_statistics['ensemble_01'].index[-1]\
+            enddate = forecast_ensembles['ensemble_01'].index[-1]\
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
             
-            high_r_time_series = []
-            for date, value in forecast_statistics['high_res'].iteritems():
-                high_r_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-            
-            mean_time_series = []
-            for date, value in forecast_statistics['mean'].iteritems():
-                mean_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+            for i in range(1,53):
+                ens_time_series = []
+
+                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
+                    ens_time_series.append({
+                        'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'val': value
+                    })
                 
-            max_time_series = []
-            for date, value in forecast_statistics['max'].iteritems():
-                max_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+                ensemble_ts_dict['{0:02}'.format(i)] = ens_time_series
                 
-            min_time_series = []
-            for date, value in forecast_statistics['min'].iteritems():
-                min_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-                
-            std_d_lower_time_series = []
-            for date, value in forecast_statistics['std_dev_range_lower'].iteritems():
-                std_d_lower_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-                
-            std_d_upper_time_series = []
-            for date, value in forecast_statistics['std_dev_range_upper'].iteritems():
-                std_d_upper_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-                
-            context['stats'] = formatted_stat
-            
+            context['ensembles'] = formatted_ensemble
             context['startdate'] = startdate
             context['enddate'] = enddate
-            stat_ts_dict['high_res'] = high_r_time_series
-            stat_ts_dict['mean'] = mean_time_series
-            stat_ts_dict['max'] = max_time_series
-            stat_ts_dict['min'] = min_time_series
-            stat_ts_dict['std_dev_range_lower'] = std_d_lower_time_series
-            stat_ts_dict['std_dev_range_upper'] = std_d_upper_time_series
+        
+        elif (ensemble != '' and ensemble != 'all' and '-' in ensemble and ',' not in ensemble):
+
+            start = int(ensemble.split('-')[0])
+            if start == '': start = 1
+            stop = int(ensemble.split('-')[1])+1
+            if stop == '': stop = 53
+
+            if start > 53 and stop > 53:
+                start = 1
+                stop = 53
+
+            startdate = forecast_ensembles['ensemble_{0:02}'.format(start)].index[0]\
+                .strftime('%Y-%m-%dT%H:%M:%SZ')
+            enddate = forecast_ensembles['ensemble_{0:02}'.format(start)].index[-1]\
+                .strftime('%Y-%m-%dT%H:%M:%SZ')
+                
+            for i in range(start,stop):
+                ens_time_series = []
+
+                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
+                    ens_time_series.append({
+                        'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'val': value
+                    })
+                
+                ensemble_ts_dict['{0:02}'.format(i)] = ens_time_series
+                
+            context['ensembles'] = formatted_ensemble
+            context['startdate'] = startdate
+            context['enddate'] = enddate
             
-        context['time_series'] = stat_ts_dict
+        context['time_series'] = ensemble_ts_dict
             
     
         if return_format == "waterml":
             xml_response = \
-                make_response(render_template('forecast_stats.xml', **context))
+                make_response(render_template('forecast_ensembles.xml', **context))
             xml_response.headers.set('Content-Type', 'application/xml')
         
             return xml_response
