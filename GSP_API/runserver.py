@@ -77,6 +77,32 @@ def forecast_ensembles():
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
         return jsonify({"error": "An unexpected error occured."})
+    
+
+# GET, API HistoricSimulation endpoint
+@app.route(api_prefix + '/HistoricSimulation/', methods=['GET'])
+def historic_simulation():
+    init_logger()
+
+    if (request.args.get('region', '') == ''):
+        logging.error("region is required as input.")
+        return jsonify({"error": "region is required as input."})
+
+    if (request.args.get('reach_id', '') == ''):
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."})
+
+    try:
+        # Call the service
+        results = api_controller.historic_data_handler(request)
+
+        return results
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."})
 
 
 if __name__ == '__main__':

@@ -1,7 +1,9 @@
 from main_controller import (get_forecast_streamflow_csv,
                              get_ecmwf_forecast_statistics,
                              get_forecast_ensemble_csv,
-                             get_ecmwf_ensemble)
+                             get_ecmwf_ensemble,
+                             get_historic_data_csv,
+                             get_historic_streamflow_series)
                             
 from functions import get_units_title
 
@@ -330,6 +332,67 @@ def forecast_ensembles_handler(request):
         if return_format == "waterml":
             xml_response = \
                 make_response(render_template('forecast_ensembles.xml', **context))
+            xml_response.headers.set('Content-Type', 'application/xml')
+        
+            return xml_response
+        
+        if return_format == "json":
+            return jsonify(context)
+        
+    else:
+        return jsonify({"error": "Invalid return_format."})
+
+
+def historic_data_handler(request):
+    """
+    Controller that will show the historic data in WaterML 1.1 format
+    """
+    return_format = request.args.get('return_format', '')
+
+    if (return_format == 'csv' or return_format == ''):
+        csv_response = get_historic_data_csv(request)
+        if (isinstance(csv_response, dict) and "error" in csv_response.keys()):
+            return jsonify(csv_response)
+        else:
+            return csv_response
+        
+    elif (return_format == 'waterml' or return_format == 'json'):
+
+        qout_data, river_id, watershed_name, subbasin_name, units =\
+            get_historic_streamflow_series(request)
+    
+        units_title = get_units_title(units)
+        units_title_long = 'meters'
+        if units_title == 'ft':
+            units_title_long = 'feet'
+            
+        context = {
+            'region': "-".join([watershed_name, subbasin_name]),
+            'comid': river_id,
+            'gendate': dt.utcnow().isoformat() + 'Z',
+            'units': {
+                'name': 'Streamflow',
+                'short': '{}3/s'.format(units_title),
+                'long': 'Cubic {} per Second'.format(units_title_long)
+            }
+        }
+        
+        startdate = qout_data.index[0].strftime('%Y-%m-%d %H:%M:%S')
+        enddate = qout_data.index[-1].strftime('%Y-%m-%d %H:%M:%S')
+        time_series = []
+        for date, value in qout_data.iteritems():
+            time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%S'),
+                'val': value
+            })
+                
+        context['startdate'] = startdate
+        context['enddate'] = enddate
+        context['time_series'] = time_series
+        
+        if return_format == "waterml":
+            xml_response = \
+                make_response(render_template('historic_simulation.xml', **context))
             xml_response.headers.set('Content-Type', 'application/xml')
         
             return xml_response
