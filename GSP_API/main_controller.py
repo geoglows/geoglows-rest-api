@@ -1,4 +1,5 @@
 import os
+from glob import glob
 import pandas as pd
 import xarray
 
@@ -91,6 +92,39 @@ def get_forecast_ensemble_csv(request):
         return {"error": "An unexpected error occured with the CSV response."}
         
 
+def get_historic_data_csv(request):
+    """""
+    Returns ERA Interim data as csv
+    """""
+
+    try:
+        qout_data, river_id, watershed_name, subbasin_name, units =\
+            get_historic_streamflow_series(request)
+    
+        si = StringIO()
+    
+        writer = csv_writer(si)
+        
+        writer.writerow(['datetime', 'streamflow ({}3/s)'
+                             .format(get_units_title(units))])
+    
+        for row_data in qout_data.iteritems():
+            writer.writerow(row_data)
+            
+        # prepare to write response
+        response = make_response(si.getvalue())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = \
+            'attachment; filename=historic_streamflow_{0}_{1}_{2}.csv' \
+            .format(watershed_name,
+                    subbasin_name,
+                    river_id)
+
+        return response
+    except:
+        return {"error": "An unexpected error occured with the CSV response."}
+
+
 def get_ecmwf_forecast_statistics(request):
     """
     Returns the statistics for the 52 member forecast
@@ -104,7 +138,7 @@ def get_ecmwf_forecast_statistics(request):
               "date": request.args.get('date', ''),
               "return_format": request.args.get('return_format', '')}
 
-    path_to_rapid_output = "/mnt/output"
+    path_to_rapid_output = "/mnt/output/ecmwf"
 
     watershed_name = params["region"].split("-")[0]
     subbasin_name = params["region"].split("-")[1]
@@ -214,7 +248,7 @@ def get_ecmwf_ensemble(request):
               "date": request.args.get('date', ''),
               "return_format": request.args.get('return_format', '')}
 
-    path_to_rapid_output = "/mnt/output"
+    path_to_rapid_output = "/mnt/output/ecmwf"
 
     watershed_name = params["region"].split("-")[0]
     subbasin_name = params["region"].split("-")[1]
@@ -334,3 +368,57 @@ def get_ecmwf_ensemble(request):
         return_dict[key] = return_dict[key].to_dataframe().Qout
 
     return return_dict, watershed_name, subbasin_name, river_id, units
+
+
+def get_historic_streamflow_series(request):
+    """
+    Retireve Pandas series object based on request for ERA Interim data
+    """
+    
+    params = {"region": request.args.get('region', ''),
+              "reach_id": request.args.get('reach_id', ''),
+              "lat": request.args.get('lat', ''),
+              "lon": request.args.get('lon', ''),
+              "daily": request.args.get('daily', '')}
+
+    path_to_rapid_output = "/mnt/output/era"
+    
+    # get information from GET request
+    daily = request.args.get('daily', '')
+    units = 'metric'
+    historical_data_file = glob(os.path.join(path_to_rapid_output, params["region"], 'Qout*.nc'))[0]
+    
+    if params["reach_id"] != '':
+        river_id = int(params["reach_id"])
+    elif params["lat"] != '' and params["lon"] != '':
+        point = Point(float(params["lat"]),float(params["lon"]))
+        df = pd.read_csv(
+            f"/app/GSP_API/region_coordinate_files/{params['region']}/comid_lat_lon_z.csv", 
+            sep=',',
+            header=0,
+            index_col=0
+        )
+        
+        points_df = df.loc[:,"Lat":"Lon"].apply(Point,axis=1)
+        multi_pt = MultiPoint(points_df.tolist())
+        
+        nearest_pt = nearest_points(point, multi_pt)
+        river_id = int(points_df[points_df == nearest_pt[1]].index[0])
+
+        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
+            return {"error": "Nearest river is more than ~10km away."}
+    else:
+        return {"error": "No river_id or coordinates found in parameters."}
+
+    # write data to csv stream
+    with xarray.open_dataset(historical_data_file) as qout_nc:
+        qout_data = qout_nc.sel(rivid=river_id).Qout\
+                           .to_dataframe().Qout
+        if daily.lower() == 'true':
+            # calculate daily values
+            qout_data = qout_data.resample('D').mean()
+
+        if units == 'english':
+            # convert from m3/s to ft3/s
+            qout_data *= M3_TO_FT3
+    return qout_data, river_id, params["region"].split('-')[0], params["region"].split('-')[0], units
