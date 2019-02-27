@@ -1,9 +1,7 @@
-from main_controller import (get_forecast_streamflow_csv,
-                             get_ecmwf_forecast_statistics,
-                             get_forecast_ensemble_csv,
-                             get_ecmwf_ensemble,
-                             get_historic_data_csv,
-                             get_historic_streamflow_series)
+from main_controller import (get_forecast_streamflow_csv, get_ecmwf_forecast_statistics,
+                             get_forecast_ensemble_csv, get_ecmwf_ensemble,
+                             get_historic_data_csv, get_historic_streamflow_series,
+                             get_return_period_csv, get_return_period_dict)
                             
 from functions import get_units_title
 
@@ -86,7 +84,7 @@ def forecast_stats_handler(request):
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
     
             time_series = []
-            for date, value in forecast_statistics[stat].iteritems():
+            for date, value in forecast_statistics[stat].items():
                 time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
@@ -104,42 +102,42 @@ def forecast_stats_handler(request):
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
             
             high_r_time_series = []
-            for date, value in forecast_statistics['high_res'].iteritems():
+            for date, value in forecast_statistics['high_res'].items():
                 high_r_time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
                 })
             
             mean_time_series = []
-            for date, value in forecast_statistics['mean'].iteritems():
+            for date, value in forecast_statistics['mean'].items():
                 mean_time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
                 })
                 
             max_time_series = []
-            for date, value in forecast_statistics['max'].iteritems():
+            for date, value in forecast_statistics['max'].items():
                 max_time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
                 })
                 
             min_time_series = []
-            for date, value in forecast_statistics['min'].iteritems():
+            for date, value in forecast_statistics['min'].items():
                 min_time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
                 })
                 
             std_d_lower_time_series = []
-            for date, value in forecast_statistics['std_dev_range_lower'].iteritems():
+            for date, value in forecast_statistics['std_dev_range_lower'].items():
                 std_d_lower_time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
                 })
                 
             std_d_upper_time_series = []
-            for date, value in forecast_statistics['std_dev_range_upper'].iteritems():
+            for date, value in forecast_statistics['std_dev_range_upper'].items():
                 std_d_upper_time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
@@ -231,7 +229,7 @@ def forecast_ensembles_handler(request):
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
     
             time_series = []
-            for date, value in forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].iteritems():
+            for date, value in forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].items():
                 time_series.append({
                     'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'val': value
@@ -252,7 +250,7 @@ def forecast_ensembles_handler(request):
             for i in range(1,53):
                 ens_time_series = []
 
-                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
+                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].items():
                     ens_time_series.append({
                         'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         'val': value
@@ -290,7 +288,7 @@ def forecast_ensembles_handler(request):
             for i in range(start,stop):
                 ens_time_series = []
 
-                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
+                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].items():
                     ens_time_series.append({
                         'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         'val': value
@@ -314,7 +312,7 @@ def forecast_ensembles_handler(request):
             for i in ens_list:
                 ens_time_series = []
 
-                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].iteritems():
+                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].items():
                     ens_time_series.append({
                         'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         'val': value
@@ -377,12 +375,12 @@ def historic_data_handler(request):
             }
         }
         
-        startdate = qout_data.index[0].strftime('%Y-%m-%d %H:%M:%S')
-        enddate = qout_data.index[-1].strftime('%Y-%m-%d %H:%M:%S')
+        startdate = qout_data.index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
+        enddate = qout_data.index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
         time_series = []
-        for date, value in qout_data.iteritems():
+        for date, value in qout_data.items():
             time_series.append({
-                'date': date.strftime('%Y-%m-%dT%H:%M:%S'),
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'val': value
             })
                 
@@ -393,6 +391,67 @@ def historic_data_handler(request):
         if return_format == "waterml":
             xml_response = \
                 make_response(render_template('historic_simulation.xml', **context))
+            xml_response.headers.set('Content-Type', 'application/xml')
+        
+            return xml_response
+        
+        if return_format == "json":
+            return jsonify(context)
+        
+    else:
+        return jsonify({"error": "Invalid return_format."})
+
+
+def return_periods_handler(request):
+    """
+    Controller that will show the historic data in WaterML 1.1 format
+    """
+    return_format = request.args.get('return_format', '')
+
+    if (return_format == 'csv' or return_format == ''):
+        csv_response = get_return_period_csv(request)
+        if (isinstance(csv_response, dict) and "error" in csv_response.keys()):
+            return jsonify(csv_response)
+        else:
+            return csv_response
+        
+    elif (return_format == 'waterml' or return_format == 'json'):
+
+        return_period_data, river_id, watershed_name, subbasin_name, units =\
+            get_return_period_dict(request)
+    
+        units_title = get_units_title(units)
+        units_title_long = 'meters'
+        if units_title == 'ft':
+            units_title_long = 'feet'
+            
+        context = {
+            'region': "-".join([watershed_name, subbasin_name]),
+            'comid': river_id,
+            'gendate': dt.utcnow().isoformat() + 'Z',
+            'units': {
+                'name': 'Streamflow',
+                'short': '{}3/s'.format(units_title),
+                'long': 'Cubic {} per Second'.format(units_title_long)
+            }
+        }
+        
+        startdate = '1980-01-01T00:00:00Z'
+        enddate = '2014-12-31T00:00:00Z'
+        time_series = []
+        for period, value in return_period_data.items():
+            time_series.append({
+                'period': period,
+                'val': value
+            })
+                
+        context['startdate'] = startdate
+        context['enddate'] = enddate
+        context['time_series'] = time_series
+        
+        if return_format == "waterml":
+            xml_response = \
+                make_response(render_template('return_periods.xml', **context))
             xml_response.headers.set('Content-Type', 'application/xml')
         
             return xml_response

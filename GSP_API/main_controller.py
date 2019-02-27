@@ -108,7 +108,7 @@ def get_historic_data_csv(request):
         writer.writerow(['datetime', 'streamflow ({}3/s)'
                              .format(get_units_title(units))])
     
-        for row_data in qout_data.iteritems():
+        for row_data in qout_data.items():
             writer.writerow(row_data)
             
         # prepare to write response
@@ -124,6 +124,39 @@ def get_historic_data_csv(request):
     except:
         return {"error": "An unexpected error occured with the CSV response."}
 
+
+def get_return_period_csv(request):
+    """""
+    Returns ERA Interim data as csv
+    """""
+
+    try:
+        return_period_data, river_id, watershed_name, subbasin_name, units =\
+            get_return_period_dict(request)
+    
+        si = StringIO()
+    
+        writer = csv_writer(si)
+        
+        writer.writerow(['return period', 'streamflow ({}3/s)'
+                             .format(get_units_title(units))])
+    
+        for key, value in return_period_data.items():
+            writer.writerow([key, value])
+            
+        # prepare to write response
+        response = make_response(si.getvalue())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = \
+            'attachment; filename=return_periods_{0}_{1}_{2}.csv' \
+            .format(watershed_name,
+                    subbasin_name,
+                    river_id)
+
+        return response
+    except:
+        return {"error": "An unexpected error occured with the CSV response."}
+    
 
 def get_ecmwf_forecast_statistics(request):
     """
@@ -422,3 +455,61 @@ def get_historic_streamflow_series(request):
             # convert from m3/s to ft3/s
             qout_data *= M3_TO_FT3
     return qout_data, river_id, params["region"].split('-')[0], params["region"].split('-')[0], units
+
+
+def get_return_period_dict(request):
+    """
+    Returns return period data as dictionary for a river ID in a watershed
+    """
+    params = {"region": request.args.get('region', ''),
+              "reach_id": request.args.get('reach_id', ''),
+              "lat": request.args.get('lat', ''),
+              "lon": request.args.get('lon', ''),
+              "daily": request.args.get('daily', '')}
+
+    path_to_rapid_output = "/mnt/output/era"
+    
+    units = 'metric'
+
+    return_period_file = glob(os.path.join(path_to_rapid_output, params["region"], 'return_period*.nc'))[0]
+
+    if params["reach_id"] != '':
+        river_id = int(params["reach_id"])
+    elif params["lat"] != '' and params["lon"] != '':
+        point = Point(float(params["lat"]),float(params["lon"]))
+        df = pd.read_csv(
+            f"/app/GSP_API/region_coordinate_files/{params['region']}/comid_lat_lon_z.csv", 
+            sep=',',
+            header=0,
+            index_col=0
+        )
+        
+        points_df = df.loc[:,"Lat":"Lon"].apply(Point,axis=1)
+        multi_pt = MultiPoint(points_df.tolist())
+        
+        nearest_pt = nearest_points(point, multi_pt)
+        river_id = int(points_df[points_df == nearest_pt[1]].index[0])
+
+        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
+            return {"error": "Nearest river is more than ~10km away."}
+    else:
+        return {"error": "No river_id or coordinates found in parameters."}
+
+    # get information from dataset
+    return_period_data = {}
+
+    with xarray.open_dataset(return_period_file) \
+            as return_period_nc:
+        rpd = return_period_nc.sel(rivid=river_id)
+        if units == 'english':
+            rpd['max_flow'] *= M3_TO_FT3
+            rpd['return_period_20'] *= M3_TO_FT3
+            rpd['return_period_10'] *= M3_TO_FT3
+            rpd['return_period_2'] *= M3_TO_FT3
+
+        return_period_data["max"] = str(rpd.max_flow.values)
+        return_period_data["twenty"] = str(rpd.return_period_20.values)
+        return_period_data["ten"] = str(rpd.return_period_10.values)
+        return_period_data["two"] = str(rpd.return_period_2.values)
+
+    return return_period_data, river_id, params["region"].split('-')[0], params["region"].split('-')[0], units
