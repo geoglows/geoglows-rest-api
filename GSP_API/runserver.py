@@ -130,7 +130,41 @@ def return_periods():
         logging.exception(sys.exc_info()[0])
         return jsonify({"error": "An unexpected error occured."})
     
+
+@app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
+def regions():
     
+    try:
+        # Call the service
+        results = api_controller.get_region_handler()
+
+        return results
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."})
+
+
+@app.route(api_prefix + '/AvailableDates/', methods=['GET'])
+def dates():
+    
+    if (request.args.get('region', '') == ''):
+        logging.error("region is required as input.")
+        return jsonify({"error": "region is required as input."})
+    
+    try:
+        # Call the service
+        results = api_controller.get_available_dates_handler(request)
+
+        return results
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."})
+
+
 if __name__ == '__main__':
     app.debug = True
     app.run()

@@ -9,6 +9,7 @@ from datetime import datetime as dt
 from flask import jsonify, render_template, make_response
 
 import logging
+import os
 
 
 # create logger function
@@ -461,3 +462,39 @@ def return_periods_handler(request):
         
     else:
         return jsonify({"error": "Invalid return_format."})
+    
+    
+def get_region_handler():
+    """
+    Controller that returns available regions.
+    """
+    path_to_rapid_output = "/mnt/output/ecmwf"
+
+    regions = os.listdir(path_to_rapid_output)
+
+    if len(regions) > 0:
+        return jsonify({"available_regions": regions})
+    else:
+        return jsonify({"message": "No regions found."})
+
+
+def get_available_dates_handler(request):
+    """
+    Controller that returns available dates.
+    """
+    path_to_rapid_output = "/mnt/output/ecmwf"
+    
+    region = request.args.get('region', '')
+    
+    region_path = os.path.join(path_to_rapid_output, region)
+    
+    if not os.path.exists(region_path):
+        return jsonify({"message": "Region does not exist."})
+
+    dates = os.listdir(region_path)
+
+    if len(dates) > 0:
+        return jsonify({"available_dates": dates})
+    else:
+        return jsonify({"message": "No dates available."})
+    
