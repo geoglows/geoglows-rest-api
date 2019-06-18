@@ -77,7 +77,7 @@ def forecast_stats_handler(request):
     
             if stat not in formatted_stat.keys():
                 logging.error('Invalid value for stat ...')
-                return jsonify({"error": "Invalid value for stat parameter."})
+                return jsonify({"error": "Invalid value for stat parameter."}), 422
                 
             startdate = forecast_statistics[stat].index[0]\
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -169,7 +169,7 @@ def forecast_stats_handler(request):
             return jsonify(context)
         
     else:
-        return jsonify({"error": "Invalid return_format."})
+        return jsonify({"error": "Invalid return_format."}), 422
 
 
 def forecast_ensembles_handler(request):
@@ -222,7 +222,7 @@ def forecast_ensembles_handler(request):
     
             if int(ensemble) not in map(int, sorted(formatted_ensemble.keys())):
                 logging.error('Invalid value for ensemble ...')
-                return jsonify({"error": "Invalid value for ensemble parameter."})
+                return jsonify({"error": "Invalid value for ensemble parameter."}), 422
 
             startdate = forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].index[0]\
                 .strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -339,7 +339,7 @@ def forecast_ensembles_handler(request):
             return jsonify(context)
         
     else:
-        return jsonify({"error": "Invalid return_format."})
+        return jsonify({"error": "Invalid return_format."}), 422
 
 
 def historic_data_handler(request):
@@ -400,7 +400,7 @@ def historic_data_handler(request):
             return jsonify(context)
         
     else:
-        return jsonify({"error": "Invalid return_format."})
+        return jsonify({"error": "Invalid return_format."}), 422
 
 
 def return_periods_handler(request):
@@ -461,7 +461,7 @@ def return_periods_handler(request):
             return jsonify(context)
         
     else:
-        return jsonify({"error": "Invalid return_format."})
+        return jsonify({"error": "Invalid return_format."}), 422
     
     
 def get_region_handler():
@@ -475,7 +475,7 @@ def get_region_handler():
     if len(regions) > 0:
         return jsonify({"available_regions": regions})
     else:
-        return jsonify({"message": "No regions found."})
+        return jsonify({"message": "No regions found."}), 204
 
 
 def get_available_dates_handler(request):
@@ -491,10 +491,10 @@ def get_available_dates_handler(request):
     if not os.path.exists(region_path):
         return jsonify({"message": "Region does not exist."})
 
-    dates = os.listdir(region_path)
+    dates = [d for d in os.listdir(region_path) if d.split('.')[0].isdigit()]
 
     if len(dates) > 0:
         return jsonify({"available_dates": dates})
     else:
-        return jsonify({"message": "No dates available."})
+        return jsonify({"message": "No dates available."}), 204
     

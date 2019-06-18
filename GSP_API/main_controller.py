@@ -51,7 +51,7 @@ def get_forecast_streamflow_csv(request):
         return response
 
     except:
-        return {"error": "An unexpected error occured with the CSV response."}
+        return {"error": "An unexpected error occured with the CSV response."}, 422
     
 
 def get_forecast_ensemble_csv(request):
@@ -89,7 +89,7 @@ def get_forecast_ensemble_csv(request):
     
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}
+        return {"error": "An unexpected error occured with the CSV response."}, 422
         
 
 def get_historic_data_csv(request):
@@ -122,7 +122,7 @@ def get_historic_data_csv(request):
 
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}
+        return {"error": "An unexpected error occured with the CSV response."}, 422
 
 
 def get_return_period_csv(request):
@@ -155,7 +155,7 @@ def get_return_period_csv(request):
 
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}
+        return {"error": "An unexpected error occured with the CSV response."}, 422
     
 
 def get_ecmwf_forecast_statistics(request):
@@ -196,7 +196,7 @@ def get_ecmwf_forecast_statistics(request):
         if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
             return {"error": "Nearest river is more than ~10km away."}
     else:
-        return {"error": "No river_id or coordinates found in parameters."}
+        return {"error": "No river_id or coordinates found in parameters."}, 422
     
     units = "metric"
 
@@ -216,7 +216,7 @@ def get_ecmwf_forecast_statistics(request):
     forecast_nc_list, start_date = \
         ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
     if (not forecast_nc_list or not start_date):
-        return {"error": 'ECMWF forecast for %s (%s).' % (watershed_name, subbasin_name)}
+        return {"error": 'ECMWF forecast for %s (%s).' % (watershed_name, subbasin_name)}, 422
 
     # combine 52 ensembles
     qout_datasets = []
@@ -306,7 +306,7 @@ def get_ecmwf_ensemble(request):
         if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
             return {"error": "Nearest river is more than ~10km away."}
     else:
-        return {"error": "No river_id or coordinates found in parameters."}
+        return {"error": "No river_id or coordinates found in parameters."}, 422
 
     units = "metric"
 
@@ -327,7 +327,7 @@ def get_ecmwf_ensemble(request):
         ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
     if not forecast_nc_list or not start_date:
         return {"error": 'ECMWF forecast for %s (%s).'
-                            % (watershed_name, subbasin_name)}
+                            % (watershed_name, subbasin_name)}, 422
 
     # combine 52 ensembles
     qout_datasets = []
@@ -441,7 +441,7 @@ def get_historic_streamflow_series(request):
         if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
             return {"error": "Nearest river is more than ~10km away."}
     else:
-        return {"error": "No river_id or coordinates found in parameters."}
+        return {"error": "No river_id or coordinates found in parameters."}, 422
 
     # write data to csv stream
     with xarray.open_dataset(historical_data_file) as qout_nc:
@@ -493,7 +493,7 @@ def get_return_period_dict(request):
         if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
             return {"error": "Nearest river is more than ~10km away."}
     else:
-        return {"error": "No river_id or coordinates found in parameters."}
+        return {"error": "No river_id or coordinates found in parameters."}, 422
 
     # get information from dataset
     return_period_data = {}
@@ -507,9 +507,9 @@ def get_return_period_dict(request):
             rpd['return_period_10'] *= M3_TO_FT3
             rpd['return_period_2'] *= M3_TO_FT3
 
-        return_period_data["max"] = str(rpd.max_flow.values)
-        return_period_data["twenty"] = str(rpd.return_period_20.values)
-        return_period_data["ten"] = str(rpd.return_period_10.values)
-        return_period_data["two"] = str(rpd.return_period_2.values)
+        return_period_data["max"] = float(rpd.max_flow.values)
+        return_period_data["twenty"] = float(rpd.return_period_20.values)
+        return_period_data["ten"] = float(rpd.return_period_10.values)
+        return_period_data["two"] = float(rpd.return_period_2.values)
 
     return return_period_data, river_id, params["region"].split('-')[0], params["region"].split('-')[0], units

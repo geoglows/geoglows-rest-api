@@ -61,7 +61,8 @@ RUN chmod +x /startup.sh
 COPY ./file_mount.json /app/azcopy/file_mount.json
 
 # Copy sample output
-COPY ./output /mnt/output
+COPY ./output/ecmwf /mnt/output/ecmwf
+COPY ./output/era /mnt/output/era
 
 COPY ./file_mounter.py /app/azcopy/file_mounter.py
 RUN chmod +x /app/azcopy/file_mounter.py
