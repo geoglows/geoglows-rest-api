@@ -1,6 +1,7 @@
 from main_controller import (get_forecast_streamflow_csv, get_ecmwf_forecast_statistics,
                              get_forecast_ensemble_csv, get_ecmwf_ensemble,
                              get_historic_data_csv, get_historic_streamflow_series,
+                             get_seasonal_avg_csv, get_seasonal_average,
                              get_return_period_csv, get_return_period_dict)
                             
 from functions import get_units_title
@@ -344,7 +345,7 @@ def forecast_ensembles_handler(request):
 
 def historic_data_handler(request):
     """
-    Controller that will show the historic data in WaterML 1.1 format
+    Controller for retrieving simulated historic data
     """
     return_format = request.args.get('return_format', '')
 
@@ -403,6 +404,63 @@ def historic_data_handler(request):
         return jsonify({"error": "Invalid return_format."}), 422
 
 
+def seasonal_average_handler(request):
+    """
+    Controller for retrieving seasonal averages
+    """
+    return_format = request.args.get('return_format', '')
+
+    if (return_format == 'csv' or return_format == ''):
+        csv_response = get_seasonal_avg_csv(request)
+        if (isinstance(csv_response, dict) and "error" in csv_response.keys()):
+            return jsonify(csv_response)
+        else:
+            return csv_response
+        
+    elif (return_format == 'waterml' or return_format == 'json'):
+
+        qout_data, river_id, watershed_name, subbasin_name, units =\
+            get_seasonal_average(request)
+    
+        units_title = get_units_title(units)
+        units_title_long = 'meters'
+        if units_title == 'ft':
+            units_title_long = 'feet'
+            
+        context = {
+            'region': "-".join([watershed_name, subbasin_name]),
+            'comid': river_id,
+            'gendate': dt.utcnow().isoformat() + 'Z',
+            'units': {
+                'name': 'Streamflow',
+                'short': '{}3/s'.format(units_title),
+                'long': 'Cubic {} per Second'.format(units_title_long)
+            }
+        }
+        
+        time_series = []
+        for day, value in qout_data.items():
+            time_series.append({
+                'day': day,
+                'val': value
+            })
+                
+        context['time_series'] = time_series
+        
+        if return_format == "waterml":
+            xml_response = \
+                make_response(render_template('seasonal_averages.xml', **context))
+            xml_response.headers.set('Content-Type', 'application/xml')
+        
+            return xml_response
+        
+        if return_format == "json":
+            return jsonify(context)
+        
+    else:
+        return jsonify({"error": "Invalid return_format."}), 422
+    
+    
 def return_periods_handler(request):
     """
     Controller that will show the historic data in WaterML 1.1 format

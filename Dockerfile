@@ -51,7 +51,7 @@ RUN sudo apt-get install vim -y
 
 # Copy API code
 COPY ./GSP_API /app/GSP_API/
-COPY ./supervisord.conf /etc/supervisord.conf
+COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 
 # startup.sh is a helper script
 COPY ./startup.sh /

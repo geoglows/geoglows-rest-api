@@ -391,6 +391,107 @@
         }
       }
     },
+    "/SeasonalAverage": {
+      "get": {
+        "description": "This operation returns the daily average for an entire year based on ERA Interim data.\nA successful response will return a time series with day-value pairs.",
+        "summary": "Return seasonal average",
+        "parameters": [
+          {
+            "name": "region",
+            "in": "query",
+            "required": true,
+            "description": "The name of the major region of interest.",
+            "type": "string",
+            "enum": [
+              "africa-continental",
+              "north_america-continental",
+              "south_america-continental",
+              "south_asia-continental"
+            ]
+          },
+          {
+            "name": "reach_id",
+            "in": "query",
+            "description": "The unique identifier for the stream reach of interest. Also refered to as common identifier (COMID). Requires previous knowledge of the value. This parameter is incompatible with `lat` and `lon` (see lat and lon parameters).",
+            "required": true,
+            "type": "number",
+            "format": "integer"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "A given latitud used to find the closest stream reach. Must be used togeter with `lon`. The spatial query uses the center point of the stream reach to determine proximity. This parameter is incompatible with `reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.",
+            "type": "number",
+            "format": "float"
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "A given longitud used to find the closest stream reach. Must be used together with `lat`. The spatial query uses the center point of the stream reach to determine proximity. This parameter is incompatible with `reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.",
+            "type": "number",
+            "format": "float"
+          },
+          {
+            "name": "return_format",
+            "in": "query",
+            "description": "The format of the time series response.",
+            "type": "string",
+            "default": "csv",
+            "enum": [
+              "csv",
+              "json",
+              "waterml"
+            ]
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/xml",
+          "text/csv"
+        ],
+        "responses": {
+          "200": {
+            "description": "The response body will contain a time series along with metadata about the stream reach of interest.",
+            "examples": {
+              "application/json": {
+                "comid": 56691,
+                "gendate": "2019-06-21T19:56:42.935383Z",
+                "region": "south_asia-south_asia",
+                "time_series": [
+                  {
+                    "day": 0,
+                    "val": 122.98004150390625
+                  },
+                  {
+                    "day": 364,
+                    "val": 129.8092803955078
+                  }
+                ],
+                "units": {
+                  "long": "Cubic meters per Second",
+                  "name": "Streamflow",
+                  "short": "m3/s"
+                }
+              },
+              "application/xml": "<?xml version=\"1.0\" encoding=\"utf-8\" ?> <wml2:Collection xmlns:wml2=\"http://www.opengis.net/waterml/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" xmlns:om=\"http://www.opengis.net/om/2.0\" xmlns:sa=\"http://www.opengis.net/sampling/2.0\" xmlns:swe=\"http://www.opengis.net/swe/2.0\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:sf=\"http://www.opengis.net/sampling/2.0\" xmlns:sams=\"http://www.opengis.net/samplingSpatial/2.0\" xmlns:gco=\"http://www.isotc211.org/2005/gco\" xmlns:gmd=\"http://www.isotc211.org/2005/gmd\" xsi:schemaLocation=\"http://www.opengis.net/waterml/2.0 http://schemas.opengis.net/waterml/2.0/waterml2.xsd\" gml:id=\"GSP_south_asia-south_asia_seasonal_avg_56691\"> <gml:description> A timeseries with the requested seasonal averages extracted from ECMWFs ERA-Iterim data previously downscaled with RAPID. </gml:description> <wml2:metadata> <wml2:DocumentMetadata gml:id=\"doc_d\"> <wml2:generationDate>2019-06-21T20:42:32.123035Z</wml2:generationDate> <wml2:version xlink:href=\"http://www.opengis.net/waterml/2.0\"/> </wml2:DocumentMetadata> </wml2:metadata> <wml2:observationMember> <om:OM_Observation gml:id=\"seasonal_average_56691\"> <om:metadata> <wml2:ObservationMetadata> <gmd:contact> <gmd:CI_ResponsibleParty> <gmd:organisationName> <gco:CharacterString>Aquaveo, LLC.</gco:CharacterString> </gmd:organisationName> <gmd:role> <gmd:CI_RoleCode codeList=\"http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode\" codeListValue=\"owner\"/> </gmd:role> </gmd:CI_ResponsibleParty> </gmd:contact> <gmd:identificationInfo/> </wml2:ObservationMetadata> </om:metadata> <om:phenomenonTime> <gml:TimePeriod gml:id=\"forecast_period\"> <gml:beginPosition>0</gml:beginPosition> <gml:endPosition>364</gml:endPosition> </gml:TimePeriod> </om:phenomenonTime> <om:resultTime> <gml:TimeInstant gml:id=\"forecast_available\"> <gml:timePosition>0</gml:timePosition> </gml:TimeInstant> </om:resultTime> <om:procedure xlink:href=\"ECMWF-RAPID\" xlink:title=\"ECMWF-RAPID\" xlink:arcrole=\"http://www.opengis.net/def/waterml/2.0/processType/Simulation\"/> <om:observedProperty xlink:title=\"Streamflow\"/> <om:featureOfInterest xlink:title=\"south_asia-south_asia\"/> <om:result> <wml2:MeasurementTimeseries gml:id=\"seasonal_avg\"> <wml2:metadata> <wml2:MeasurementTimeseriesMetadata> <wml2:temporalExtent> <gml:TimePeriod gml:id=\"seasonal_average\"> <gml:beginPosition>0</gml:beginPosition> <gml:endPosition>364</gml:endPosition> </gml:TimePeriod> </wml2:temporalExtent> </wml2:MeasurementTimeseriesMetadata> </wml2:metadata> <wml2:defaultPointMetadata> <wml2:DefaultTVPMeasurementMetadata> <wml2:uom xlink:title=\"Cubic meters per Second\"/> <wml2:uom code=\"m3/s\"/> <wml2:interpolationType xlink:href=\"http://www.opengis.net/def/waterml/2.0/interpolationType/Continuous\" xlink:title=\"Continuous\"/> </wml2:DefaultTVPMeasurementMetadata> </wml2:defaultPointMetadata> <wml2:point> <wml2:MeasurementTVP> <wml2:time>0</wml2:time> <wml2:value>122.98004150390625</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>1</wml2:time> <wml2:value>122.26720428466797</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2</wml2:time> <wml2:value>120.51087188720703</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>3</wml2:time> <wml2:value>118.9857177734375</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>4</wml2:time> <wml2:value>118.57260131835938</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>363</wml2:time> <wml2:value>131.64041137695312</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>364</wml2:time> <wml2:value>129.8092803955078</wml2:value> </wml2:MeasurementTVP> </wml2:point> </wml2:MeasurementTimeseries> </om:result> </om:OM_Observation> </wml2:observationMember> </wml2:Collection>",
+              "text/csv": "day,streamflow_avg (m3/s) 0,122.98004150390625 1,122.26720428466797 2,120.51087188720703 3,118.9857177734375 4,118.57260131835938 364,129.8092803955078"
+            }
+          },
+          "400": {
+            "description": "Bad request. Check request and paramaters.",
+            "examples": {
+              "error": "An unexpected error occured."
+            }
+          },
+          "422": {
+            "description": "Missing a required parameter.",
+            "examples": {
+              "error": "region is required as input."
+            }
+          }
+        }
+      }
+    },
     "/ReturnPeriods": {
       "get": {
         "description": "This operation returns the 2, 10, and 20 year return period based on the 35-years simulated streamflow data.\nA successful response will return key-value pairs for earch return period along with metadata.",

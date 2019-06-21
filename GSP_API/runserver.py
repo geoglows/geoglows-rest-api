@@ -131,6 +131,32 @@ def return_periods():
         return jsonify({"error": "An unexpected error occured."}), 400
     
 
+# GET, API HistoricSimulation endpoint
+@app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
+def seasonal_average():
+    init_logger()
+
+    if (request.args.get('region', '') == ''):
+        logging.error("region is required as input.")
+        return jsonify({"error": "region is required as input."}), 422
+
+    if (request.args.get('reach_id', '') == ''):
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
+
+    try:
+        # Call the service
+        results = api_controller.seasonal_average_handler(request)
+
+        return results
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."}), 400
+    
+    
 @app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
 def regions():
     

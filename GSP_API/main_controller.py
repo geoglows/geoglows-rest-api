@@ -125,6 +125,39 @@ def get_historic_data_csv(request):
         return {"error": "An unexpected error occured with the CSV response."}, 422
 
 
+def get_seasonal_avg_csv(request):
+    """""
+    Returns seasonal data as csv
+    """""
+
+    try:
+        qout_data, river_id, watershed_name, subbasin_name, units =\
+            get_seasonal_average(request)
+    
+        si = StringIO()
+    
+        writer = csv_writer(si)
+        
+        writer.writerow(['day', 'streamflow_avg ({}3/s)'
+                             .format(get_units_title(units))])
+    
+        for row_data in qout_data.items():
+            writer.writerow(row_data)
+            
+        # prepare to write response
+        response = make_response(si.getvalue())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = \
+            'attachment; filename=seasonal_streamflow_average_{0}_{1}_{2}.csv' \
+            .format(watershed_name,
+                    subbasin_name,
+                    river_id)
+
+        return response
+    except:
+        return {"error": "An unexpected error occured with the CSV response."}, 422
+    
+    
 def get_return_period_csv(request):
     """""
     Returns ERA Interim data as csv
@@ -450,6 +483,55 @@ def get_historic_streamflow_series(request):
         if daily.lower() == 'true':
             # calculate daily values
             qout_data = qout_data.resample('D').mean()
+
+        if units == 'english':
+            # convert from m3/s to ft3/s
+            qout_data *= M3_TO_FT3
+    return qout_data, river_id, params["region"].split('-')[0], params["region"].split('-')[0], units
+
+
+def get_seasonal_average(request):
+    """
+    Retireve Pandas series object based on request for seasonal average
+    """
+    
+    params = {"region": request.args.get('region', ''),
+              "reach_id": request.args.get('reach_id', ''),
+              "lat": request.args.get('lat', ''),
+              "lon": request.args.get('lon', '')}
+
+    path_to_rapid_output = "/mnt/output/era"
+    
+    # get information from GET request
+    units = 'metric'
+    seasonal_data_file = glob(os.path.join(path_to_rapid_output, params["region"], 'seasonal_average*.nc'))[0]
+    
+    if params["reach_id"] != '':
+        river_id = int(params["reach_id"])
+    elif params["lat"] != '' and params["lon"] != '':
+        point = Point(float(params["lat"]),float(params["lon"]))
+        df = pd.read_csv(
+            f"/app/GSP_API/region_coordinate_files/{params['region']}/comid_lat_lon_z.csv", 
+            sep=',',
+            header=0,
+            index_col=0
+        )
+        
+        points_df = df.loc[:,"Lat":"Lon"].apply(Point,axis=1)
+        multi_pt = MultiPoint(points_df.tolist())
+        
+        nearest_pt = nearest_points(point, multi_pt)
+        river_id = int(points_df[points_df == nearest_pt[1]].index[0])
+
+        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
+            return {"error": "Nearest river is more than ~10km away."}
+    else:
+        return {"error": "No river_id or coordinates found in parameters."}, 422
+
+    # write data to csv stream
+    with xarray.open_dataset(seasonal_data_file) as qout_nc:
+        qout_data = qout_nc.sel(rivid=river_id).average_flow\
+                           .to_dataframe().average_flow
 
         if units == 'english':
             # convert from m3/s to ft3/s
