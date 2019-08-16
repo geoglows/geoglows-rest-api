@@ -10,7 +10,7 @@ RUN apt-get update --fix-missing && \
     rm -rf /var/lib/apt/lists/*
 
 RUN apt-get -qq update && apt-get -qq -y install curl bzip2 \ 
-    && curl -sSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
+    && curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && bash /tmp/miniconda.sh -bfp /usr/local \ 
     && rm -rf /tmp/miniconda.sh \ 
     && conda install -y python=3 \ 
@@ -23,7 +23,7 @@ RUN apt-get -qq update && apt-get -qq -y install curl bzip2 \
 
 RUN conda create -n gsp_api python=3.6.6 \
     && echo "source activate gsp_api" >> ~/.bashrc \
-    && conda install -c conda-forge -n gsp_api uwsgi flask flask-restful
+    && conda install -c conda-forge -n gsp_api uwsgi icu=58 flask flask-restful
 
 RUN apt-get update
 RUN apt-get install apt-transport-https -y
@@ -61,8 +61,8 @@ RUN chmod +x /startup.sh
 COPY ./file_mount.json /app/azcopy/file_mount.json
 
 # Copy sample output
-COPY ./output/ecmwf /mnt/output/ecmwf
-COPY ./output/era /mnt/output/era
+RUN mkdir -p /mnt/output/ecmwf
+RUN mkdir -p /mnt/output/era
 
 COPY ./file_mounter.py /app/azcopy/file_mounter.py
 RUN chmod +x /app/azcopy/file_mounter.py
