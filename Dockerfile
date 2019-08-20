@@ -21,9 +21,11 @@ RUN apt-get -qq update && apt-get -qq -y install curl bzip2 \
     && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log \ 
     && conda clean --all --yes
 
-RUN conda create -n gsp_api python=3.6.6 \
-    && echo "source activate gsp_api" >> ~/.bashrc \
-    && conda install -c conda-forge -n gsp_api uwsgi icu=58 flask flask-restful
+RUN conda create -n gsp_api python=3.7 \
+    && echo "conda activate gsp_api" >> ~/.bashrc \
+    && conda config --set channel_priority strict \
+    && conda config --add channels conda-forge \
+    && conda install -n gsp_api uwsgi flask flask-restful
 
 RUN apt-get update
 RUN apt-get install apt-transport-https -y
