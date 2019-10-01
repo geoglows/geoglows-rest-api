@@ -22,7 +22,7 @@ def get_forecast_streamflow_csv(request):
 
     try:
         # retrieve statistics
-        forecast_statistics, region, river_id, units = get_ecmwf_forecast_statistics(request)
+        forecast_statistics, region, reach_id, units = get_ecmwf_forecast_statistics(request)
 
         # prepare to write response for CSV
         si = StringIO()
@@ -38,7 +38,7 @@ def get_forecast_streamflow_csv(request):
         response = make_response(si.getvalue())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = \
-            'attachment; filename=forecasted_streamflow_{0}_{1}.csv'.format(region, river_id)
+            'attachment; filename=forecasted_streamflow_{0}_{1}.csv'.format(region, reach_id)
 
         return response
 
@@ -52,7 +52,7 @@ def get_forecast_ensemble_csv(request):
     """
     try:
         # retrieve ensembles
-        forecast_statistics, region, river_id, units = get_ecmwf_ensemble(request)
+        forecast_statistics, region, reach_id, units = get_ecmwf_ensemble(request)
 
         # prepare to write response for CSV
         si = StringIO()
@@ -70,11 +70,11 @@ def get_forecast_ensemble_csv(request):
         response = make_response(si.getvalue())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = \
-            'attachment; filename=forecasted_ensembles_{0}_{1}.csv'.format(region, river_id)
+            'attachment; filename=forecasted_ensembles_{0}_{1}.csv'.format(region, reach_id)
 
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}, 422
+        return {"error": "An unexpected error occurred with the CSV response."}, 422
 
 
 def get_historic_data_csv(request):
@@ -83,7 +83,7 @@ def get_historic_data_csv(request):
     """""
 
     try:
-        qout_data, river_id, region, units = get_historic_streamflow_series(request)
+        qout_data, region, reach_id, units = get_historic_streamflow_series(request)
 
         si = StringIO()
         writer = csv_writer(si)
@@ -97,11 +97,11 @@ def get_historic_data_csv(request):
         response = make_response(si.getvalue())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = \
-            'attachment; filename=historic_streamflow_{0}_{1}.csv'.format(region, river_id)
+            'attachment; filename=historic_streamflow_{0}_{1}.csv'.format(region, reach_id)
 
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}, 422
+        return {"error": "An unexpected error occurred with the CSV response."}, 422
 
 
 def get_seasonal_avg_csv(request):
@@ -110,7 +110,7 @@ def get_seasonal_avg_csv(request):
     """""
 
     try:
-        qout_data, river_id, region, units = get_seasonal_average(request)
+        qout_data, region, reach_id, units = get_seasonal_average(request)
 
         si = StringIO()
         writer = csv_writer(si)
@@ -124,11 +124,11 @@ def get_seasonal_avg_csv(request):
         response = make_response(si.getvalue())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = \
-            'attachment; filename=seasonal_streamflow_average_{0}_{1}.csv'.format(region, river_id)
+            'attachment; filename=seasonal_streamflow_average_{0}_{1}.csv'.format(region, reach_id)
 
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}, 422
+        return {"error": "An unexpected error occurred with the CSV response."}, 422
 
 
 def get_return_period_csv(request):
@@ -137,7 +137,7 @@ def get_return_period_csv(request):
     """""
 
     try:
-        return_period_data, river_id, region, units = get_return_period_dict(request)
+        return_period_data, region, reach_id, units = get_return_period_dict(request)
 
         si = StringIO()
         writer = csv_writer(si)
@@ -151,11 +151,11 @@ def get_return_period_csv(request):
         response = make_response(si.getvalue())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = \
-            'attachment; filename=return_periods_{0}_{1}.csv'.format(region, river_id)
+            'attachment; filename=return_periods_{0}_{1}.csv'.format(region, reach_id)
 
         return response
     except:
-        return {"error": "An unexpected error occured with the CSV response."}, 422
+        return {"error": "An unexpected error occurred with the CSV response."}, 422
 
 
 def get_ecmwf_forecast_statistics(request):
