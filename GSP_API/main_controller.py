@@ -172,6 +172,8 @@ def get_ecmwf_forecast_statistics(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
+        if not region:
+            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
         point = Point(float(lat), float(lon))
         df = pd.read_csv(
@@ -255,6 +257,8 @@ def get_ecmwf_ensemble(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
+        if not region:
+            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
         point = Point(float(lat), float(lon))
         df = pd.read_csv(
@@ -367,6 +371,8 @@ def get_historic_streamflow_series(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
+        if not region:
+            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
         point = Point(float(lat), float(lon))
         df = pd.read_csv(
@@ -414,6 +420,8 @@ def get_seasonal_average(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
+        if not region:
+            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
         point = Point(float(lat), float(lon))
         df = pd.read_csv(
@@ -457,6 +465,8 @@ def get_return_period_dict(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
+        if not region:
+            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
         point = Point(float(lat), float(lon))
         df = pd.read_csv(

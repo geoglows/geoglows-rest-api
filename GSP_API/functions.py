@@ -128,4 +128,4 @@ def reach_to_region(reach_id=None):
             if region == 'error':
                 return False
             return region
-    return 'error'
+    return False
