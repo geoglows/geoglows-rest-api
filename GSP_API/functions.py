@@ -1,6 +1,5 @@
 import datetime
 import os
-import re
 from collections import OrderedDict
 from glob import glob
 
@@ -80,38 +79,6 @@ def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder,
             if directory_count > 64:
                 break
     return output_directories
-
-
-def format_name(string):
-    """
-    Formats watershed name for code
-    """
-    if string:
-        formatted_string = string.strip().replace(" ", "_").lower()
-        formatted_string = re.sub(r'[^a-zA-Z0-9_-]', '', formatted_string)
-        while formatted_string.startswith("-") \
-                or formatted_string.startswith("_"):
-            formatted_string = formatted_string[1:]
-    else:
-        formatted_string = ""
-    return formatted_string
-
-
-def format_watershed_title(watershed, subbasin):
-    """
-    Formats title for watershed in navigation
-    """
-    max_length = 30
-    watershed = watershed.strip()
-    subbasin = subbasin.strip()
-    watershed_length = len(watershed)
-    if watershed_length > max_length:
-        return watershed[:max_length-1].strip() + "..."
-    max_length -= watershed_length
-    subbasin_length = len(subbasin)
-    if subbasin_length > max_length:
-        return watershed + " (" + subbasin[:max_length-3].strip() + " ...)"
-    return watershed + " (" + subbasin + ")"
 
 
 def get_units_title(unit_type):
