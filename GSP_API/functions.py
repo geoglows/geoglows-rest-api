@@ -1,7 +1,8 @@
 import datetime
-from glob import glob
 import os
 import re
+from collections import OrderedDict
+from glob import glob
 
 from pytz import utc
 
@@ -121,3 +122,43 @@ def get_units_title(unit_type):
     if unit_type == 'english':
         units_title = "ft"
     return units_title
+
+
+def reach_to_region(reach_id=None):
+    # Indonesia 1M's
+    # ------australia 2M (currently 200k's)
+    # Japan 3M's
+    # East Asia 4M's
+    # South Asia 5M's
+    # ------middle_east 6M (currently 600k's)
+    # Africa 7M's
+    # Central Asia 8M's
+    # South America 9M's
+    # West Asia 10M's
+    # -------central_america 11M (currently 900k's)
+    # Europe 12M's
+    # North America 13M's
+
+    lookup = OrderedDict([
+        ('south_asia-mainland', 100000),
+        ('error', 200000),
+        ('australia-geoglows', 300000),
+        ('middle_east-geoglows', 700000),
+        ('central_america-geoglows', 1000000),
+        # ('indonesia-geoglows', 2000000),
+        # ('japan-geoglows', 4000000),
+        # ('east_asia-geoglows', 5000000),
+        ('south_asia-geoglows', 6000000),
+        ('africa-geoglows', 8000000),
+        # ('central_asia-geoglows', 9000000),
+        ('south_america-geoglows', 10000000),
+        # ('west_asia-geoglows', 11000000),
+        # ('europe-geoglows', 13000000),
+        # ('north_america-geoglows', 14000000)
+    ])
+    for region, threshold in lookup.items():
+        if reach_id < threshold:
+            if region == 'error':
+                return False
+            return region
+    return 'error'
