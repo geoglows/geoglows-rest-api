@@ -5,7 +5,7 @@
     "description": "A REST API to access high resolution streamflow forecasts for regions including Africa, the Americas, and South Asia. The forecasts are derived using GloFAS runoff and RAPID.",
     "version": "1.0.1",
   },
-  "host": "aci-gsp.eastus.azurecontainer.io",
+  "host": "global-streamflow-prediction.eastus.azurecontainer.io",
   "basePath": "/api",
   "schemes": [
     "http"
