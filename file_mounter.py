@@ -2,8 +2,9 @@
 # Licensed under the MIT License.
 import json
 import subprocess
-import os, shutil
+import os
 import sys
+
 
 def execute_bash(bash_command):
     print("Executing command: " + str(bash_command))
@@ -12,6 +13,7 @@ def execute_bash(bash_command):
     print("output: " + str(output))
     print("error: " + str(error))
 
+
 with open('/app/azcopy/file_mount.json') as f:
     try:
         file_config = json.load(f)
@@ -19,14 +21,12 @@ with open('/app/azcopy/file_mount.json') as f:
         for cfg in file_config:
             resource_dir = os.path.basename(cfg["mappedDirectory"])
 
-            os.makedirs(resource_dir + "/" + cfg["region"] + "/" + cfg["timestamp"])
-            shutil.chown(resource_dir, "root")
-            os.makedirs(cfg["mappedDirectory"] + "/" + cfg["region"] + "/" + cfg["timestamp"][0:-1])
-
-            copy_cmd = "azcopy --quiet --source https://" + cfg["accountName"] + ".file.core.windows.net/" + resource_dir + "/" + cfg["region"] + "/" + cfg["timestamp"] + " --destination " + cfg["mappedDirectory"] + "/" + cfg["region"] + "/" + cfg["timestamp"][0:-1] + " --source-key " + cfg["accountKey"] + " --recursive --exclude-older --exclude-newer"
+            copy_cmd = f'/app/azcopy/azcopy cp "https://{cfg["accountName"]}.file.core.windows.net/' \
+                f'{cfg["volumeName"]}/?sv=2018-03-28&ss=f&srt=sco&sp=rl&se=2024-10-05T07:43:26Z&' \
+                f'st=2019-10-04T23:43:26Z&spr=https&sig={cfg["sasSig"]}" "{cfg["mappedDirectory"]}" --recursive'
 
             execute_bash(copy_cmd)
 
-    except:
-        print("Unexpected error during blob mounting:", str(sys.exc_info()[0]))
+    except Exception:
+        print("Unexpected error during file mounting:", str(sys.exc_info()[0]))
         raise

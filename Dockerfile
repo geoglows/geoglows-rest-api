@@ -5,7 +5,7 @@ ENV PATH /opt/conda/bin:$PATH
 RUN mkdir /var/uwsgi
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y wget supervisor bzip2 && \
+    apt-get install -y wget tar supervisor bzip2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -38,18 +38,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV PATH /usr/local/envs/gsp_api/bin:$PATH
 
 RUN apt-get update
-RUN apt-get -y install sudo
-
-RUN echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod/ xenial main" > azure.list
-RUN sudo cp ./azure.list /etc/apt/sources.list.d/
-RUN sudo apt-key adv --keyserver packages.microsoft.com --recv-keys EB3E94ADBE1229CF
-RUN apt-get update
-RUN apt-get install -y azcopy
+RUN apt-get -y install vim cron
 
 RUN echo "source activate gsp_api" >> ~/.bashrc \
     && conda install -c conda-forge -n gsp_api numpy pandas xarray netCDF4 shapely
-
-RUN sudo apt-get install vim -y
 
 # Copy API code
 COPY ./GSP_API /app/GSP_API/
@@ -59,15 +51,23 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 COPY ./startup.sh /
 RUN chmod +x /startup.sh
 
+# Install azcopy
+RUN mkdir -p /app/azcopy
+RUN wget -O /app/azcopy/azcopy.tar.gz https://aka.ms/downloadazcopy-v10-linux
+RUN tar -xf /app/azcopy/azcopy.tar.gz -C /app/azcopy --strip-components=1
+
 # Copy file connection information
 COPY ./file_mount.json /app/azcopy/file_mount.json
 
-# Copy sample output
+# Create output directories
 RUN mkdir -p /mnt/output/ecmwf
 RUN mkdir -p /mnt/output/era
 
 COPY ./file_mounter.py /app/azcopy/file_mounter.py
 RUN chmod +x /app/azcopy/file_mounter.py
+
+COPY ./forecast-workflow.sh /app/azcopy/forecast-workflow.sh
+RUN chmod +x /app/azcopy/forecast-workflow.sh
 
 ENV API_PREFIX=/api
 

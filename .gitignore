@@ -1,2 +1,3 @@
 .spyproject
 output/**
+deploy-aci.yaml
