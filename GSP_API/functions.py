@@ -1,7 +1,7 @@
 import datetime
-from glob import glob
 import os
-import re
+from collections import OrderedDict
+from glob import glob
 
 from pytz import utc
 
@@ -81,38 +81,6 @@ def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder,
     return output_directories
 
 
-def format_name(string):
-    """
-    Formats watershed name for code
-    """
-    if string:
-        formatted_string = string.strip().replace(" ", "_").lower()
-        formatted_string = re.sub(r'[^a-zA-Z0-9_-]', '', formatted_string)
-        while formatted_string.startswith("-") \
-                or formatted_string.startswith("_"):
-            formatted_string = formatted_string[1:]
-    else:
-        formatted_string = ""
-    return formatted_string
-
-
-def format_watershed_title(watershed, subbasin):
-    """
-    Formats title for watershed in navigation
-    """
-    max_length = 30
-    watershed = watershed.strip()
-    subbasin = subbasin.strip()
-    watershed_length = len(watershed)
-    if watershed_length > max_length:
-        return watershed[:max_length-1].strip() + "..."
-    max_length -= watershed_length
-    subbasin_length = len(subbasin)
-    if subbasin_length > max_length:
-        return watershed + " (" + subbasin[:max_length-3].strip() + " ...)"
-    return watershed + " (" + subbasin + ")"
-
-
 def get_units_title(unit_type):
     """
     Get the title for units
@@ -121,3 +89,43 @@ def get_units_title(unit_type):
     if unit_type == 'english':
         units_title = "ft"
     return units_title
+
+
+def reach_to_region(reach_id=None):
+    # Indonesia 1M's
+    # ------australia 2M (currently 200k's)
+    # Japan 3M's
+    # East Asia 4M's
+    # South Asia 5M's
+    # ------middle_east 6M (currently 600k's)
+    # Africa 7M's
+    # Central Asia 8M's
+    # South America 9M's
+    # West Asia 10M's
+    # -------central_america 11M (currently 900k's)
+    # Europe 12M's
+    # North America 13M's
+
+    lookup = OrderedDict([
+        ('south_asia-mainland', 100000),
+        ('error', 200000),
+        ('australia-geoglows', 300000),
+        ('middle_east-geoglows', 700000),
+        ('central_america-geoglows', 1000000),
+        # ('indonesia-geoglows', 2000000),
+        # ('japan-geoglows', 4000000),
+        # ('east_asia-geoglows', 5000000),
+        ('south_asia-geoglows', 6000000),
+        ('africa-geoglows', 8000000),
+        # ('central_asia-geoglows', 9000000),
+        ('south_america-geoglows', 10000000),
+        # ('west_asia-geoglows', 11000000),
+        # ('europe-geoglows', 13000000),
+        # ('north_america-geoglows', 14000000)
+    ])
+    for region, threshold in lookup.items():
+        if reach_id < threshold:
+            if region == 'error':
+                return False
+            return region
+    return False

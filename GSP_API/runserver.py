@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify
-from flask_restful import Api
 import logging
 import sys
 from os import getenv
 
-import api_controller
+from api_controller import (forecast_stats_handler, forecast_ensembles_handler, historic_data_handler,
+                            return_periods_handler, seasonal_average_handler, get_region_handler,
+                            get_available_dates_handler)
+from flask import Flask, request, jsonify
+from flask_restful import Api
 
 blob_mapped_dir = "/mnt/output"
 
@@ -32,25 +34,20 @@ def init_logger():
 def forecast_stats():
     init_logger()
 
-    if (request.args.get('region', '') == ''):
-        logging.error("region is required as input.")
-        return jsonify({"error": "region is required as input."}), 422
-
-    if (request.args.get('reach_id', '') == ''):
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
+                request.args.get('region', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     try:
         # Call the service
-        results = api_controller.forecast_stats_handler(request)
-
-        return results
+        return forecast_stats_handler(request)
 
     except:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API ForecastEnsembles endpoint
@@ -58,46 +55,36 @@ def forecast_stats():
 def forecast_ensembles():
     init_logger()
 
-    if (request.args.get('region', '') == ''):
-        logging.error("region is required as input.")
-        return jsonify({"error": "region is required as input."}), 422
-
-    if (request.args.get('reach_id', '') == ''):
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
+                request.args.get('region', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     try:
         # Call the service
-        results = api_controller.forecast_ensembles_handler(request)
-
-        return results
+        return forecast_ensembles_handler(request)
 
     except:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
         return jsonify({"error": "An unexpected error occured."}), 400
-    
+
 
 # GET, API HistoricSimulation endpoint
 @app.route(api_prefix + '/HistoricSimulation/', methods=['GET'])
 def historic_simulation():
     init_logger()
 
-    if (request.args.get('region', '') == ''):
-        logging.error("region is required as input.")
-        return jsonify({"error": "region is required as input."}), 422
-
-    if (request.args.get('reach_id', '') == ''):
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
+                request.args.get('region', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     try:
         # Call the service
-        results = api_controller.historic_data_handler(request)
-
-        return results
+        return historic_data_handler(request)
 
     except:
         print(sys.exc_info()[0])
@@ -110,61 +97,48 @@ def historic_simulation():
 def return_periods():
     init_logger()
 
-    if (request.args.get('region', '') == ''):
-        logging.error("region is required as input.")
-        return jsonify({"error": "region is required as input."}), 422
-
-    if (request.args.get('reach_id', '') == ''):
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
+                request.args.get('region', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     try:
         # Call the service
-        results = api_controller.return_periods_handler(request)
-
-        return results
+        return return_periods_handler(request)
 
     except:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
         return jsonify({"error": "An unexpected error occured."}), 400
-    
+
 
 # GET, API HistoricSimulation endpoint
 @app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
 def seasonal_average():
     init_logger()
 
-    if (request.args.get('region', '') == ''):
-        logging.error("region is required as input.")
-        return jsonify({"error": "region is required as input."}), 422
-
-    if (request.args.get('reach_id', '') == ''):
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
+                request.args.get('region', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     try:
         # Call the service
-        results = api_controller.seasonal_average_handler(request)
-
-        return results
+        return seasonal_average_handler(request)
 
     except:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
         return jsonify({"error": "An unexpected error occured."}), 400
-    
-    
+
+
 @app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
 def regions():
-    
     try:
         # Call the service
-        results = api_controller.get_region_handler()
-
-        return results
+        return get_region_handler()
 
     except:
         print(sys.exc_info()[0])
@@ -174,16 +148,13 @@ def regions():
 
 @app.route(api_prefix + '/AvailableDates/', methods=['GET'])
 def dates():
-    
-    if (request.args.get('region', '') == ''):
+    if request.args.get('region', '') == '':
         logging.error("region is required as input.")
         return jsonify({"error": "region is required as input."}), 422
-    
+
     try:
         # Call the service
-        results = api_controller.get_available_dates_handler(request)
-
-        return results
+        return get_available_dates_handler(request)
 
     except:
         print(sys.exc_info()[0])
