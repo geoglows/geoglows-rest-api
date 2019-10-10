@@ -61,7 +61,7 @@ COPY ./file_mount.json /app/azcopy/file_mount.json
 
 # Create output directories
 RUN mkdir -p /mnt/output/ecmwf
-COPY ./output/era /mnt/output/era
+RUN mkdir -p /mnt/output/era
 
 COPY ./file_mounter.py /app/azcopy/file_mounter.py
 RUN chmod +x /app/azcopy/file_mounter.py

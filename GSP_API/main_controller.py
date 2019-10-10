@@ -247,7 +247,7 @@ def get_ecmwf_ensemble(request):
     """
     Returns the statistics for the 52 member forecast
     """
-    reach_id = request.args.get('reach_id', False)
+    reach_id = int(request.args.get('reach_id', False))
     region = request.args.get('region', '')
     ensemble_number = request.args.get('ensemble', 'all')
     lat = request.args.get('lat', '')
@@ -360,9 +360,9 @@ def get_ecmwf_ensemble(request):
 
 def get_historic_streamflow_series(request):
     """
-    Retireve Pandas series object based on request for ERA Interim data
+    Retrieve Pandas series object based on request for ERA Interim data
     """
-    reach_id = request.args.get('reach_id', False)
+    reach_id = int(request.args.get('reach_id', False))
     region = request.args.get('region', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
@@ -412,7 +412,7 @@ def get_seasonal_average(request):
     """
     Retrieve Pandas series object based on request for seasonal average
     """
-    reach_id = request.args.get('reach_id', False)
+    reach_id = int(request.args.get('reach_id', False))
     region = request.args.get('region', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
@@ -457,7 +457,7 @@ def get_return_period_dict(request):
     """
     Returns return period data as dictionary for a river ID in a watershed
     """
-    reach_id = request.args.get('reach_id', False)
+    reach_id = int(request.args.get('reach_id', False))
     region = request.args.get('region', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')

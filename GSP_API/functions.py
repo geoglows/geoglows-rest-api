@@ -123,6 +123,7 @@ def reach_to_region(reach_id=None):
         # ('europe-geoglows', 13000000),
         # ('north_america-geoglows', 14000000)
     ])
+
     for region, threshold in lookup.items():
         if reach_id < threshold:
             if region == 'error':
