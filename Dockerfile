@@ -1,31 +1,26 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
 RUN mkdir /var/uwsgi
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y wget tar supervisor bzip2 && \
+    apt-get install -y wget tar supervisor bzip2 curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN apt-get -qq update && apt-get -qq -y install curl bzip2 \ 
-    && curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
+RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && bash /tmp/miniconda.sh -bfp /usr/local \ 
     && rm -rf /tmp/miniconda.sh \ 
     && conda install -y python=3 \ 
-    && conda update conda \ 
-    && apt-get -qq -y remove curl bzip2 \ 
-    && apt-get -qq -y autoremove \ 
-    && apt-get autoclean \ 
-    && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log \ 
+    && conda update conda \
     && conda clean --all --yes
 
 RUN conda create -n gsp_api python=3.7 \
     && echo "conda activate gsp_api" >> ~/.bashrc \
     && conda config --set channel_priority strict \
     && conda config --add channels conda-forge \
-    && conda install -n gsp_api uwsgi flask flask-restful
+    && conda install -n gsp_api uwsgi flask flask-restful flask-cors
 
 RUN apt-get update
 RUN apt-get install apt-transport-https -y

@@ -2,7 +2,7 @@
 
 # variables
 TODAY=$(date +"%Y%m%d")
-DATE_LIMIT=$(date -d "$TODAY - 3 days" +"%Y%m%d")
+DATE_LIMIT=$(date -d "$TODAY - 2 days" +"%Y%m%d")
 
 ACCOUNT=$(grep "accountName" file_mount.json -m 1 | awk -F':' '{print substr($2, 1, length($2)-1)}' | tr -d \")
 OUTPUT_DIRECTORY="/mnt/output/ecmwf"

@@ -8,12 +8,17 @@ from api_controller import (forecast_stats_handler, forecast_ensembles_handler, 
 from flask import Flask, request, jsonify
 from flask_restful import Api
 
+from flask_cors import CORS, cross_origin
+
 blob_mapped_dir = "/mnt/output"
 
 print("Creating Application")
 
 api_prefix = getenv('API_PREFIX')
 app = Flask(__name__)
+
+cors = CORS(app)
+app.config['CORS_HEADERS'] = '*'
 
 api = Api(app)
 print(api_prefix)
@@ -31,6 +36,7 @@ def init_logger():
 
 # GET, API ForecastStats endpoint
 @app.route(api_prefix + '/ForecastStats/', methods=['GET'])
+@cross_origin()
 def forecast_stats():
     init_logger()
 
@@ -52,6 +58,7 @@ def forecast_stats():
 
 # GET, API ForecastEnsembles endpoint
 @app.route(api_prefix + '/ForecastEnsembles/', methods=['GET'])
+@cross_origin()
 def forecast_ensembles():
     init_logger()
 
@@ -73,6 +80,7 @@ def forecast_ensembles():
 
 # GET, API HistoricSimulation endpoint
 @app.route(api_prefix + '/HistoricSimulation/', methods=['GET'])
+@cross_origin()
 def historic_simulation():
     init_logger()
 
@@ -94,6 +102,7 @@ def historic_simulation():
 
 # GET, API HistoricSimulation endpoint
 @app.route(api_prefix + '/ReturnPeriods/', methods=['GET'])
+@cross_origin()
 def return_periods():
     init_logger()
 
@@ -115,6 +124,7 @@ def return_periods():
 
 # GET, API HistoricSimulation endpoint
 @app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
+@cross_origin()
 def seasonal_average():
     init_logger()
 
@@ -135,6 +145,7 @@ def seasonal_average():
 
 
 @app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
+@cross_origin()
 def regions():
     try:
         # Call the service
@@ -147,6 +158,7 @@ def regions():
 
 
 @app.route(api_prefix + '/AvailableDates/', methods=['GET'])
+@cross_origin()
 def dates():
     if request.args.get('region', '') == '':
         logging.error("region is required as input.")
