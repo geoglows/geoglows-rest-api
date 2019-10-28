@@ -31,10 +31,10 @@ with open('/app/azcopy/file_mount.json') as f:
                         'do if [[ -n "$(/app/azcopy/azcopy jobs show ${job} --with-status=Failed | grep Failed)" ]]; ' \
                         'then /app/azcopy/azcopy jobs resume ${job} --source-sas="sv=2018-03-28&ss=f&srt=sco&sp=rl&' \
                         f'se=2024-10-05T07:43:26Z&st=2019-10-04T23:43:26Z&spr=https&sig={file_config[0]["sasSig"]}"; ' \
-                        'else break; fi; done; done < <(/app/azcopy/azcopy jobs list | grep JobId | awk "{print $2}")'
+                        'else break; fi; done; done < <(/app/azcopy/azcopy jobs list | grep JobId | awk \'{print $2}\')'
 
         execute_bash(resume_failed)
 
     except Exception:
-        print("Unexpected error during file mounting:", str(sys.exc_info()[0]))
+        print("Unexpected error during file transferring:", str(sys.exc_info()[0]))
         raise
