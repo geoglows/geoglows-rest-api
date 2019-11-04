@@ -1,0 +1,23 @@
+# https://docs.microsoft.com/en-us/azure/container-instances/container-instances-reference-yaml
+additional_properties: {}
+apiVersion: '2018-10-01'
+name: global-streamflow-prediction
+location: eastus
+properties:
+  containers:
+  - name: global-streamflow-prediction
+    properties:
+      image: ai4egrantee.azurecr.io/global-streamflow-prediction/0.1-predict:latest
+      resources:
+        requests:
+          cpu: 12
+          memoryInGB: 112
+          gpu:
+            count: 2
+            sku: K80
+  osType: Linux
+  restartPolicy: Always
+  imageRegistryCredentials: 
+  - server: <fill in here>
+    username: <fill in here>
+    password: <fill in here>
