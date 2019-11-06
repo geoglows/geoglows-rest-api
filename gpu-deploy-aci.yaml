@@ -8,6 +8,9 @@ properties:
   - name: global-streamflow-prediction
     properties:
       image: ai4egrantee.azurecr.io/global-streamflow-prediction/0.1-predict:latest
+      ports:
+      - protocol: tcp 
+        port: 80
       resources:
         requests:
           cpu: 12
@@ -17,7 +20,17 @@ properties:
             sku: K80
   osType: Linux
   restartPolicy: Always
+  ipAddress:
+    ports:
+      - protocol: tcp
+        port: 80
+    type: Public
+    dnsNameLabel: "global-streamflow-prediction"
   imageRegistryCredentials: 
   - server: <fill in here>
     username: <fill in here>
     password: <fill in here>
+#  diagnostics:
+#    logAnalytics:
+#      workspaceId: <fill in here>
+#      workspaceKey: <fill in here>
