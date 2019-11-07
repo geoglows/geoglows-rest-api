@@ -107,8 +107,6 @@ def reach_to_region(reach_id=None):
     # North America 13M's
 
     lookup = OrderedDict([
-        ('south_asia-mainland', 100000),
-        ('error', 200000),
         ('australia-geoglows', 300000),
         ('middle_east-geoglows', 700000),
         ('central_america-geoglows', 1000000),
@@ -119,7 +117,7 @@ def reach_to_region(reach_id=None):
         ('africa-geoglows', 8000000),
         ('central_asia-geoglows', 9000000),
         ('south_america-geoglows', 10000000),
-        # ('west_asia-geoglows', 11000000),
+        ('west_asia-geoglows', 11000000),
         ('europe-geoglows', 13000000),
         ('north_america-geoglows', 14000000)
     ])
