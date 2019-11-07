@@ -121,7 +121,7 @@ def reach_to_region(reach_id=None):
         ('south_america-geoglows', 10000000),
         # ('west_asia-geoglows', 11000000),
         ('europe-geoglows', 13000000),
-        # ('north_america-geoglows', 14000000)
+        ('north_america-geoglows', 14000000)
     ])
 
     for region, threshold in lookup.items():
