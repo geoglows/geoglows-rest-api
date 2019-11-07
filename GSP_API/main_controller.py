@@ -534,6 +534,10 @@ def get_reach_from_latlon(lat, lon):
 
     # check the lat lon against each of the region csv's that we determined were an option
     for region in regions_to_check:
+        # TEMPORARY until we figure out how to fix the west asia problem, skip it
+        if region == 'west_asia-geoglows':
+            pass
+
         # open the region csv, find the closest reach_id
         df = pd.read_csv(
             f"region_coordinate_files/{region}/comid_lat_lon_z.csv", sep=',', header=0, index_col=0)
