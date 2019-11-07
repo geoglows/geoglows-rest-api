@@ -6,7 +6,8 @@ from flask import jsonify, render_template, make_response
 from functions import get_units_title
 from main_controller import (get_forecast_streamflow_csv, get_ecmwf_forecast_statistics, get_forecast_ensemble_csv,
                              get_ecmwf_ensemble, get_historic_data_csv, get_historic_streamflow_series,
-                             get_seasonal_avg_csv, get_seasonal_average, get_return_period_csv, get_return_period_dict)
+                             get_seasonal_avg_csv, get_seasonal_average, get_return_period_csv, get_return_period_dict,
+                             get_reach_from_latlon)
 
 # GLOBAL
 PATH_TO_HISTORICAL = '/mnt/output/era'
@@ -537,3 +538,12 @@ def get_available_dates_handler(request):
         return jsonify({"available_dates": dates})
     else:
         return jsonify({"message": "No dates available."}), 204
+
+
+def get_reach_id_from_latlon_handler(request):
+    """
+    Controller that returns the reach_id nearest to valid lat/lon coordinates
+    """
+    lat = request.get('lat', '')
+    lon = request.get('lon', '')
+    return jsonify(get_reach_from_latlon(lat, lon))
