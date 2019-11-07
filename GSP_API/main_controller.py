@@ -2,12 +2,14 @@ import os
 from csv import writer as csv_writer
 from glob import glob
 from io import StringIO
+from collections import namedtuple
+import math
 
 import pandas as pd
 import xarray
 from flask import make_response
 from functions import ecmwf_find_most_current_files, M3_TO_FT3, get_units_title, reach_to_region
-from shapely.geometry import Point, MultiPoint
+from shapely.geometry import Point, MultiPoint, box
 from shapely.ops import nearest_points
 
 # GLOBAL
@@ -175,7 +177,7 @@ def get_ecmwf_forecast_statistics(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
-        point = Point(float(lat), float(lon))
+        point = Point(float(lon), float(lat))
         df = pd.read_csv(
             f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
             sep=',',
@@ -260,7 +262,7 @@ def get_ecmwf_ensemble(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
-        point = Point(float(lat), float(lon))
+        point = Point(float(lon), float(lat))
         df = pd.read_csv(
             f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
             sep=',',
@@ -374,7 +376,7 @@ def get_historic_streamflow_series(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
-        point = Point(float(lat), float(lon))
+        point = Point(float(lon), float(lat))
         df = pd.read_csv(
             f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
             sep=',',
@@ -423,7 +425,7 @@ def get_seasonal_average(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
-        point = Point(float(lat), float(lon))
+        point = Point(float(lon), float(lat))
         df = pd.read_csv(
             f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
             sep=',',
@@ -468,7 +470,7 @@ def get_return_period_dict(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '' and region != '':
-        point = Point(float(lat), float(lon))
+        point = Point(float(lon), float(lat))
         df = pd.read_csv(
             f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
             sep=',',
@@ -506,3 +508,47 @@ def get_return_period_dict(request):
         return_period_data["two"] = float(rpd.return_period_2.values)
 
     return return_period_data, region, reach_id, units
+
+
+def get_reach_from_latlon(lat, lon):
+    """
+    uses the bounding boxes of all the regions to determine which comid_lat_lon_z csv(s) to read from
+    """
+    # create a shapely point for the querying
+    point = Point(float(lon), float(lat))
+    regions_to_check = []
+    # store the best matching stream using a named tuple for easy comparisons/management
+    StreamResult = namedtuple('Stream', 'reach_id, region, distance')
+    stream_result = StreamResult(None, None, math.inf)
+
+    # open the bounding boxes csv, figure out which regions the point lies within
+    bb_csv = pd.read_csv('region_coordinate_files/bounding_boxes.csv', index_col='region')
+    for row in bb_csv.iterrows():
+        bbox = box(row[1][0], row[1][1], row[1][2], row[1][3])
+        if point.within(bbox):
+            regions_to_check.append(row[0])
+
+    # if there weren't any regions, return that there was an error
+    if len(regions_to_check) == 0:
+        return {"error": "This point is not within any of the delineation regions supported."}
+
+    # check the lat lon against each of the region csv's that we determined were an option
+    for region in regions_to_check:
+        # open the region csv, find the closest reach_id
+        df = pd.read_csv(
+            f"region_coordinate_files/{region}/comid_lat_lon_z.csv", sep=',', header=0, index_col=0)
+        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
+        multi_pt = MultiPoint(points_df.tolist())
+        nearest_pt = nearest_points(point, multi_pt)
+        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
+
+        # is this a better match than what we have? if so then replace the current selection
+        distance = nearest_pt[0].distance(nearest_pt[1])
+        if distance < stream_result.distance:
+            stream_result = StreamResult(reach_id, region, distance)
+
+    # there was only 1 option, return it
+    if stream_result.distance > 0.11:
+        return {"error": "Nearest river is more than ~10km away."}
+    else:
+        return dict(reach_id=stream_result.reach_id, region=stream_result.region, distance=stream_result.distance)
