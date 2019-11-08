@@ -544,6 +544,6 @@ def get_reach_id_from_latlon_handler(request):
     """
     Controller that returns the reach_id nearest to valid lat/lon coordinates
     """
-    lat = request.get('lat', '')
-    lon = request.get('lon', '')
+    lat = request.args.get('lat', '')
+    lon = request.args.get('lon', '')
     return jsonify(get_reach_from_latlon(lat, lon))
