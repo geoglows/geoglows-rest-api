@@ -522,7 +522,7 @@ def get_reach_from_latlon(lat, lon):
     stream_result = StreamResult(None, None, math.inf)
 
     # open the bounding boxes csv, figure out which regions the point lies within
-    bb_csv = pd.read_csv('region_coordinate_files/bounding_boxes.csv', index_col='region')
+    bb_csv = pd.read_csv('/app/GSP_API/region_coordinate_files/bounding_boxes.csv', index_col='region')
     for row in bb_csv.iterrows():
         bbox = box(row[1][0], row[1][1], row[1][2], row[1][3])
         if point.within(bbox):
@@ -540,7 +540,7 @@ def get_reach_from_latlon(lat, lon):
 
         # open the region csv, find the closest reach_id
         df = pd.read_csv(
-            f"region_coordinate_files/{region}/comid_lat_lon_z.csv", sep=',', header=0, index_col=0)
+            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv", sep=',', header=0, index_col=0)
         points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
         multi_pt = MultiPoint(points_df.tolist())
         nearest_pt = nearest_points(point, multi_pt)
