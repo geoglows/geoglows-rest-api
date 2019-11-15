@@ -1,6 +1,6 @@
 FROM continuumio/miniconda3:latest
 
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH /opt/conda/envs/gsp_api/bin:$PATH API_PREFIX=/api
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/envs/gsp_api/bin:$PATH API_PREFIX=/api
 RUN mkdir /var/uwsgi
 
 RUN apt-get update --fix-missing && \
@@ -16,7 +16,8 @@ RUN conda config --set channel_priority strict && \
     echo "conda activate gsp_api" >> ~/.bashrc
 
 RUN mkdir -p /mnt/output/ecmwf && \
-    mkdir -p /mnt/output/era
+    mkdir -p /mnt/output/era && \
+    mkdir -p /app/azcopy/
 
 # Copy API code
 COPY ./GSP_API /app/GSP_API/
@@ -26,7 +27,7 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 RUN chmod +x /startup.sh
     
 # Copy files
-COPY ./azcopy /app/
+COPY ./azcopy/* /app/azcopy/
 RUN chmod -R +x /app/azcopy/
 
 # Expose the port that is to be used when calling your API
