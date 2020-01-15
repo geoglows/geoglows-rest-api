@@ -1,10 +1,11 @@
 #!/bin/bash
 
 python /app/azcopy/file_mounter.py
-FILE=/mnt/output
+FILE=/mnt/output/init
 if [ -d "$FILE" ]; then
     echo "Output already exists. No need to re create it or any cron jobs"
 else
+	touch /mnt/output/init
 	python /app/azcopy/file_mounter.py
 	service cron start
 	crontab -l > dailyforecastcron
