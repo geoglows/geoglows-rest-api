@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   gsp_api:
@@ -11,3 +11,5 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8081:80
+    volumes:
+      - ./output:/mnt/output/

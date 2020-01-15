@@ -1,5 +1,6 @@
 #!/bin/bash
 
+python /app/azcopy/file_mounter.py
 FILE=/mnt/output
 if [ -d "$FILE" ]; then
     echo "Output already exists. No need to re create it or any cron jobs"
