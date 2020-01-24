@@ -110,7 +110,7 @@ def reach_to_region(reach_id=None):
         ('australia-geoglows', 300000),
         ('middle_east-geoglows', 700000),
         ('central_america-geoglows', 1000000),
-        ('indonesia-geoglows', 2000000),
+        ('islands-geoglows', 2000000),
         ('japan-geoglows', 4000000),
         ('east_asia-geoglows', 5000000),
         ('south_asia-geoglows', 6000000),
