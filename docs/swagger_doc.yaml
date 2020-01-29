@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   title: AI for Earth Streamflow Prediction API
-  description: 'A REST API to access high resolution streamflow forecasts for regions including Africa, the Americas, and South Asia. The forecasts are derived using GloFAS runoff and RAPID.'
+  description: 'A REST API to access high resolution streamflow forecasts for around the planet. The forecasts are derived using GloFAS runoff and RAPID routing.'
   version: 1.0.1
 host: global-streamflow-prediction.eastus.azurecontainer.io
 basePath: /api
@@ -31,17 +31,6 @@ paths:
           description: A given longitude used to find the closest stream reach. Must be used together with `lat` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
           type: number
           format: float
-        - name: region
-          in: query
-          description: The name of the major region of interest. Must be used together with `lat` and `lon`. This parameter is ignored if you provide a valid `reach_id`.
-          type: string
-          enum:
-            - africa-geoglows
-            - australia-geoglows
-            - central_america-geoglows
-            - middle_east-geoglows
-            - south_america-geoglows
-            - south_asia-geoglows
         - name: date
           in: query
           description: The given date for the forecast of interest.
@@ -129,17 +118,6 @@ paths:
           description: A given longitude used to find the closest stream reach. Must be used together with `lat` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
           type: number
           format: float
-        - name: region
-          in: query
-          description: The name of the major region of interest. Must be used together with `lat` and `lon`. This parameter is ignored if you provide a valid `reach_id`.
-          type: string
-          enum:
-            - africa-geoglows
-            - australia-geoglows
-            - central_america-geoglows
-            - middle_east-geoglows
-            - south_america-geoglows
-            - south_asia-geoglows
         - name: date
           in: query
           description: The given date for the forecast of interest.
@@ -235,17 +213,6 @@ paths:
           description: A given longitude used to find the closest stream reach. Must be used together with `lat` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
           type: number
           format: float
-        - name: region
-          in: query
-          description: The name of the major region of interest. Must be used together with `lat` and `lon`. This parameter is ignored if you provide a valid `reach_id`.
-          type: string
-          enum:
-            - africa-geoglows
-            - australia-geoglows
-            - central_america-geoglows
-            - middle_east-geoglows
-            - south_america-geoglows
-            - south_asia-geoglows
         - name: return_format
           in: query
           description: The format of the time series response.
@@ -311,17 +278,6 @@ paths:
           description: A given longitude used to find the closest stream reach. Must be used together with `lat` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
           type: number
           format: float
-        - name: region
-          in: query
-          description: The name of the major region of interest. Must be used together with `lat` and `lon`. This parameter is ignored if you provide a valid `reach_id`.
-          type: string
-          enum:
-            - africa-geoglows
-            - australia-geoglows
-            - central_america-geoglows
-            - middle_east-geoglows
-            - south_america-geoglows
-            - south_asia-geoglows
         - name: return_format
           in: query
           description: The format of the time series response.
@@ -385,17 +341,6 @@ paths:
           description: A given longitude used to find the closest stream reach. Must be used together with `lat` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
           type: number
           format: float
-        - name: region
-          in: query
-          description: The name of the major region of interest. Must be used together with `lat` and `lon`. This parameter is ignored if you provide a valid `reach_id`.
-          type: string
-          enum:
-            - africa-geoglows
-            - australia-geoglows
-            - central_america-geoglows
-            - middle_east-geoglows
-            - south_america-geoglows
-            - south_asia-geoglows
         - name: return_format
           in: query
           description: The format of the time series response.
