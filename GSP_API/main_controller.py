@@ -165,7 +165,6 @@ def get_ecmwf_forecast_statistics(request):
     Returns the statistics for the 52 member forecast
     """
     reach_id = int(request.args.get('reach_id', False))
-    region = request.args.get('region', '')
     stat_type = request.args.get('stat', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
@@ -176,23 +175,10 @@ def get_ecmwf_forecast_statistics(request):
         region = reach_to_region(reach_id)
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '' and region != '':
-        point = Point(float(lon), float(lat))
-        df = pd.read_csv(
-            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
-            sep=',',
-            header=0,
-            index_col=0
-        )
-
-        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
-        multi_pt = MultiPoint(points_df.tolist())
-
-        nearest_pt = nearest_points(point, multi_pt)
-        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
-
-        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
-            return {"error": "Nearest river is more than ~10km away."}
+    elif lat != '' and lon != '':
+        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -250,7 +236,6 @@ def get_ecmwf_ensemble(request):
     Returns the statistics for the 52 member forecast
     """
     reach_id = int(request.args.get('reach_id', False))
-    region = request.args.get('region', '')
     ensemble_number = request.args.get('ensemble', 'all')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
@@ -261,23 +246,10 @@ def get_ecmwf_ensemble(request):
         region = reach_to_region(reach_id)
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '' and region != '':
-        point = Point(float(lon), float(lat))
-        df = pd.read_csv(
-            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
-            sep=',',
-            header=0,
-            index_col=0
-        )
-
-        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
-        multi_pt = MultiPoint(points_df.tolist())
-
-        nearest_pt = nearest_points(point, multi_pt)
-        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
-
-        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
-            return {"error": "Nearest river is more than ~10km away."}
+    elif lat != '' and lon != '':
+        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -365,7 +337,6 @@ def get_historic_streamflow_series(request):
     Retrieve Pandas series object based on request for ERA Interim data
     """
     reach_id = int(request.args.get('reach_id', False))
-    region = request.args.get('region', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
     daily = request.args.get('daily', '')
@@ -375,23 +346,10 @@ def get_historic_streamflow_series(request):
         region = reach_to_region(reach_id)
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '' and region != '':
-        point = Point(float(lon), float(lat))
-        df = pd.read_csv(
-            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
-            sep=',',
-            header=0,
-            index_col=0
-        )
-
-        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
-        multi_pt = MultiPoint(points_df.tolist())
-
-        nearest_pt = nearest_points(point, multi_pt)
-        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
-
-        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
-            return {"error": "Nearest river is more than ~10km away."}
+    elif lat != '' and lon != '':
+        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -415,7 +373,6 @@ def get_seasonal_average(request):
     Retrieve Pandas series object based on request for seasonal average
     """
     reach_id = int(request.args.get('reach_id', False))
-    region = request.args.get('region', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
     units = request.args.get('units', 'metric')
@@ -424,23 +381,10 @@ def get_seasonal_average(request):
         region = reach_to_region(reach_id)
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '' and region != '':
-        point = Point(float(lon), float(lat))
-        df = pd.read_csv(
-            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
-            sep=',',
-            header=0,
-            index_col=0
-        )
-
-        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
-        multi_pt = MultiPoint(points_df.tolist())
-
-        nearest_pt = nearest_points(point, multi_pt)
-        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
-
-        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
-            return {"error": "Nearest river is more than ~10km away."}
+    elif lat != '' and lon != '':
+        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -460,7 +404,6 @@ def get_return_period_dict(request):
     Returns return period data as dictionary for a river ID in a watershed
     """
     reach_id = int(request.args.get('reach_id', False))
-    region = request.args.get('region', '')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
     units = request.args.get('units', 'metric')
@@ -469,23 +412,10 @@ def get_return_period_dict(request):
         region = reach_to_region(reach_id)
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '' and region != '':
-        point = Point(float(lon), float(lat))
-        df = pd.read_csv(
-            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv",
-            sep=',',
-            header=0,
-            index_col=0
-        )
-
-        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
-        multi_pt = MultiPoint(points_df.tolist())
-
-        nearest_pt = nearest_points(point, multi_pt)
-        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
-
-        if nearest_pt[0].distance(nearest_pt[1]) > 0.11:
-            return {"error": "Nearest river is more than ~10km away."}
+    elif lat != '' and lon != '':
+        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -511,9 +441,6 @@ def get_return_period_dict(request):
 
 
 def get_reach_from_latlon(lat, lon):
-    """
-    uses the bounding boxes of all the regions to determine which comid_lat_lon_z csv(s) to read from
-    """
     # create a shapely point for the querying
     point = Point(float(lon), float(lat))
     regions_to_check = []
@@ -530,7 +457,10 @@ def get_reach_from_latlon(lat, lon):
 
     # if there weren't any regions, return that there was an error
     if len(regions_to_check) == 0:
-        return {"error": "This point is not within any of the delineation regions supported."}
+        return {"error": "This point is not within any of the supported delineation regions."}
+
+    # switch the point because the csv's are lat/lon, backwards from what shapely expects (lon then lat)
+    point = Point(float(lat), float(lon))
 
     # check the lat lon against each of the region csv's that we determined were an option
     for region in regions_to_check:
@@ -551,8 +481,10 @@ def get_reach_from_latlon(lat, lon):
         if distance < stream_result.distance:
             stream_result = StreamResult(reach_id, region, distance)
 
-    # there was only 1 option, return it
+    # if the stream was too far away, set the error message
     if stream_result.distance > 0.11:
-        return {"error": "Nearest river is more than ~10km away."}
+        distance_error = {"error": "Nearest river is more than ~10km away."}
     else:
-        return dict(reach_id=stream_result.reach_id, region=stream_result.region, distance=stream_result.distance)
+        distance_error = False
+
+    return stream_result.reach_id, distance_error
