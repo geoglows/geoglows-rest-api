@@ -1,0 +1,14 @@
+[
+    {
+        "accountName":"globalfloodsdiag360",
+        "sasSig":"o8u%2BoutumDqKQL4A1I2Yft9T0S5M%2FJRBlMPuptfVehc%3D",
+        "volumeName":"output",
+        "mappedDirectory":"/mnt/output/ecmwf"
+    },
+    {
+        "accountName":"globalfloodsdiag360",
+        "sasSig":"o8u%2BoutumDqKQL4A1I2Yft9T0S5M%2FJRBlMPuptfVehc%3D",
+        "volumeName":"era-interim",
+        "mappedDirectory":"/mnt/output/era"
+    }
+]
