@@ -46,7 +46,7 @@ def get_forecast_streamflow_csv(request):
 
     except:
         return {"error": "An unexpected error occurred with the CSV response."}, 422
-    
+
 
 def get_forecast_ensemble_csv(request):
     """

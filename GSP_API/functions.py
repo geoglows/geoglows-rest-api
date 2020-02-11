@@ -34,10 +34,8 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
                 basin_files = sorted(glob(os.path.join(path_to_files, "*.nc")),
                                      reverse=True)
                 if len(basin_files) > 0:
-                    seconds = int(int(time)/100) * 60 * 60
-                    forecast_datetime_utc = \
-                        (date + datetime.timedelta(0, seconds))\
-                        .replace(tzinfo=utc)
+                    seconds = int(int(time) / 100) * 60 * 60
+                    forecast_datetime_utc = (date + datetime.timedelta(0, seconds)).replace(tzinfo=utc)
                     return basin_files, forecast_datetime_utc
         except Exception as ex:
             print(ex)
@@ -47,27 +45,23 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
     return None, None
 
 
-def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder,
-                                         file_extension):
+def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder, file_extension):
     """
     Retreives a list of valid forecast forlders for the watershed
     """
-    directories = \
-        sorted(
-            [d for d in os.listdir(main_watershed_forecast_folder)
-             if os.path.isdir(
-                os.path.join(main_watershed_forecast_folder, d))],
-            reverse=True
-        )
+    directories = sorted(
+        [d for d in os.listdir(main_watershed_forecast_folder)
+         if os.path.isdir(os.path.join(main_watershed_forecast_folder, d))],
+        reverse=True
+    )
     output_directories = []
     directory_count = 0
     for directory in directories:
         date = datetime.datetime.strptime(directory.split(".")[0], "%Y%m%d")
-        hour = int(directory.split(".")[-1])/100
+        hour = int(directory.split(".")[-1]) / 100
         path_to_files = os.path.join(main_watershed_forecast_folder, directory)
         if os.path.exists(path_to_files):
-            basin_files = glob(os.path.join(path_to_files,
-                                            "*{0}".format(file_extension)))
+            basin_files = glob(os.path.join(path_to_files, "*{0}".format(file_extension)))
             # only add directory to the list if valid
             if len(basin_files) > 0:
                 output_directories.append({
