@@ -1,12 +1,13 @@
 swagger: '2.0'
 info:
-  title: AI for Earth Streamflow Prediction API
+  title: GEOGloWS ECMWF Streamflow API
   description: 'A REST API to access high resolution streamflow forecasts for around the planet. The forecasts are derived using GloFAS runoff and RAPID routing.'
-  version: 1.0.1
-host: global-streamflow-prediction.eastus.azurecontainer.io
+  version: 1.1.0
+host: gsf-api-vm.eastus.cloudapp.azure.com
 basePath: /api
 schemes:
   - http
+  - https
 paths:
   /ForecastStats:
     get:
@@ -387,6 +388,22 @@ paths:
           description: Missing a required parameter.
           examples:
             error: region is required as input.
+  /AvailableData/:
+    get:
+      description: |-
+        This method returns the regions available and their corresponding available dates. See also AvailableRegions and AvailableDates
+      summary: Available forecasted streamflow data
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: the response body will contain json containing a key/value pair for each region and its corresponding list of available dates.
+          examples:
+            application/json:
+              Total_Regions:
+                1
+              south_america-geoglows:
+                ['20191015', '20191016', '20191017']
   /AvailableRegions:
     get:
       description: |-
