@@ -509,6 +509,30 @@ def return_periods_handler(request):
         return jsonify({"error": "Invalid return_format."}), 422
 
 
+def available_data_handler():
+    available_data = {}
+
+    # get a list of the available regions
+    regions = os.listdir(PATH_TO_FORECASTS)
+    if len(regions) == 0:
+        return jsonify({'error': 'no regions were found'})
+    available_data['Total_Regions'] = len(regions)
+
+    # for each region
+    for region in regions:
+        region_path = os.path.join(PATH_TO_FORECASTS, region)
+        # get a list of the data in its folder
+        dates = [d for d in os.listdir(region_path) if d.split('.')[0].isdigit()]
+        # if there is are dates in that folder
+        if len(dates) != 0:
+            # add it to the list of available data
+            available_data[region] = dates
+        else:
+            available_data[region] = 'No Dates Discovered'
+
+    return jsonify(available_data)
+
+
 def get_region_handler():
     """
     Controller that returns available regions.

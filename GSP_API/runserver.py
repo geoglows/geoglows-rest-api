@@ -2,9 +2,9 @@ import logging
 import sys
 from os import getenv
 
-from api_controller import (forecast_stats_handler, forecast_ensembles_handler, historic_data_handler,
-                            return_periods_handler, seasonal_average_handler, get_region_handler,
-                            get_available_dates_handler, get_reach_id_from_latlon_handler)
+from api_handlers import (forecast_stats_handler, forecast_ensembles_handler, historic_data_handler,
+                          return_periods_handler, seasonal_average_handler, get_region_handler,
+                          get_available_dates_handler, get_reach_id_from_latlon_handler, available_data_handler)
 from flask import Flask, request, jsonify
 from flask_restful import Api
 
@@ -50,7 +50,7 @@ def forecast_stats():
         # Call the service
         return forecast_stats_handler(request)
 
-    except:
+    except Exception:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
         return jsonify({"error": "An unexpected error occurred."}), 400
@@ -137,6 +137,21 @@ def seasonal_average():
     try:
         # Call the service
         return seasonal_average_handler(request)
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."}), 400
+
+
+@app.route(api_prefix + '/AvailableData/', methods=['GET'])
+@cross_origin()
+def available_data():
+    init_logger()
+
+    try:
+        # Call the service
+        return available_data_handler()
 
     except:
         print(sys.exc_info()[0])
