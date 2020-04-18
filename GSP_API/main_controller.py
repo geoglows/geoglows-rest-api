@@ -464,10 +464,6 @@ def get_reach_from_latlon(lat, lon):
 
     # check the lat lon against each of the region csv's that we determined were an option
     for region in regions_to_check:
-        # TEMPORARY until we figure out how to fix the west asia problem, skip it
-        if region == 'west_asia-geoglows':
-            pass
-
         # open the region csv, find the closest reach_id
         df = pd.read_csv(
             f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv", sep=',', header=0, index_col=0)
@@ -488,3 +484,59 @@ def get_reach_from_latlon(lat, lon):
         distance_error = False
 
     return stream_result.reach_id, distance_error
+
+
+def get_region_from_latlon(lat, lon):
+    # create a shapely point for the querying
+    point = Point(float(lon), float(lat))
+
+    # open the bounding boxes csv, figure out which regions the point lies within
+    bb_csv = pd.read_csv('/app/GSP_API/region_coordinate_files/bounding_boxes.csv', index_col='region')
+    for row in bb_csv.iterrows():
+        bbox = box(row[1][0], row[1][1], row[1][2], row[1][3])
+        if point.within(bbox):
+            return row[0]
+
+    raise ValueError('given lat and lon not found within the bounding boxes of a forecast delineation')
+
+
+def get_forecast_warnings(region=False, lat=False, lon=False, forecast_date='most_recent'):
+    if not region:
+        if lat and lon:
+            region = get_region_from_latlon(lat, lon)
+        else:
+            raise ValueError('Provide a valid latitude and longitude')
+
+    # find/check current output datasets
+    path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, region)
+    if forecast_date == 'most_recent':
+        date_folders = sorted(
+            [d for d in os.listdir(path_to_region_forecasts)
+             if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
+            reverse=True
+        )
+        folder = os.path.join(path_to_region_forecasts, date_folders[0])
+    else:
+        folder = os.path.join(path_to_region_forecasts, forecast_date)
+        if not os.path.isdir(folder):
+            raise RuntimeError('Forecast date {0} was not found'.format(forecast_date))
+
+    # locate the forecast warning csv
+    summary_file = os.path.join(folder, 'forecast_return_period_summary.csv')
+    if not os.path.isfile(summary_file):
+        raise FileNotFoundError('Forecast warnings csv not found in the forecast folder')
+    warning_summary = pd.read_csv(os.path.join(folder, 'forecast_return_period_summary.csv'))
+
+    # prepare to write response for CSV
+    si = StringIO()
+    writer = csv_writer(si)
+
+    writer.writerow(warning_summary.columns.values.tolist())
+
+    for row_data in warning_summary.itertuples():
+        writer.writerow(row_data)
+    response = make_response(si.getvalue())
+    response.headers['content-type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=ForecastWarnings-{0}'.format(region)
+
+    return response

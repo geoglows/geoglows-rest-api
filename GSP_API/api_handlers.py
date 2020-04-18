@@ -334,6 +334,17 @@ def forecast_ensembles_handler(request):
         return jsonify({"error": "Invalid return_format."}), 422
 
 
+def forecast_warning_handler(request):
+    try:
+        csv_response = get_forecast_streamflow_csv(request)
+        if isinstance(csv_response, dict) and "error" in csv_response.keys():
+            return jsonify(csv_response)
+        else:
+            return csv_response
+    except:
+        return jsonify({"error": "Invalid return_format."}), 422
+
+
 def historic_data_handler(request):
     """
     Controller for retrieving simulated historic data
@@ -545,7 +556,7 @@ def get_region_handler():
         return jsonify({"message": "No regions found."}), 204
 
 
-def get_available_dates_handler(request):
+def get_dates_handler(request):
     """
     Controller that returns available dates.
     """
