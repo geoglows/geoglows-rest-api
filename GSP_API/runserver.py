@@ -11,8 +11,7 @@ from api_handlers import (forecast_stats_handler,
                           available_data_handler,
                           get_region_handler,
                           get_dates_handler,
-                          get_reach_id_from_latlon_handler,
-                          get_region_from_latlon_handler)
+                          get_reach_id_from_latlon_handler,)
 from flask import Flask, request, jsonify
 from flask_restful import Api
 
@@ -30,6 +29,12 @@ app.config['CORS_HEADERS'] = '*'
 
 api = Api(app)
 print(api_prefix)
+
+# GLOBAL
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+PATH_TO_FORECASTS = '/mnt/output/forecasts'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
 # create logger function

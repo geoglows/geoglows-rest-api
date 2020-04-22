@@ -4,14 +4,24 @@ from datetime import datetime as dt
 
 from flask import jsonify, render_template, make_response
 from functions import get_units_title
-from main_controller import (get_forecast_streamflow_csv, get_ecmwf_forecast_statistics, get_forecast_ensemble_csv,
-                             get_ecmwf_ensemble, get_historic_data_csv, get_historic_streamflow_series,
-                             get_seasonal_avg_csv, get_seasonal_average, get_return_period_csv, get_return_period_dict,
+from main_controller import (get_forecast_streamflow_csv,
+                             get_ecmwf_forecast_statistics,
+                             get_forecast_warnings,
+                             get_forecast_ensemble_csv,
+                             get_ecmwf_ensemble,
+                             get_historic_data_csv,
+                             get_historic_streamflow_series,
+                             get_seasonal_avg_csv,
+                             get_seasonal_average,
+                             get_return_period_csv,
+                             get_return_period_dict,
                              get_reach_from_latlon)
 
 # GLOBAL
-PATH_TO_HISTORICAL = '/mnt/output/era'
-PATH_TO_FORECASTS = '/mnt/output/ecmwf'
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+PATH_TO_FORECASTS = '/mnt/output/forecasts'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
 # create logger function
@@ -334,15 +344,23 @@ def forecast_ensembles_handler(request):
         return jsonify({"error": "Invalid return_format."}), 422
 
 
-def forecast_warning_handler(request):
+def forecast_warnings_handler(request):
+    region = request.args.get('region', False)
+    lat = request.args.get('lat', False)
+    lon = request.args.get('lon', False)
+    forecast_date = request.args.get('forecast_date', 'most_recent')
+
     try:
-        csv_response = get_forecast_streamflow_csv(request)
+        print('made it to the handler')
+        csv_response = get_forecast_warnings(region, lat, lon, forecast_date)
         if isinstance(csv_response, dict) and "error" in csv_response.keys():
             return jsonify(csv_response)
         else:
+            print('in the else')
             return csv_response
-    except:
-        return jsonify({"error": "Invalid return_format."}), 422
+    except Exception as e:
+        print(e)
+        return jsonify({"error": e}), 422
 
 
 def historic_data_handler(request):
