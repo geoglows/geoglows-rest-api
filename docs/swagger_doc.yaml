@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: GEOGloWS ECMWF Streamflow API
   description: 'A REST API to access high resolution streamflow forecasts for around the planet. The forecasts are derived using GloFAS runoff and RAPID routing.'
-  version: 1.1.0
+  version: '1.2'
 host: gsf-api-vm.eastus.cloudapp.azure.com
 basePath: /api
 schemes:
@@ -191,6 +191,44 @@ paths:
           description: Missing a required parameter.
           examples:
             error: region is required as input.
+  /ForecastWarnings:
+    get:
+      description: |-
+        This method returns a csv created to summarize the potential return period level flow events coming to the reaches in a specified region. The CSV contains a column for the reach_id, lat of the reach, lon of the reach, maximum forecasted flow in the next 15 day forecast, and a column for each of the return periods (2, 10, 20, 25, 50, 100) which will contain the date when the forecast is first expected to pass that threshold.
+      summary: Returns potential warnings for the forecast
+      parameters:
+       - name: region
+         in: query
+         description: the name of one of the regions that the streamflow forecasts are generated for. You can find this with the AvailableRegions method.
+         type: string
+       - name: lat
+         in: query
+         description: A latitude which, in conjunction with a longitude, will be used to determine the region if the name of the region is not known. Must be used with the lon parameter. If a region parameter is provided, this is ignored.
+         type: number
+         format: float
+       - name: lon
+         in: query
+         description: A longtidue which, in conjunction with a latitude, will be used to determine the region if the name of the region is not known. Must be used with the lat parameter. If a region parameter is provided, this is ignored.
+         type: number
+         format: float
+       - name: forecast_date
+         in: query
+         description: If multiple forecast dates are available, provide the date in the format YYYYMMDD.HH of the forecast you would like to query. Use the AvailableDates method if you need to find out which dates are available. Defaults to the most recent available data.
+         type: string
+         format: string
+      produces:
+        - text/csv
+      responses:
+        '200':
+          description: The response body will contain a csv table with the information previous mentioned.
+        '400':
+          description: Bad request. Check request and paramaters.
+          examples:
+            error: An unexpected error occured.
+        '422':
+          description: Missing a required parameter.
+          examples:
+            error: region or both lat and lon are required as input.
   /HistoricSimulation:
     get:
       description: |-
