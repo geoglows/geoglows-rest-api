@@ -3,6 +3,7 @@ import os
 from datetime import datetime as dt
 import xarray
 import pandas as pd
+import numpy as np
 
 from flask import jsonify, render_template, make_response
 from functions import get_units_title, reach_to_region
