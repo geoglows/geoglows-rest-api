@@ -5,6 +5,7 @@ from os import getenv
 from api_handlers import (forecast_stats_handler,
                           forecast_ensembles_handler,
                           forecast_warnings_handler,
+                          forecast_records_handler,
                           historic_data_handler,
                           return_periods_handler,
                           seasonal_average_handler,
@@ -76,8 +77,7 @@ def forecast_ensembles():
     init_logger()
 
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -106,6 +106,28 @@ def forecast_warnings():
     try:
         # collect the
         return forecast_warnings_handler(request)
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."}), 400
+
+
+# GET, API ForecastEnsembles endpoint
+@app.route(api_prefix + '/ForecastRecords/', methods=['GET'])
+@cross_origin()
+def forecast_records():
+    init_logger()
+
+    # ensure you have enough information provided to provide a response
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
+
+    try:
+        # collect the
+        return forecast_records_handler(request)
 
     except:
         print(sys.exc_info()[0])

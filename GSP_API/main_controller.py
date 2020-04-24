@@ -178,7 +178,7 @@ def get_ecmwf_forecast_statistics(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -249,7 +249,7 @@ def get_ecmwf_ensemble(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -349,7 +349,7 @@ def get_historic_streamflow_series(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -384,7 +384,7 @@ def get_seasonal_average(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -415,7 +415,7 @@ def get_return_period_dict(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -485,7 +485,7 @@ def get_reach_from_latlon(lat, lon):
     else:
         distance_error = False
 
-    return stream_result.reach_id, distance_error
+    return stream_result.reach_id, stream_result.region, distance_error
 
 
 def get_region_from_latlon(lat, lon):
