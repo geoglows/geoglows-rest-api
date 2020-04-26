@@ -13,8 +13,10 @@ from shapely.geometry import Point, MultiPoint, box
 from shapely.ops import nearest_points
 
 # GLOBAL
-PATH_TO_HISTORICAL = '/mnt/output/era'
-PATH_TO_FORECASTS = '/mnt/output/ecmwf'
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+PATH_TO_FORECASTS = '/mnt/output/forecasts'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
 def get_forecast_streamflow_csv(request):
@@ -176,7 +178,7 @@ def get_ecmwf_forecast_statistics(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -247,7 +249,7 @@ def get_ecmwf_ensemble(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
@@ -347,13 +349,13 @@ def get_historic_streamflow_series(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
-    historical_data_file = glob(os.path.join(PATH_TO_HISTORICAL, region, 'Qout*.nc'))[0]
+    historical_data_file = glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
 
     # write data to csv stream
     with xarray.open_dataset(historical_data_file) as qout_nc:
@@ -382,13 +384,13 @@ def get_seasonal_average(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
-    seasonal_data_file = glob(os.path.join(PATH_TO_HISTORICAL, region, 'seasonal_average*.nc'))[0]
+    seasonal_data_file = glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'seasonal_average*.nc'))[0]
 
     # write data to csv stream
     with xarray.open_dataset(seasonal_data_file) as qout_nc:
@@ -413,13 +415,13 @@ def get_return_period_dict(request):
         if not region:
             return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat != '' and lon != '':
-        reach_id, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
         if dist_error:
             return dist_error
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
-    return_period_file = glob(os.path.join(PATH_TO_HISTORICAL, region, 'return_period*.nc'))[0]
+    return_period_file = glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'return_period*.nc'))[0]
 
     # get information from dataset
     return_period_data = {}
@@ -483,7 +485,7 @@ def get_reach_from_latlon(lat, lon):
     else:
         distance_error = False
 
-    return stream_result.reach_id, distance_error
+    return stream_result.reach_id, stream_result.region, distance_error
 
 
 def get_region_from_latlon(lat, lon):
@@ -500,12 +502,12 @@ def get_region_from_latlon(lat, lon):
     raise ValueError('given lat and lon not found within the bounding boxes of a forecast delineation')
 
 
-def get_forecast_warnings(region=False, lat=False, lon=False, forecast_date='most_recent'):
+def get_forecast_warnings(region, lat, lon, forecast_date='most_recent'):
     if not region:
         if lat and lon:
             region = get_region_from_latlon(lat, lon)
         else:
-            raise ValueError('Provide a valid latitude and longitude')
+            return {"error": 'Provide a valid latitude and longitude'}
 
     # find/check current output datasets
     path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, region)
@@ -519,24 +521,25 @@ def get_forecast_warnings(region=False, lat=False, lon=False, forecast_date='mos
     else:
         folder = os.path.join(path_to_region_forecasts, forecast_date)
         if not os.path.isdir(folder):
-            raise RuntimeError('Forecast date {0} was not found'.format(forecast_date))
+            return {"error": 'Forecast date {0} was not found'.format(forecast_date)}
 
     # locate the forecast warning csv
-    summary_file = os.path.join(folder, 'forecast_return_period_summary.csv')
+    summary_file = os.path.join(folder, 'forecasted_return_periods_summary.csv')
+
     if not os.path.isfile(summary_file):
-        raise FileNotFoundError('Forecast warnings csv not found in the forecast folder')
-    warning_summary = pd.read_csv(os.path.join(folder, 'forecast_return_period_summary.csv'))
+        return {"error": "summary file was not found for this region and forecast date"}
+    warning_summary = pd.read_csv(summary_file)
 
     # prepare to write response for CSV
     si = StringIO()
     writer = csv_writer(si)
 
-    writer.writerow(warning_summary.columns.values.tolist())
+    writer.writerow([''] + warning_summary.columns.values.tolist())
 
     for row_data in warning_summary.itertuples():
         writer.writerow(row_data)
     response = make_response(si.getvalue())
     response.headers['content-type'] = 'text/csv'
-    response.headers['Content-Disposition'] = 'attachment; filename=ForecastWarnings-{0}'.format(region)
+    response.headers['Content-Disposition'] = 'attachment; filename=ForecastWarnings-{0}.csv'.format(region)
 
     return response

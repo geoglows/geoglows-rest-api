@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: GEOGloWS ECMWF Streamflow API
   description: 'A REST API to access high resolution streamflow forecasts for around the planet. The forecasts are derived using GloFAS runoff and RAPID routing.'
-  version: 1.1.0
+  version: '1.3'
 host: gsf-api-vm.eastus.cloudapp.azure.com
 basePath: /api
 schemes:
@@ -183,6 +183,92 @@ paths:
                 short: m3/s
             application/xml: '<?xml version="1.0" encoding="utf-8" ?> <wml2:Collection xmlns:wml2="http://www.opengis.net/waterml/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:om="http://www.opengis.net/om/2.0" xmlns:sa="http://www.opengis.net/sampling/2.0" xmlns:swe="http://www.opengis.net/swe/2.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sf="http://www.opengis.net/sampling/2.0" xmlns:sams="http://www.opengis.net/samplingSpatial/2.0" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmd="http://www.isotc211.org/2005/gmd" xsi:schemaLocation="http://www.opengis.net/waterml/2.0 http://schemas.opengis.net/waterml/2.0/waterml2.xsd" gml:id="GSP_south_asia-mainland_forecastensembles_69494_2019-01-30T00:00:00Z"> <gml:description> A timeseries collection with the requested forecast ensembles extracted from the ECMWF runoff forecast previously downscaled with RAPID. </gml:description> <wml2:metadata> <wml2:DocumentMetadata gml:id="doc_d"> <wml2:generationDate>2019-06-17T19:08:25.846989Z</wml2:generationDate> <wml2:version xlink:href="http://www.opengis.net/waterml/2.0"/> </wml2:DocumentMetadata> </wml2:metadata> <wml2:observationMember> <om:OM_Observation gml:id="forecast_ensembles_69494"> <om:metadata> <wml2:ObservationMetadata> <gmd:contact> <gmd:CI_ResponsibleParty> <gmd:organisationName> <gco:CharacterString>Aquaveo, LLC.</gco:CharacterString> </gmd:organisationName> <gmd:role> <gmd:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="owner"/> </gmd:role> </gmd:CI_ResponsibleParty> </gmd:contact> <gmd:dateStamp> <gco:DateTime>2019-01-30T00:00:00Z</gco:DateTime> </gmd:dateStamp> <gmd:identificationInfo/> </wml2:ObservationMetadata> </om:metadata> <om:phenomenonTime> <gml:TimePeriod gml:id="forecast_period"> <gml:beginPosition>2019-01-30T00:00:00Z</gml:beginPosition> <gml:endPosition>2019-02-14T00:00:00Z</gml:endPosition> </gml:TimePeriod> </om:phenomenonTime> <om:resultTime> <gml:TimeInstant gml:id="forecast_available"> <gml:timePosition>2019-01-30T00:00:00Z</gml:timePosition> </gml:TimeInstant> </om:resultTime> <om:procedure xlink:href="ECMWF-RAPID" xlink:title="ECMWF-RAPID" xlink:arcrole="http://www.opengis.net/def/waterml/2.0/processType/Simulation"/> <om:observedProperty xlink:title="Streamflow"/> <om:featureOfInterest xlink:title="south_asia-mainland"/> <om:result> <wml2:MeasurementTimeseries gml:id="ensemble_01"> <wml2:metadata> <wml2:MeasurementTimeseriesMetadata> <wml2:temporalExtent> <gml:TimePeriod gml:id="ensemble_01_period"> <gml:beginPosition>2019-01-30T00:00:00Z</gml:beginPosition> <gml:endPosition>2019-02-14T00:00:00Z</gml:endPosition> </gml:TimePeriod> </wml2:temporalExtent> </wml2:MeasurementTimeseriesMetadata> </wml2:metadata> <wml2:defaultPointMetadata> <wml2:DefaultTVPMeasurementMetadata> <wml2:uom xlink:title="Cubic Meters per Second"/> <wml2:uom code="m3/s"/> <wml2:interpolationType xlink:href="http://www.opengis.net/def/waterml/2.0/interpolationType/Continuous" xlink:title="Continuous"/> </wml2:DefaultTVPMeasurementMetadata> </wml2:defaultPointMetadata> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2019-01-30T00:00:00Z</wml2:time> <wml2:value>213.29168701171875</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2019-02-14T00:00:00Z</wml2:time> <wml2:value>323.43060302734375</wml2:value> </wml2:MeasurementTVP> </wml2:point> </wml2:MeasurementTimeseries> <wml2:MeasurementTimeseries gml:id="ensemble_05"> <wml2:metadata> <wml2:MeasurementTimeseriesMetadata> <wml2:temporalExtent> <gml:TimePeriod gml:id="ensemble_05_period"> <gml:beginPosition>2019-01-30T00:00:00Z</gml:beginPosition> <gml:endPosition>2019-02-14T00:00:00Z</gml:endPosition> </gml:TimePeriod> </wml2:temporalExtent> </wml2:MeasurementTimeseriesMetadata> </wml2:metadata> <wml2:defaultPointMetadata> <wml2:DefaultTVPMeasurementMetadata> <wml2:uom xlink:title="Cubic Meters per Second"/> <wml2:uom code="m3/s"/> <wml2:interpolationType xlink:href="http://www.opengis.net/def/waterml/2.0/interpolationType/Continuous" xlink:title="Continuous"/> </wml2:DefaultTVPMeasurementMetadata> </wml2:defaultPointMetadata> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2019-01-30T00:00:00Z</wml2:time> <wml2:value>213.29168701171875</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2019-02-14T00:00:00Z</wml2:time> <wml2:value>316.87237548828125</wml2:value> </wml2:MeasurementTVP> </wml2:point> </wml2:MeasurementTimeseries> <wml2:MeasurementTimeseries gml:id="ensemble_09"> <wml2:metadata> <wml2:MeasurementTimeseriesMetadata> <wml2:temporalExtent> <gml:TimePeriod gml:id="ensemble_09_period"> <gml:beginPosition>2019-01-30T00:00:00Z</gml:beginPosition> <gml:endPosition>2019-02-14T00:00:00Z</gml:endPosition> </gml:TimePeriod> </wml2:temporalExtent> </wml2:MeasurementTimeseriesMetadata> </wml2:metadata> <wml2:defaultPointMetadata> <wml2:DefaultTVPMeasurementMetadata> <wml2:uom xlink:title="Cubic Meters per Second"/> <wml2:uom code="m3/s"/> <wml2:interpolationType xlink:href="http://www.opengis.net/def/waterml/2.0/interpolationType/Continuous" xlink:title="Continuous"/> </wml2:DefaultTVPMeasurementMetadata> </wml2:defaultPointMetadata> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2019-01-30T00:00:00Z</wml2:time> <wml2:value>213.29168701171875</wml2:value> </wml2:MeasurementTVP> </wml2:point> <wml2:point> <wml2:MeasurementTVP> <wml2:time>2019-02-14T00:00:00Z</wml2:time> <wml2:value>327.3080749511719</wml2:value> </wml2:MeasurementTVP> </wml2:point> </wml2:MeasurementTimeseries> </om:result> </om:OM_Observation> </wml2:observationMember> </wml2:Collection>'
             text/csv: 'datetime,ensemble_01 (m3/s),ensemble_05 (m3/s),ensemble_09 (m3/s) 2019-01-30 00:00:00,213.29168701171875,213.29168701171875,213.29168701171875 2019-01-30 03:00:00,215.32891845703125,215.3298797607422,215.333740234375 2019-01-30 06:00:00,219.7271270751953,219.7324981689453,219.7404327392578 2019-01-30 09:00:00,224.0840301513672,224.1027069091797,224.0642547607422 2019-01-30 12:00:00,228.4619598388672,228.4906005859375,228.3660430908203 2019-02-14 00:00:00,323.43060302734375,316.87237548828125,327.3080749511719'
+        '400':
+          description: Bad request. Check request and paramaters.
+          examples:
+            error: An unexpected error occured.
+        '422':
+          description: Missing a required parameter.
+          examples:
+            error: region is required as input.
+  /ForecastWarnings:
+    get:
+      description: |-
+        This method returns a csv created to summarize the potential return period level flow events coming to the reaches in a specified region. The CSV contains a column for the reach_id, lat of the reach, lon of the reach, maximum forecasted flow in the next 15 day forecast, and a column for each of the return periods (2, 10, 20, 25, 50, 100) which will contain the date when the forecast is first expected to pass that threshold.
+      summary: Returns potential warnings for the forecast
+      parameters:
+       - name: region
+         in: query
+         description: the name of one of the regions that the streamflow forecasts are generated for. You can find this with the AvailableRegions method.
+         type: string
+       - name: lat
+         in: query
+         description: A latitude which, in conjunction with a longitude, will be used to determine the region if the name of the region is not known. Must be used with the lon parameter. If a region parameter is provided, this is ignored.
+         type: number
+         format: float
+       - name: lon
+         in: query
+         description: A longtidue which, in conjunction with a latitude, will be used to determine the region if the name of the region is not known. Must be used with the lat parameter. If a region parameter is provided, this is ignored.
+         type: number
+         format: float
+       - name: forecast_date
+         in: query
+         description: If multiple forecast dates are available, provide the date in the format YYYYMMDD.HH of the forecast you would like to query. Use the AvailableDates method if you need to find out which dates are available. Defaults to the most recent available data.
+         type: string
+         format: string
+      produces:
+        - text/csv
+      responses:
+        '200':
+          description: The response body will contain a csv table with the information previous mentioned.
+        '400':
+          description: Bad request. Check request and paramaters.
+          examples:
+            error: An unexpected error occured.
+        '422':
+          description: Missing a required parameter.
+          examples:
+            error: region or both lat and lon are required as input.
+  /ForecastRecords:
+    get:
+      description: |-
+        This retrieves the rolling record of the mean of the forecasted streamflow during the first 24 hours of each day's forecast. That is, each day day after the
+        streamflow forecasts are computed, the average of first 8 of the 3-hour timesteps are recorded to a csv. This retrives that rolling record
+      summary: Return rolling record of average flows
+      parameters:
+        - name: reach_id
+          in: query
+          description: The unique identifier for the stream reach of interest. Also referred to as common identifier (COMID). Requires previous knowledge of the value. This parameter is incompatible with `lat`, `lon`. and `region` (see lat, lon, region parameters).
+          required: true
+          type: number
+          format: integer
+        - name: lat
+          in: query
+          description: A given latitude used to find the closest stream reach. Must be used together with `lon` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
+          type: number
+          format: float
+        - name: lon
+          in: query
+          description: A given longitude used to find the closest stream reach. Must be used together with `lat` and `region`. The spatial query uses the center point of the stream reach to determine proximity. This parameter gets superceded by`reach_id`. A lat/lon spatial query will take longer than providing the reach_id. It is recommended that the reach_id be used instead once it is known.
+          type: number
+          format: float
+        - name: start_date
+          in: query
+          description: A date in YYYYMMDD format when you would like to start retrieving data (if available). Defaults to Jan 1 of the current year.
+          default: most_recent
+          type: string
+          pattern: YYYYMMDD
+        - name: end_date
+          in: query
+          description: A date in YYYYMMDD format when you would like to stop retrieving data (if available). Defaults to Dec 31 of the current year.
+          default: most_recent
+          type: string
+          pattern: YYYYMMDD
+      produces:
+        - text/csv
+      responses:
+        '200':
+          description: The response body will contain a time series for the specified stream reach
         '400':
           description: Bad request. Check request and paramaters.
           examples:

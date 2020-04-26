@@ -5,14 +5,14 @@ from os import getenv
 from api_handlers import (forecast_stats_handler,
                           forecast_ensembles_handler,
                           forecast_warnings_handler,
+                          forecast_records_handler,
                           historic_data_handler,
                           return_periods_handler,
                           seasonal_average_handler,
                           available_data_handler,
                           get_region_handler,
                           get_dates_handler,
-                          get_reach_id_from_latlon_handler,
-                          get_region_from_latlon_handler)
+                          get_reach_id_from_latlon_handler,)
 from flask import Flask, request, jsonify
 from flask_restful import Api
 
@@ -30,6 +30,12 @@ app.config['CORS_HEADERS'] = '*'
 
 api = Api(app)
 print(api_prefix)
+
+# GLOBAL
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+PATH_TO_FORECASTS = '/mnt/output/forecasts'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
 # create logger function
@@ -71,8 +77,7 @@ def forecast_ensembles():
     init_logger()
 
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -101,6 +106,28 @@ def forecast_warnings():
     try:
         # collect the
         return forecast_warnings_handler(request)
+
+    except:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occured."}), 400
+
+
+# GET, API ForecastEnsembles endpoint
+@app.route(api_prefix + '/ForecastRecords/', methods=['GET'])
+@cross_origin()
+def forecast_records():
+    init_logger()
+
+    # ensure you have enough information provided to provide a response
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
+
+    try:
+        # collect the
+        return forecast_records_handler(request)
 
     except:
         print(sys.exc_info()[0])

@@ -1,17 +1,30 @@
 import logging
 import os
 from datetime import datetime as dt
+import xarray
+import pandas as pd
+import numpy as np
 
 from flask import jsonify, render_template, make_response
-from functions import get_units_title
-from main_controller import (get_forecast_streamflow_csv, get_ecmwf_forecast_statistics, get_forecast_ensemble_csv,
-                             get_ecmwf_ensemble, get_historic_data_csv, get_historic_streamflow_series,
-                             get_seasonal_avg_csv, get_seasonal_average, get_return_period_csv, get_return_period_dict,
+from functions import get_units_title, reach_to_region
+from main_controller import (get_forecast_streamflow_csv,
+                             get_ecmwf_forecast_statistics,
+                             get_forecast_warnings,
+                             get_forecast_ensemble_csv,
+                             get_ecmwf_ensemble,
+                             get_historic_data_csv,
+                             get_historic_streamflow_series,
+                             get_seasonal_avg_csv,
+                             get_seasonal_average,
+                             get_return_period_csv,
+                             get_return_period_dict,
                              get_reach_from_latlon)
 
 # GLOBAL
-PATH_TO_HISTORICAL = '/mnt/output/era'
-PATH_TO_FORECASTS = '/mnt/output/ecmwf'
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+PATH_TO_FORECASTS = '/mnt/output/forecasts'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
 # create logger function
@@ -334,15 +347,72 @@ def forecast_ensembles_handler(request):
         return jsonify({"error": "Invalid return_format."}), 422
 
 
-def forecast_warning_handler(request):
+def forecast_warnings_handler(request):
+    region = request.args.get('region', False)
+    lat = request.args.get('lat', False)
+    lon = request.args.get('lon', False)
+    forecast_date = request.args.get('forecast_date', 'most_recent')
+
     try:
-        csv_response = get_forecast_streamflow_csv(request)
+        print('made it to the handler')
+        csv_response = get_forecast_warnings(region, lat, lon, forecast_date)
         if isinstance(csv_response, dict) and "error" in csv_response.keys():
             return jsonify(csv_response)
         else:
+            print('in the else')
             return csv_response
+    except Exception as e:
+        print(e)
+        return jsonify({"error": e}), 422
+
+
+def forecast_records_handler(request):
+    reach_id = int(request.args.get('reach_id', False))
+    lat = request.args.get('lat', '')
+    lon = request.args.get('lon', '')
+    return_format = request.args.get('return_format', 'csv')
+
+    year = dt.utcnow().year
+    start_date = request.args.get('start_date', dt(year=year, month=1, day=1).strftime('%Y%m%d'))
+    end_date = request.args.get('end_date', dt(year=year, month=12, day=31).strftime('%Y%m%d'))
+
+    # determine if you have a reach_id and region from the inputs
+    if reach_id:
+        region = reach_to_region(reach_id)
+        if not region:
+            return jsonify({"error": "Unable to determine a region paired with this reach_id"}, 422)
+    elif lat != '' and lon != '':
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return jsonify(dist_error)
+    else:
+        return jsonify({"error": "Invalid reach_id or lat/lon/region combination"}, 422)
+
+    # validate the times
+    try:
+        start_date = dt.strptime(start_date, '%Y%m%d')
+        end_date = dt.strptime(end_date, '%Y%m%d')
     except:
-        return jsonify({"error": "Invalid return_format."}), 422
+        return jsonify({'Error': 'Unrecognized start_date or end_date. Use YYYYMMDD format'})
+
+    # open and read the forecast record netcdf
+    record_path = os.path.join(PATH_TO_FORECAST_RECORDS, region, 'forecast_record-{0}-{1}.nc'.format(year, region))
+    forecast_record = xarray.open_dataset(record_path)
+    times = pd.to_datetime(pd.Series(forecast_record['time'].data, name='datetime'), unit='s', origin='unix')
+    record_flows = forecast_record.sel(rivid=reach_id)['Qout']
+    forecast_record.close()
+
+    # create a dataframe and filter by date
+    flow_series_df = times.to_frame().join(pd.Series(record_flows, name='streamflow (m^3/s)'))
+    flow_series_df = flow_series_df[flow_series_df['datetime'].between(start_date, end_date)]
+    flow_series_df[flow_series_df['streamflow (m^3/s)'] > 1000000000] = np.nan
+    flow_series_df.dropna(inplace=True)
+
+    # create the http response
+    response = make_response(flow_series_df.to_csv(index=False))
+    response.headers['content-type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=forecast_record_{0}.csv'.format(reach_id)
+    return response
 
 
 def historic_data_handler(request):

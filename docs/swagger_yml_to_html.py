@@ -9,8 +9,9 @@
 #
 """
 Usage:
-    python swagger-yaml-to-html.py < /path/to/api.yaml > doc.html
+    python swagger_yml_to_html.py < swagger_doc.yaml > index.html
 """
+# pip install PyYAML
 import yaml, json, sys
 
 TEMPLATE = """

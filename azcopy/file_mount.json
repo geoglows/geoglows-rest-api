@@ -3,12 +3,24 @@
         "accountName":"globalfloodsdiag360",
         "sasSig":"o8u%2BoutumDqKQL4A1I2Yft9T0S5M%2FJRBlMPuptfVehc%3D",
         "volumeName":"output",
-        "mappedDirectory":"/mnt/output/ecmwf"
+        "mappedDirectory":"/mnt/output/forecasts"
     },
     {
         "accountName":"globalfloodsdiag360",
         "sasSig":"o8u%2BoutumDqKQL4A1I2Yft9T0S5M%2FJRBlMPuptfVehc%3D",
         "volumeName":"era-interim",
-        "mappedDirectory":"/mnt/output/era"
+        "mappedDirectory":"/mnt/output/era-interim"
+    },
+    {
+        "accountName":"globalfloodsdiag360",
+        "sasSig":"o8u%2BoutumDqKQL4A1I2Yft9T0S5M%2FJRBlMPuptfVehc%3D",
+        "volumeName":"era-5-rapid",
+        "mappedDirectory":"/mnt/output/era-5"
+    },
+    {
+        "accountName":"globalfloodsdiag360",
+        "sasSig":"o8u%2BoutumDqKQL4A1I2Yft9T0S5M%2FJRBlMPuptfVehc%3D",
+        "volumeName":"forecast-records",
+        "mappedDirectory":"/mnt/output/forecast-records"
     }
 ]

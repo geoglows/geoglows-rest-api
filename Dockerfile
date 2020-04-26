@@ -15,8 +15,10 @@ RUN conda config --set channel_priority strict && \
     conda env create -f environment.yml && \
     echo "conda activate gsp_api" >> ~/.bashrc
 
-RUN mkdir -p /mnt/output/ecmwf && \
-    mkdir -p /mnt/output/era && \
+RUN mkdir -p /mnt/output/forecasts && \
+    mkdir -p /mnt/output/era-interim && \
+    mkdir -p /mnt/output/era-5 && \
+    mkdir -p /mnt/output/forecast-records && \
     mkdir -p /app/azcopy/
 
 # Copy API code
