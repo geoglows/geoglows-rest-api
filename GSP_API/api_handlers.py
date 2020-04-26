@@ -12,8 +12,6 @@ from main_controller import (get_forecast_streamflow_csv,
                              get_forecast_warnings,
                              get_forecast_ensemble_csv,
                              get_ecmwf_ensemble,
-                             get_historic_data_csv,
-                             get_historic_streamflow_series,
                              get_seasonal_avg_csv,
                              get_seasonal_average,
                              get_return_period_csv,
@@ -21,20 +19,11 @@ from main_controller import (get_forecast_streamflow_csv,
                              get_reach_from_latlon)
 
 # GLOBAL
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
 PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-
-
-# create logger function
-def init_logger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler('/app/api.log', 'a')
-    formatter = logging.Formatter('%(asctime)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+M3_TO_FT3 = 35.3146667
 
 
 def forecast_stats_handler(request):
@@ -42,8 +31,6 @@ def forecast_stats_handler(request):
     Controller that will retrieve forecast statistic data
     in different formats
     """
-    init_logger()
-
     return_format = request.args.get('return_format', 'csv')
 
     if return_format in ('csv', ''):
@@ -189,8 +176,6 @@ def forecast_ensembles_handler(request):
     Controller that will retrieve forecast ensemble data
     in different formats
     """
-    init_logger()
-
     return_format = request.args.get('return_format', 'csv')
 
     if return_format in ('csv', ''):
@@ -354,15 +339,12 @@ def forecast_warnings_handler(request):
     forecast_date = request.args.get('forecast_date', 'most_recent')
 
     try:
-        print('made it to the handler')
         csv_response = get_forecast_warnings(region, lat, lon, forecast_date)
         if isinstance(csv_response, dict) and "error" in csv_response.keys():
             return jsonify(csv_response)
         else:
-            print('in the else')
             return csv_response
     except Exception as e:
-        print(e)
         return jsonify({"error": e}), 422
 
 
@@ -414,61 +396,87 @@ def forecast_records_handler(request):
     response.headers['Content-Disposition'] = 'attachment; filename=forecast_record_{0}.csv'.format(reach_id)
     return response
 
-
 def historic_data_handler(request):
     """
     Controller for retrieving simulated historic data
     """
+    reach_id = int(request.args.get('reach_id', False))
+    lat = request.args.get('lat', False)
+    lon = request.args.get('lon', False)
+    units = request.args.get('units', 'metric')
+    forcing = request.args.get('forcing', 'era_interim')
     return_format = request.args.get('return_format', 'csv')
 
-    if return_format in ('csv', ''):
-        csv_response = get_historic_data_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
+    if reach_id:
+        region = reach_to_region(reach_id)
+        if not region:
+            return {"error": "Unable to determine a region paired with this reach_id"}
+    elif lat and lon:
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            return dist_error
+    else:
+        return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
-    elif return_format in ('waterml', 'json'):
+    if forcing == 'era_interim':
+        forcing_fullname = 'ERA Interim'
+        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
+    elif forcing == 'era_5':
+        forcing_fullname = 'ERA 5'
+        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'DailyAggregated_Qout*.nc'))[0]
+    else:
+        return {"error": "Invalid forcing specified, choose era_interim or era_5"}, 422
 
-        qout_data, region, reach_id, units = get_historic_streamflow_series(request)
+    # write data to csv stream
+    qout_nc = xarray.open_dataset(historical_data_file)
+    qout_data = qout_nc.sel(rivid=reach_id).to_dataframe()
+    del qout_data['rivid']
+    qout_data.index.rename('datetime', inplace=True)
+    qout_data.rename(columns={'Qout': 'streamflow ({0}^3/s)'.format('m')}, inplace=True)
 
-        units_title = get_units_title(units)
-        units_title_long = 'meters'
-        if units_title == 'ft':
-            units_title_long = 'feet'
+    units_title, units_title_long = get_units_title(units)
+    if units == 'english':
+        qout_data['Qout'] *= M3_TO_FT3
 
-        context = {
-            'region': region,
-            'comid': reach_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
+    if return_format == 'csv':
+        response = make_response(qout_data.to_csv())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = \
+            'attachment; filename=historic_streamflow_{0}_{1}.csv'.format(forcing, reach_id)
+
+    json_output = {
+        'region': region,
+        'simulation_forcing': forcing,
+        'forcing_fullname': forcing_fullname,
+        'comid': reach_id,
+        'gendate': dt.utcnow().isoformat() + 'Z',
+        'units': {
+            'name': 'Streamflow',
+            'short': '{}3/s'.format(units_title),
+            'long': 'Cubic {} per Second'.format(units_title_long)
         }
+    }
 
-        startdate = qout_data.index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
-        enddate = qout_data.index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
-        time_series = []
-        for date, value in qout_data.items():
-            time_series.append({
-                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                'val': value
-            })
+    startdate = qout_data.index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
+    enddate = qout_data.index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
+    time_series = []
+    for date, value in qout_data.items():
+        time_series.append({
+            'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'val': value
+        })
 
-        context['startdate'] = startdate
-        context['enddate'] = enddate
-        context['time_series'] = time_series
+    json_output['startdate'] = startdate
+    json_output['enddate'] = enddate
+    json_output['time_series'] = time_series
 
-        if return_format == "waterml":
-            xml_response = make_response(render_template('historic_simulation.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
+    if return_format == "json":
+        return jsonify(json_output)
 
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
+    if return_format == "waterml":
+        xml_response = make_response(render_template('historic_simulation.xml', **json_output))
+        xml_response.headers.set('Content-Type', 'application/xml')
+        return xml_response
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422
@@ -589,8 +597,7 @@ def return_periods_handler(request):
     else:
         return jsonify({"error": "Invalid return_format."}), 422
 
-
-def available_data_handler():
+def get_available_data_handler():
     available_data = {}
 
     # get a list of the available regions

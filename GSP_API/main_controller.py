@@ -81,33 +81,6 @@ def get_forecast_ensemble_csv(request):
         return {"error": "An unexpected error occurred with the CSV response."}, 422
 
 
-def get_historic_data_csv(request):
-    """""
-    Returns ERA Interim data as csv
-    """""
-
-    try:
-        qout_data, region, reach_id, units = get_historic_streamflow_series(request)
-
-        si = StringIO()
-        writer = csv_writer(si)
-
-        writer.writerow(['datetime', 'streamflow ({}3/s)'.format(get_units_title(units))])
-
-        for row_data in qout_data.items():
-            writer.writerow(row_data)
-
-        # prepare to write response
-        response = make_response(si.getvalue())
-        response.headers['content-type'] = 'text/csv'
-        response.headers['Content-Disposition'] = \
-            'attachment; filename=historic_streamflow_{0}_{1}.csv'.format(region, reach_id)
-
-        return response
-    except:
-        return {"error": "An unexpected error occurred with the CSV response."}, 422
-
-
 def get_seasonal_avg_csv(request):
     """""
     Returns seasonal data as csv
@@ -332,42 +305,6 @@ def get_ecmwf_ensemble(request):
         return_dict[key] = return_dict[key].to_dataframe().Qout
 
     return return_dict, region, reach_id, units
-
-
-def get_historic_streamflow_series(request):
-    """
-    Retrieve Pandas series object based on request for ERA Interim data
-    """
-    reach_id = int(request.args.get('reach_id', False))
-    lat = request.args.get('lat', '')
-    lon = request.args.get('lon', '')
-    daily = request.args.get('daily', '')
-    units = request.args.get('units', 'metric')
-
-    if reach_id:
-        region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '':
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
-    else:
-        return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
-
-    historical_data_file = glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
-
-    # write data to csv stream
-    with xarray.open_dataset(historical_data_file) as qout_nc:
-        qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe().Qout
-        if daily.lower() == 'true':
-            # calculate daily values
-            qout_data = qout_data.resample('D').mean()
-
-        if units == 'english':
-            # convert from m3/s to ft3/s
-            qout_data *= M3_TO_FT3
-    return qout_data, region, reach_id, units
 
 
 def get_seasonal_average(request):

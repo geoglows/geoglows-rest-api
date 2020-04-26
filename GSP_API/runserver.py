@@ -113,7 +113,7 @@ def forecast_warnings():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
-# GET, API ForecastEnsembles endpoint
+# GET, API ForecastRecords endpoint
 @app.route(api_prefix + '/ForecastRecords/', methods=['GET'])
 @cross_origin()
 def forecast_records():
@@ -157,7 +157,7 @@ def historic_simulation():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
-# GET, API HistoricSimulation endpoint
+# GET, API ReturnPeriods endpoint
 @app.route(api_prefix + '/ReturnPeriods/', methods=['GET'])
 @cross_origin()
 def return_periods():
@@ -179,7 +179,7 @@ def return_periods():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
-# GET, API HistoricSimulation endpoint
+# GET, API SeasonalAverage endpoint
 @app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
 @cross_origin()
 def seasonal_average():
@@ -201,6 +201,7 @@ def seasonal_average():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
+# GET, API AvailableData endpoint
 @app.route(api_prefix + '/AvailableData/', methods=['GET'])
 @cross_origin()
 def available_data():
@@ -208,7 +209,7 @@ def available_data():
 
     try:
         # Call the service
-        return available_data_handler()
+        return get_available_data_handler()
 
     except:
         print(sys.exc_info()[0])
@@ -216,6 +217,7 @@ def available_data():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
+# GET, API AvailableRegions endpoint
 @app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
 @cross_origin()
 def regions():
@@ -229,6 +231,7 @@ def regions():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
+# GET, API AvailableDates endpoint
 @app.route(api_prefix + '/AvailableDates/', methods=['GET'])
 @cross_origin()
 def dates():
@@ -246,6 +249,7 @@ def dates():
         return jsonify({"error": "An unexpected error occured."}), 400
 
 
+# GET, API GetReachID endpoint
 @app.route(api_prefix + '/GetReachID/', methods=['GET'])
 @cross_origin()
 def determine_reach_id():
