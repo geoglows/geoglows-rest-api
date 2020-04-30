@@ -9,7 +9,7 @@ from api_handlers import (forecast_stats_handler,
                           historic_data_handler,
                           return_periods_handler,
                           seasonal_average_handler,
-                          available_data_handler,
+                          get_available_data_handler,
                           get_region_handler,
                           get_dates_handler,
                           get_reach_id_from_latlon_handler,)

@@ -13,3 +13,4 @@ services:
       - 8090:80
     volumes:
       - ./output:/mnt/output/
+      - ./GSP_API:/app/GSP_API
