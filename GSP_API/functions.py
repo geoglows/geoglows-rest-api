@@ -75,7 +75,6 @@ def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder, file_ex
     return output_directories
 
 
-# todo update other functions to accept this output
 def get_units_title(unit_type):
     """
     Get the title for units
