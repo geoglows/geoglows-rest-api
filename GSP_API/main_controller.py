@@ -1,9 +1,8 @@
-import os
-from csv import writer as csv_writer
-from glob import glob
-from io import StringIO
-from collections import namedtuple
 import math
+import os
+from collections import namedtuple
+from csv import writer as csv_writer
+from io import StringIO
 
 import pandas as pd
 import xarray
@@ -341,15 +340,7 @@ def get_forecast_warnings(region, lat, lon, forecast_date='most_recent'):
         return {"error": "summary file was not found for this region and forecast date"}
     warning_summary = pd.read_csv(summary_file)
 
-    # prepare to write response for CSV
-    si = StringIO()
-    writer = csv_writer(si)
-
-    writer.writerow([''] + warning_summary.columns.values.tolist())
-
-    for row_data in warning_summary.itertuples():
-        writer.writerow(row_data)
-    response = make_response(si.getvalue())
+    response = make_response(warning_summary.to_csv(index=False))
     response.headers['content-type'] = 'text/csv'
     response.headers['Content-Disposition'] = 'attachment; filename=ForecastWarnings-{0}.csv'.format(region)
 
