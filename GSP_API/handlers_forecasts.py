@@ -154,10 +154,8 @@ def forecast_stats_handler(request):
         context['time_series'] = stat_ts_dict
 
         if return_format == "waterml":
-            xml_response = \
-                make_response(render_template('forecast_stats.xml', **context))
+            xml_response = make_response(render_template('forecast_stats.xml', **context))
             xml_response.headers.set('Content-Type', 'application/xml')
-
             return xml_response
 
         if return_format == "json":
