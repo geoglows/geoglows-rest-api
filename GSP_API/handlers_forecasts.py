@@ -1,10 +1,10 @@
 import logging
 import os
 from datetime import datetime as dt
-import xarray
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
+import xarray
 from flask import jsonify, render_template, make_response
 from functions import get_units_title, reach_to_region
 from main_controller import (get_forecast_streamflow_csv,
@@ -12,29 +12,14 @@ from main_controller import (get_forecast_streamflow_csv,
                              get_forecast_warnings,
                              get_forecast_ensemble_csv,
                              get_ecmwf_ensemble,
-                             get_historic_data_csv,
-                             get_historic_streamflow_series,
-                             get_seasonal_avg_csv,
-                             get_seasonal_average,
-                             get_return_period_csv,
-                             get_return_period_dict,
                              get_reach_from_latlon)
 
 # GLOBAL
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
 PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-
-
-# create logger function
-def init_logger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler('/app/api.log', 'a')
-    formatter = logging.Formatter('%(asctime)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
+M3_TO_FT3 = 35.3146667
 
 
 def forecast_stats_handler(request):
@@ -42,8 +27,6 @@ def forecast_stats_handler(request):
     Controller that will retrieve forecast statistic data
     in different formats
     """
-    init_logger()
-
     return_format = request.args.get('return_format', 'csv')
 
     if return_format in ('csv', ''):
@@ -171,10 +154,8 @@ def forecast_stats_handler(request):
         context['time_series'] = stat_ts_dict
 
         if return_format == "waterml":
-            xml_response = \
-                make_response(render_template('forecast_stats.xml', **context))
+            xml_response = make_response(render_template('forecast_stats.xml', **context))
             xml_response.headers.set('Content-Type', 'application/xml')
-
             return xml_response
 
         if return_format == "json":
@@ -189,8 +170,6 @@ def forecast_ensembles_handler(request):
     Controller that will retrieve forecast ensemble data
     in different formats
     """
-    init_logger()
-
     return_format = request.args.get('return_format', 'csv')
 
     if return_format in ('csv', ''):
@@ -354,15 +333,12 @@ def forecast_warnings_handler(request):
     forecast_date = request.args.get('forecast_date', 'most_recent')
 
     try:
-        print('made it to the handler')
         csv_response = get_forecast_warnings(region, lat, lon, forecast_date)
         if isinstance(csv_response, dict) and "error" in csv_response.keys():
             return jsonify(csv_response)
         else:
-            print('in the else')
             return csv_response
     except Exception as e:
-        print(e)
         return jsonify({"error": e}), 422
 
 
@@ -415,218 +391,7 @@ def forecast_records_handler(request):
     return response
 
 
-def historic_data_handler(request):
-    """
-    Controller for retrieving simulated historic data
-    """
-    return_format = request.args.get('return_format', 'csv')
-
-    if return_format in ('csv', ''):
-        csv_response = get_historic_data_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
-
-    elif return_format in ('waterml', 'json'):
-
-        qout_data, region, reach_id, units = get_historic_streamflow_series(request)
-
-        units_title = get_units_title(units)
-        units_title_long = 'meters'
-        if units_title == 'ft':
-            units_title_long = 'feet'
-
-        context = {
-            'region': region,
-            'comid': reach_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
-        }
-
-        startdate = qout_data.index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
-        enddate = qout_data.index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
-        time_series = []
-        for date, value in qout_data.items():
-            time_series.append({
-                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                'val': value
-            })
-
-        context['startdate'] = startdate
-        context['enddate'] = enddate
-        context['time_series'] = time_series
-
-        if return_format == "waterml":
-            xml_response = make_response(render_template('historic_simulation.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
-
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
-
-    else:
-        return jsonify({"error": "Invalid return_format."}), 422
-
-
-def seasonal_average_handler(request):
-    """
-    Controller for retrieving seasonal averages
-    """
-    return_format = request.args.get('return_format', 'csv')
-
-    if return_format == 'csv':
-        csv_response = get_seasonal_avg_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
-
-    elif return_format == 'waterml' or return_format == 'json':
-
-        qout_data, region, reach_id, units = get_seasonal_average(request)
-
-        units_title = get_units_title(units)
-        units_title_long = 'meters'
-        if units_title == 'ft':
-            units_title_long = 'feet'
-
-        context = {
-            'region': region,
-            'comid': reach_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
-        }
-
-        time_series = []
-        for day, value in qout_data.items():
-            time_series.append({
-                'day': day,
-                'val': value
-            })
-
-        context['time_series'] = time_series
-
-        if return_format == "waterml":
-            xml_response = \
-                make_response(render_template('seasonal_averages.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
-
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
-
-    else:
-        return jsonify({"error": "Invalid return_format."}), 422
-
-
-def return_periods_handler(request):
-    """
-    Controller that will show the historic data in WaterML 1.1 format
-    """
-    return_format = request.args.get('return_format', 'csv')
-
-    if return_format in ('csv', ''):
-        csv_response = get_return_period_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
-
-    elif return_format in ('waterml', 'json'):
-
-        return_period_data, region, reach_id, units = get_return_period_dict(request)
-
-        units_title = get_units_title(units)
-        units_title_long = 'meters'
-        if units_title == 'ft':
-            units_title_long = 'feet'
-
-        context = {
-            'region': region,
-            'comid': reach_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
-        }
-
-        startdate = '1980-01-01T00:00:00Z'
-        enddate = '2014-12-31T00:00:00Z'
-        time_series = []
-        for period, value in return_period_data.items():
-            time_series.append({
-                'period': period,
-                'val': value
-            })
-
-        context['startdate'] = startdate
-        context['enddate'] = enddate
-        context['time_series'] = time_series
-
-        if return_format == "waterml":
-            xml_response = \
-                make_response(render_template('return_periods.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
-
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
-
-    else:
-        return jsonify({"error": "Invalid return_format."}), 422
-
-
-def available_data_handler():
-    available_data = {}
-
-    # get a list of the available regions
-    regions = os.listdir(PATH_TO_FORECASTS)
-    if len(regions) == 0:
-        return jsonify({'error': 'no regions were found'})
-    available_data['Total_Regions'] = len(regions)
-
-    # for each region
-    for region in regions:
-        region_path = os.path.join(PATH_TO_FORECASTS, region)
-        # get a list of the data in its folder
-        dates = [d for d in os.listdir(region_path) if d.split('.')[0].isdigit()]
-        # if there is are dates in that folder
-        if len(dates) != 0:
-            # add it to the list of available data
-            available_data[region] = dates
-        else:
-            available_data[region] = 'No Dates Discovered'
-
-    return jsonify(available_data)
-
-
-def get_region_handler():
-    """
-    Controller that returns available regions.
-    """
-    regions = os.listdir(PATH_TO_FORECASTS)
-
-    if len(regions) > 0:
-        return jsonify({"available_regions": regions})
-    else:
-        return jsonify({"message": "No regions found."}), 204
-
-
-def get_dates_handler(request):
+def available_dates_handler(request):
     """
     Controller that returns available dates.
     """
@@ -643,12 +408,3 @@ def get_dates_handler(request):
         return jsonify({"available_dates": dates})
     else:
         return jsonify({"message": "No dates available."}), 204
-
-
-def get_reach_id_from_latlon_handler(request):
-    """
-    Controller that returns the reach_id nearest to valid lat/lon coordinates
-    """
-    lat = request.args.get('lat', '')
-    lon = request.args.get('lon', '')
-    return jsonify(get_reach_from_latlon(lat, lon))

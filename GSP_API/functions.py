@@ -79,10 +79,10 @@ def get_units_title(unit_type):
     """
     Get the title for units
     """
-    units_title = "m"
-    if unit_type == 'english':
-        units_title = "ft"
-    return units_title
+    if unit_type == 'metric':
+        return 'm', 'meters'
+    elif unit_type == 'english':
+        return 'ft', 'feet'
 
 
 def reach_to_region(reach_id=None):

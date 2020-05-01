@@ -8,7 +8,7 @@ RUN apt-get update --fix-missing && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./environment.yml ./startup.sh ./
+COPY environment.yml ./startup.sh ./
 
 RUN conda config --set channel_priority strict && \
     conda config --add channels conda-forge && \
@@ -22,14 +22,14 @@ RUN mkdir -p /mnt/output/forecasts && \
     mkdir -p /app/azcopy/
 
 # Copy API code
-COPY ./GSP_API /app/GSP_API/
-COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
+COPY tmp/GSP_API /app/GSP_API/
+COPY supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
     
 # Copy files
-COPY ./azcopy/* /app/azcopy/
+COPY azcopy /app/azcopy/
 RUN chmod -R +x /app/azcopy/
 
 # Expose the port that is to be used when calling your API
