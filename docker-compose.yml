@@ -7,9 +7,10 @@ services:
       - SYS_ADMIN
       - DAC_READ_SEARCH
     build:
-      context: .
+      context: ""
       dockerfile: Dockerfile
     ports:
       - 8090:80
     volumes:
       - ./output:/mnt/output/
+      - ./GSP_API:/app/GSP_API
