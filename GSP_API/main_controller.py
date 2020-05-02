@@ -62,7 +62,7 @@ def get_forecast_ensemble_csv(request):
         writer = csv_writer(si)
 
         forecast_df = pd.DataFrame(forecast_statistics)
-        column_names = (forecast_df.columns.values + [' ({}3/s)'.format(get_units_title(units)[0])]).tolist()
+        column_names = (forecast_df.columns.values + [' ({}^3/s)'.format(get_units_title(units)[0])]).tolist()
 
         writer.writerow(['datetime'] + column_names)
 
