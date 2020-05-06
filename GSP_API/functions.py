@@ -26,8 +26,7 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
         directories = [forecast_folder]
     for directory in directories:
         try:
-            date = datetime.datetime.strptime(directory.split(".")[0],
-                                              "%Y%m%d")
+            date = datetime.datetime.strptime(directory.split(".")[0], "%Y%m%d")
             time = directory.split(".")[-1]
             path_to_files = os.path.join(path_to_watershed_files, directory)
             if os.path.exists(path_to_files):

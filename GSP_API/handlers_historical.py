@@ -24,7 +24,7 @@ def historic_data_handler(request):
     lat = request.args.get('lat', False)
     lon = request.args.get('lon', False)
     units = request.args.get('units', 'metric')
-    forcing = request.args.get('forcing', 'era_interim')
+    forcing = request.args.get('forcing', 'era_5')
     return_format = request.args.get('return_format', 'csv')
 
     if reach_id:
@@ -112,7 +112,7 @@ def seasonal_average_handler(request):
     lat = request.args.get('lat', False)
     lon = request.args.get('lon', False)
     units = request.args.get('units', 'metric')
-    forcing = request.args.get('forcing', 'era_interim')
+    forcing = request.args.get('forcing', 'era_5')
     return_format = request.args.get('return_format', 'csv')
 
     if reach_id:
@@ -199,7 +199,7 @@ def return_periods_handler(request):
     lat = request.args.get('lat', False)
     lon = request.args.get('lon', False)
     units = request.args.get('units', 'metric')
-    forcing = request.args.get('forcing', 'era_interim')
+    forcing = request.args.get('forcing', 'era_5')
     return_format = request.args.get('return_format', 'csv')
 
     if reach_id:
