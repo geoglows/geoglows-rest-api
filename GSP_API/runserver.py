@@ -60,6 +60,10 @@ def forecast_stats():
 
     try:
         return forecast_stats_handler(request)
+    except ValueError as e:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": e}), 422
     except Exception:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])

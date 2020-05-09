@@ -7,12 +7,11 @@ import pandas as pd
 import xarray
 from flask import jsonify, render_template, make_response
 from functions import get_units_title, reach_to_region
-from main_controller import (get_forecast_streamflow_csv,
-                             get_ecmwf_forecast_statistics,
-                             get_forecast_warnings,
+from main_controller import (get_forecast_warnings,
                              get_forecast_ensemble_csv,
                              get_ecmwf_ensemble,
-                             get_reach_from_latlon)
+                             get_reach_from_latlon,
+                             ecmwf_find_most_current_files)
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -27,139 +26,183 @@ def forecast_stats_handler(request):
     Controller that will retrieve forecast statistic data
     in different formats
     """
+    reach_id = int(request.args.get('reach_id', False))
+    region = request.args.get('region', False)
+    lat = request.args.get('lat', '')
+    lon = request.args.get('lon', '')
+    forecast_folder = request.args.get('date', 'most_recent')
+    units = request.args.get('units', 'metric')
     return_format = request.args.get('return_format', 'csv')
 
-    if return_format in ('csv', ''):
-        csv_response = get_forecast_streamflow_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
+    if reach_id:
+        # if there wasn't a region provided, try to guess it
+        if not region:
+            region = reach_to_region(reach_id)
+        if not region:
+            raise ValueError("Unable to determine a region paired with this reach_id")
+    elif lat != '' and lon != '':
+        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
+        if dist_error:
+            raise ValueError("Unable to find a stream near the lat/lon provided")
+    else:
+        raise ValueError("Invalid reach_id or lat/lon/region combination")
 
-    elif return_format in ('waterml', 'json'):
+    # find/check current output datasets
+    path_to_output_files = os.path.join(PATH_TO_FORECASTS, region)
+    forecast_nc_list, start_date = ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
+    forecast_nc_list = sorted(forecast_nc_list)
+    if not forecast_nc_list or not start_date:
+        raise ValueError(f'ECMWF forecast for region "{region}" and date "{start_date}" not found')
 
-        formatted_stat = {
-            'high_res': 'High Resolution',
-            'mean': 'Mean',
-            'min': 'Min',
-            'max': 'Max',
-            'std_dev_range_lower': 'Standard Deviation Lower Range',
-            'std_dev_range_upper': 'Standard Deviation Upper Range',
+    # combine 52 ensembles
+    qout_datasets = []
+    ensemble_index_list = []
+    for forecast_nc in forecast_nc_list:
+        ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
+        qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
+    merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+
+    # get an array of all the ensembles, delete the high res before doing averages
+    merged_array = merged_ds.data
+    merged_array = np.delete(merged_array, list(merged_ds.ensemble.data).index(52), axis=0)
+    # replace any values that went negative because of the muskingham routing
+    merged_array[merged_array <= 0] = 0
+    short_unit, full_unit = get_units_title(units)
+
+    # load all the series into a dataframe
+    df = pd.DataFrame({
+        f'flow_max_{short_unit}^3/s': np.amax(merged_array, axis=0),
+        f'flow_75%_{short_unit}^3/s': np.percentile(merged_array, 75, axis=0),
+        f'flow_avg_{short_unit}^3/s': np.mean(merged_array, axis=0),
+        f'flow_25%_{short_unit}^3/s': np.percentile(merged_array, 25, axis=0),
+        f'flow_min_{short_unit}^3/s': np.min(merged_array, axis=0),
+        f'high_res_{short_unit}^3/s': merged_ds.sel(ensemble=52).data
+    }, index=merged_ds.time.data)
+    df.index.name = 'datetime'
+
+    if return_format == 'csv':
+        response = make_response(df.to_csv())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=forecasted_streamflow_{region}_{reach_id}.csv'
+        return response
+
+    formatted_stat = {
+        'high_res': 'High Resolution',
+        'mean': 'Mean',
+        'min': 'Min',
+        'max': 'Max',
+        'std_dev_range_lower': 'Standard Deviation Lower Range',
+        'std_dev_range_upper': 'Standard Deviation Upper Range',
+    }
+
+    # retrieve statistics
+    forecast_statistics, region, river_id, units = get_ecmwf_forecast_statistics(request)
+
+    units_title = get_units_title(units)
+    units_title_long = 'Meters'
+    if units_title == 'ft':
+        units_title_long = 'Feet'
+
+    stat = request.args.get('stat', '')
+
+    context = {
+        'region': region,
+        'comid': river_id,
+        'gendate': dt.utcnow().isoformat() + 'Z',
+        'units': {
+            'name': 'Streamflow',
+            'short': '{}3/s'.format(units_title),
+            'long': 'Cubic {} per Second'.format(units_title_long)
         }
+    }
 
-        # retrieve statistics
-        forecast_statistics, region, river_id, units = get_ecmwf_forecast_statistics(request)
+    stat_ts_dict = {}
+    if stat != '' and stat != 'all':
 
-        units_title = get_units_title(units)
-        units_title_long = 'Meters'
-        if units_title == 'ft':
-            units_title_long = 'Feet'
+        if stat not in formatted_stat.keys():
+            logging.error('Invalid value for stat ...')
+            return jsonify({"error": "Invalid value for stat parameter."}), 422
 
-        stat = request.args.get('stat', '')
+        startdate = forecast_statistics[stat].index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
+        enddate = forecast_statistics[stat].index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        context = {
-            'region': region,
-            'comid': river_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
-        }
+        time_series = []
+        for date, value in forecast_statistics[stat].items():
+            time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-        stat_ts_dict = {}
-        if stat != '' and stat != 'all':
+        context['stats'] = {stat: formatted_stat[stat]}
+        context['startdate'] = startdate
+        context['enddate'] = enddate
+        stat_ts_dict[stat] = time_series
 
-            if stat not in formatted_stat.keys():
-                logging.error('Invalid value for stat ...')
-                return jsonify({"error": "Invalid value for stat parameter."}), 422
+    else:
+        startdate = forecast_statistics['mean'].index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
+        enddate = forecast_statistics['mean'].index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            startdate = forecast_statistics[stat].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_statistics[stat].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
+        high_r_time_series = []
+        for date, value in forecast_statistics['high_res'].items():
+            high_r_time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-            time_series = []
-            for date, value in forecast_statistics[stat].items():
-                time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+        mean_time_series = []
+        for date, value in forecast_statistics['mean'].items():
+            mean_time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-            context['stats'] = {stat: formatted_stat[stat]}
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-            stat_ts_dict[stat] = time_series
+        max_time_series = []
+        for date, value in forecast_statistics['max'].items():
+            max_time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-        else:
-            startdate = forecast_statistics['mean'].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_statistics['mean'].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
+        min_time_series = []
+        for date, value in forecast_statistics['min'].items():
+            min_time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-            high_r_time_series = []
-            for date, value in forecast_statistics['high_res'].items():
-                high_r_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+        std_d_lower_time_series = []
+        for date, value in forecast_statistics['std_dev_range_lower'].items():
+            std_d_lower_time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-            mean_time_series = []
-            for date, value in forecast_statistics['mean'].items():
-                mean_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+        std_d_upper_time_series = []
+        for date, value in forecast_statistics['std_dev_range_upper'].items():
+            std_d_upper_time_series.append({
+                'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'val': value
+            })
 
-            max_time_series = []
-            for date, value in forecast_statistics['max'].items():
-                max_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+        context['stats'] = formatted_stat
+        context['startdate'] = startdate
+        context['enddate'] = enddate
+        stat_ts_dict['high_res'] = high_r_time_series
+        stat_ts_dict['mean'] = mean_time_series
+        stat_ts_dict['max'] = max_time_series
+        stat_ts_dict['min'] = min_time_series
+        stat_ts_dict['std_dev_range_lower'] = std_d_lower_time_series
+        stat_ts_dict['std_dev_range_upper'] = std_d_upper_time_series
 
-            min_time_series = []
-            for date, value in forecast_statistics['min'].items():
-                min_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+    context['time_series'] = stat_ts_dict
 
-            std_d_lower_time_series = []
-            for date, value in forecast_statistics['std_dev_range_lower'].items():
-                std_d_lower_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
+    if return_format == "waterml":
+        xml_response = make_response(render_template('forecast_stats.xml', **context))
+        xml_response.headers.set('Content-Type', 'application/xml')
+        return xml_response
 
-            std_d_upper_time_series = []
-            for date, value in forecast_statistics['std_dev_range_upper'].items():
-                std_d_upper_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            context['stats'] = formatted_stat
-
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-            stat_ts_dict['high_res'] = high_r_time_series
-            stat_ts_dict['mean'] = mean_time_series
-            stat_ts_dict['max'] = max_time_series
-            stat_ts_dict['min'] = min_time_series
-            stat_ts_dict['std_dev_range_lower'] = std_d_lower_time_series
-            stat_ts_dict['std_dev_range_upper'] = std_d_upper_time_series
-
-        context['time_series'] = stat_ts_dict
-
-        if return_format == "waterml":
-            xml_response = make_response(render_template('forecast_stats.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
+    if return_format == "json":
+        return jsonify(context)
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422

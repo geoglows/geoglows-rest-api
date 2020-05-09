@@ -18,37 +18,6 @@ PATH_TO_FORECASTS = '/mnt/output/forecasts'
 PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
-def get_forecast_streamflow_csv(request):
-    """
-    Retrieve the forecasted streamflow as CSV
-    """
-
-    try:
-        # retrieve statistics
-        forecast_statistics, region, reach_id, units = get_ecmwf_forecast_statistics(request)
-
-        # prepare to write response for CSV
-        si = StringIO()
-        writer = csv_writer(si)
-
-        forecast_df = pd.DataFrame(forecast_statistics)
-        column_names = (forecast_df.columns.values + [' ({}^3/s)'.format(get_units_title(units)[0])]).tolist()
-        writer.writerow(['datetime'] + column_names)
-
-        for row_data in forecast_df.itertuples():
-            writer.writerow(row_data)
-
-        response = make_response(si.getvalue())
-        response.headers['content-type'] = 'text/csv'
-        response.headers['Content-Disposition'] = \
-            'attachment; filename=forecasted_streamflow_{0}_{1}.csv'.format(region, reach_id)
-
-        return response
-
-    except:
-        return {"error": "An unexpected error occurred with the CSV response."}, 422
-
-
 def get_forecast_ensemble_csv(request):
     """
     Retrieve the forecast ensemble as CSV
@@ -78,77 +47,6 @@ def get_forecast_ensemble_csv(request):
         return response
     except:
         return {"error": "An unexpected error occurred with the CSV response."}, 422
-
-
-def get_ecmwf_forecast_statistics(request):
-    """
-    Returns the statistics for the 52 member forecast
-    """
-    reach_id = int(request.args.get('reach_id', False))
-    stat_type = request.args.get('stat', '')
-    lat = request.args.get('lat', '')
-    lon = request.args.get('lon', '')
-    forecast_folder = request.args.get('date', 'most_recent')
-    units = request.args.get('units', 'metric')
-
-    if reach_id:
-        region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to determine a region paired with this reach_id"}
-    elif lat != '' and lon != '':
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
-    else:
-        return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
-
-    # find/check current output datasets
-    path_to_output_files = os.path.join(PATH_TO_FORECASTS, region)
-    forecast_nc_list, start_date = ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
-    if not forecast_nc_list or not start_date:
-        return {"error": 'ECMWF forecast for ' + region}, 422
-
-    # combine 52 ensembles
-    qout_datasets = []
-    ensemble_index_list = []
-    for forecast_nc in forecast_nc_list:
-        ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
-        qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
-
-    merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
-
-    return_dict = {}
-    if stat_type in ('high_res', 'all') or not stat_type:
-        # extract the high res ensemble & time
-        try:
-            return_dict['high_res'] = merged_ds.sel(ensemble=52).dropna('time')
-        except:
-            pass
-
-    if stat_type != 'high_res' or not stat_type:
-        # analyze data to get statistic bands
-        merged_ds = merged_ds.dropna('time')
-
-        if stat_type == 'mean' or 'std' in stat_type or not stat_type:
-            return_dict['mean'] = merged_ds.mean(dim='ensemble')
-            std_ar = merged_ds.std(dim='ensemble')
-            if stat_type == 'std_dev_range_upper' or not stat_type:
-                return_dict['std_dev_range_upper'] = return_dict['mean'] + std_ar
-            if stat_type == 'std_dev_range_lower' or not stat_type:
-                return_dict['std_dev_range_lower'] = return_dict['mean'] - std_ar
-        if stat_type == "min" or not stat_type:
-            return_dict['min'] = merged_ds.min(dim='ensemble')
-        if stat_type == "max" or not stat_type:
-            return_dict['max'] = merged_ds.max(dim='ensemble')
-
-    for key in list(return_dict):
-        if units == 'english':
-            # convert m3/s to ft3/s
-            return_dict[key] *= M3_TO_FT3
-        # convert to pandas series
-        return_dict[key] = return_dict[key].to_dataframe().Qout
-
-    return return_dict, region, reach_id, units
 
 
 def get_ecmwf_ensemble(request):
