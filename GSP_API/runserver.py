@@ -84,10 +84,14 @@ def forecast_ensembles():
 
     try:
         return forecast_ensembles_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API ForecastWarnings endpoint

@@ -1,9 +1,13 @@
 import datetime
+import math
 import os
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from glob import glob
 
+import pandas as pd
 from pytz import utc
+from shapely.geometry import Point, MultiPoint, box
+from shapely.ops import nearest_points
 
 # GLOBAL
 M3_TO_FT3 = 35.3146667
@@ -121,3 +125,63 @@ def reach_to_region(reach_id=None):
                 return False
             return region
     return False
+
+
+def get_region_from_latlon(lat, lon):
+    # create a shapely point for the querying
+    point = Point(float(lon), float(lat))
+
+    # open the bounding boxes csv, figure out which regions the point lies within
+    bb_csv = pd.read_csv('/app/GSP_API/region_coordinate_files/bounding_boxes.csv', index_col='region')
+    for row in bb_csv.iterrows():
+        bbox = box(row[1][0], row[1][1], row[1][2], row[1][3])
+        if point.within(bbox):
+            return row[0]
+
+    raise ValueError('given lat and lon not found within the bounding boxes of a forecast delineation')
+
+
+def get_reach_from_latlon(lat, lon):
+    # create a shapely point for the querying
+    point = Point(float(lon), float(lat))
+    regions_to_check = []
+    # store the best matching stream using a named tuple for easy comparisons/management
+    StreamResult = namedtuple('Stream', 'reach_id, region, distance')
+    stream_result = StreamResult(None, None, math.inf)
+
+    # open the bounding boxes csv, figure out which regions the point lies within
+    bb_csv = pd.read_csv('/app/GSP_API/region_coordinate_files/bounding_boxes.csv', index_col='region')
+    for row in bb_csv.iterrows():
+        bbox = box(row[1][0], row[1][1], row[1][2], row[1][3])
+        if point.within(bbox):
+            regions_to_check.append(row[0])
+
+    # if there weren't any regions, return that there was an error
+    if len(regions_to_check) == 0:
+        return {"error": "This point is not within any of the supported delineation regions."}
+
+    # switch the point because the csv's are lat/lon, backwards from what shapely expects (lon then lat)
+    point = Point(float(lat), float(lon))
+
+    # check the lat lon against each of the region csv's that we determined were an option
+    for region in regions_to_check:
+        # open the region csv, find the closest reach_id
+        df = pd.read_csv(
+            f"/app/GSP_API/region_coordinate_files/{region}/comid_lat_lon_z.csv", sep=',', header=0, index_col=0)
+        points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
+        multi_pt = MultiPoint(points_df.tolist())
+        nearest_pt = nearest_points(point, multi_pt)
+        reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
+
+        # is this a better match than what we have? if so then replace the current selection
+        distance = nearest_pt[0].distance(nearest_pt[1])
+        if distance < stream_result.distance:
+            stream_result = StreamResult(reach_id, region, distance)
+
+    # if the stream was too far away, set the error message
+    if stream_result.distance > 0.11:
+        distance_error = {"error": "Nearest river is more than ~10km away."}
+    else:
+        distance_error = False
+
+    return stream_result.reach_id, stream_result.region, distance_error

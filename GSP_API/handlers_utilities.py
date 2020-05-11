@@ -1,7 +1,7 @@
 import os
 
 from flask import jsonify
-from main_controller import get_reach_from_latlon
+from functions import get_reach_from_latlon
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
