@@ -1,6 +1,9 @@
 import os
 from datetime import datetime as dt
 
+import os
+from datetime import datetime as dt
+
 import numpy as np
 import pandas as pd
 import xarray
@@ -49,17 +52,21 @@ def forecast_stats_handler(request):
     if not forecast_nc_list or not start_date:
         raise ValueError(f'ECMWF forecast for region "{region}" and date "{start_date}" not found')
 
-    # combine 52 ensembles
-    qout_datasets = []
-    ensemble_index_list = []
-    for forecast_nc in forecast_nc_list:
-        ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
-        qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
-    merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+    try:
+        # combine 52 ensembles
+        qout_datasets = []
+        ensemble_index_list = []
+        for forecast_nc in forecast_nc_list:
+            ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
+            qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
+        merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
 
-    # get an array of all the ensembles, delete the high res before doing averages
-    merged_array = merged_ds.data
-    merged_array = np.delete(merged_array, list(merged_ds.ensemble.data).index(52), axis=0)
+        # get an array of all the ensembles, delete the high res before doing averages
+        merged_array = merged_ds.data
+        merged_array = np.delete(merged_array, list(merged_ds.ensemble.data).index(52), axis=0)
+    except:
+        raise ValueError('Error while reading data from the netCDF files')
+
     # replace any values that went negative because of the muskingham routing
     merged_array[merged_array <= 0] = 0
     short_unit, full_unit = get_units_title(units)
@@ -157,24 +164,28 @@ def forecast_ensembles_handler(request):
     if not forecast_nc_list or not start_date:
         raise ValueError(f'ECMWF forecast for region "{region}" and date "{start_date}" not found')
 
-    # combine 52 ensembles with xarray
-    qout_datasets = []
-    ensemble_index_list = []
-    for forecast_nc in forecast_nc_list:
-        ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
-        qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
-    merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+    try:
+        # combine 52 ensembles with xarray
+        qout_datasets = []
+        ensemble_index_list = []
+        for forecast_nc in forecast_nc_list:
+            ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
+            qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
+        merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+    except:
+        raise ValueError('Error while reading data from the netCDF files')
+
+    short_unit, full_unit = get_units_title(units)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame
     ensemble_column_names = []
     for i in ensemble_index_list:
-        ensemble_column_names.append(f'ensemble_{i:02}')
+        ensemble_column_names.append(f'ensemble_{i:02}_{short_unit}^3/s')
 
     # make the data into a pandas dataframe
     df = pd.DataFrame(data=np.transpose(merged_ds.data), columns=ensemble_column_names, index=merged_ds.time.data)
     df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
     df.index.name = 'datetime'
-    short_unit, full_unit = get_units_title(units)
 
     # handle units conversion
     if short_unit == 'ft':
@@ -189,9 +200,9 @@ def forecast_ensembles_handler(request):
             if '-' in ens:
                 start, end = ens.split('-')
                 for i in range(int(start), int(end) + 1):
-                    requested_ensembles.append(f'ensemble_{int(i):02}')
+                    requested_ensembles.append(f'ensemble_{int(i):02}_{short_unit}^3/s')
             else:
-                requested_ensembles.append(f'ensemble_{int(ens):02}')
+                requested_ensembles.append(f'ensemble_{int(ens):02}_{short_unit}^3/s')
         # make a list of columns to remove from the dataframe deleting the requested ens from all ens columns
         for ens in requested_ensembles:
             if ens in ensemble_column_names:
@@ -208,12 +219,12 @@ def forecast_ensembles_handler(request):
         return response
 
     # for any column in the dataframe (e.g. each ensemble)
-    ensemble_ts_dict = {}
+    ensemble_ts_dict = {
+        'datetime': df[f'ensemble_01_{short_unit}^3/s'].dropna(inplace=False).tolist(),
+        'datetime_high_res': df[f'ensemble_52_{short_unit}^3/s'].dropna(inplace=False).tolist(),
+    }
     for column in df.columns:
-        ens_time_series = []
-        for date, value in df[column].items():
-            ens_time_series.append({'date': date, 'val': value})
-        ensemble_ts_dict[str(column).split('_')[-1]] = ens_time_series
+        ensemble_ts_dict[column] = df[column].dropna(inplace=False).tolist()
 
     context = {
         'region': region,
@@ -247,6 +258,7 @@ def forecast_warnings_handler(request):
     lat = request.args.get('lat', False)
     lon = request.args.get('lon', False)
     forecast_date = request.args.get('forecast_date', 'most_recent')
+    return_format = request.args.get('return_format', 'csv')
 
     if not region:
         if lat and lon:
@@ -275,10 +287,17 @@ def forecast_warnings_handler(request):
         return {"error": "summary file was not found for this region and forecast date"}
 
     warning_summary = pd.read_csv(summary_file)
-    response = make_response(warning_summary.to_csv(index=False))
-    response.headers['content-type'] = 'text/csv'
-    response.headers['Content-Disposition'] = f'attachment; filename=ForecastWarnings-{region}.csv'
-    return response
+
+    if return_format == 'csv':
+        response = make_response(warning_summary.to_csv(index=False))
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=ForecastWarnings-{region}.csv'
+        return response
+
+    elif return_format == 'json':
+        warning_summary.index = warning_summary['comid']
+        del warning_summary['comid']
+        return jsonify(warning_summary.to_dict(orient='index'))
 
 
 def forecast_records_handler(request):
