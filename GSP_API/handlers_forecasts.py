@@ -217,8 +217,8 @@ def forecast_ensembles_handler(request):
 
     # for any column in the dataframe (e.g. each ensemble)
     ensemble_ts_dict = {
-        'datetime': df[f'ensemble_01_{short_unit}^3/s'].dropna(inplace=False).tolist(),
-        'datetime_high_res': df[f'ensemble_52_{short_unit}^3/s'].dropna(inplace=False).tolist(),
+        'datetime': df[f'ensemble_01_{short_unit}^3/s'].dropna(inplace=False).index.tolist(),
+        'datetime_high_res': df[f'ensemble_52_{short_unit}^3/s'].dropna(inplace=False).index.tolist(),
     }
     for column in df.columns:
         ensemble_ts_dict[column] = df[column].dropna(inplace=False).tolist()
