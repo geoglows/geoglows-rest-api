@@ -1,7 +1,7 @@
 import os
 
 from flask import jsonify
-from main_controller import get_reach_from_latlon
+from functions import latlon_to_reach
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -53,4 +53,5 @@ def get_reach_id_from_latlon_handler(request):
     """
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
-    return jsonify(get_reach_from_latlon(lat, lon))
+    reach_id, region, dist_error = latlon_to_reach(lat, lon)
+    return jsonify(dict(reach_id=reach_id, region=region, dist_error=dist_error))

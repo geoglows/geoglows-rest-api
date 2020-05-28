@@ -5,8 +5,7 @@ import os
 
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, reach_to_region
-from main_controller import get_reach_from_latlon
+from functions import get_units_title, reach_to_region, latlon_to_reach
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -29,12 +28,8 @@ def historic_data_handler(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat and lon:
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -54,24 +49,18 @@ def historic_data_handler(request):
     qout_nc = xarray.open_dataset(historical_data_file)
     qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe()
     del qout_data['rivid'], qout_data['lon'], qout_data['lat']
-    qout_data.index.name = 'datetime'
     qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
-    flow_title = 'streamflow ({0}^3/s)'.format(units_title)
-    qout_data.rename(columns={'Qout': flow_title}, inplace=True)
+    qout_data.index.name = 'datetime'
     if units == 'english':
         qout_data['Qout'] *= M3_TO_FT3
+    qout_data.rename(columns={'Qout': f'streamflow_{units_title}^3/s'}, inplace=True)
 
     # if csv, return the dataframe as csv
     if return_format == 'csv':
         response = make_response(qout_data.to_csv())
         response.headers['content-type'] = 'text/csv'
-        response.headers['Content-Disposition'] = \
-            'attachment; filename=historic_streamflow_{0}_{1}.csv'.format(forcing, reach_id)
+        response.headers['Content-Disposition'] = f'attachment; filename=historic_streamflow_{forcing}_{reach_id}.csv'
         return response
-
-    time_series = []
-    for date, val in qout_data.iterrows():
-        time_series.append({'date': date, 'val': float(val[flow_title])})
 
     # create a json of the data
     json_output = {
@@ -82,11 +71,14 @@ def historic_data_handler(request):
         'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
         'startdate': qout_data.index[0],
         'enddate': qout_data.index[-1],
-        'time_series': time_series,
+        'time_series': {
+            'datetime': qout_data.index.tolist(),
+            'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
+        },
         'units': {
             'name': 'Streamflow',
-            'short': '{}3/s'.format(units_title),
-            'long': 'Cubic {} per Second'.format(units_title_long)
+            'short': f'{units_title}3/s',
+            'long': f'Cubic {units_title_long} per Second'
         }
     }
 
@@ -117,12 +109,8 @@ def seasonal_average_handler(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat and lon:
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -143,7 +131,7 @@ def seasonal_average_handler(request):
     qout_data = qout_nc.sel(rivid=reach_id).to_dataframe()
     del qout_data['rivid'], qout_data['lon'], qout_data['lat']
     qout_data.index.rename('day_of_year', inplace=True)
-    qout_data.rename(columns={'average_flow': 'streamflow ({0}^3/s)'.format(units_title)}, inplace=True)
+    qout_data.rename(columns={'average_flow': f'streamflow_{units_title}^3/s'}, inplace=True)
     if units == 'english':
         for column in qout_data:
             qout_data[column] *= M3_TO_FT3
@@ -151,19 +139,8 @@ def seasonal_average_handler(request):
     if return_format == 'csv':
         response = make_response(qout_data.to_csv())
         response.headers['content-type'] = 'text/csv'
-        response.headers['Content-Disposition'] = \
-            'attachment; filename=seasonal_average_{0}_{1}.csv'.format(forcing, reach_id)
+        response.headers['Content-Disposition'] = f'attachment; filename=seasonal_average_{forcing}_{reach_id}.csv'
         return response
-
-    time_series = []
-    for day, flows in qout_data.iterrows():
-        time_series.append({
-            'day': day,
-            'avg_flow': float(flows[0]),
-            'std_flow': float(flows[1]),
-            'max_flow': float(flows[2]),
-            'min_flow': float(flows[3]),
-        })
 
     json_output = {
         'region': region,
@@ -171,11 +148,14 @@ def seasonal_average_handler(request):
         'forcing_fullname': forcing_fullname,
         'comid': reach_id,
         'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
-        'time_series': time_series,
+        'time_series': {
+            'datetime': qout_data.index.tolist(),
+            'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
+        },
         'units': {
             'name': 'Streamflow',
-            'short': '{}3/s'.format(units_title),
-            'long': 'Cubic {} per Second'.format(units_title_long)
+            'short': f'{units_title}3/s',
+            'long': f'Cubic {units_title_long} per Second'
         }
     }
 
@@ -204,12 +184,8 @@ def return_periods_handler(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to dete rmine a region paired with this reach_id"}
     elif lat and lon:
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -245,8 +221,7 @@ def return_periods_handler(request):
     if return_format == 'csv':
         response = make_response(qout_data.to_csv())
         response.headers['content-type'] = 'text/csv'
-        response.headers['Content-Disposition'] = \
-            'attachment; filename=return_periods_{0}_{1}.csv'.format(forcing, reach_id)
+        response.headers['Content-Disposition'] = f'attachment; filename=return_periods_{forcing}_{reach_id}.csv'
         return response
 
     # create a json of the data
@@ -260,8 +235,9 @@ def return_periods_handler(request):
         'startdate': startdate,
         'enddate': enddate,
         'units': {
-            'short': '{}3/s'.format(units_title),
-            'long': 'Cubic {} per Second'.format(units_title_long)
+            'name': 'Streamflow',
+            'short': f'{units_title}3/s',
+            'long': f'Cubic {units_title_long} per Second'
         }
     }
 

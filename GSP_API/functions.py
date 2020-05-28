@@ -1,9 +1,14 @@
 import datetime
+import json
 import os
+import pickle
 from collections import OrderedDict
 from glob import glob
 
+import pandas as pd
 from pytz import utc
+from shapely.geometry import Point, MultiPoint, shape
+from shapely.ops import nearest_points
 
 # GLOBAL
 M3_TO_FT3 = 35.3146667
@@ -118,6 +123,46 @@ def reach_to_region(reach_id=None):
     for region, threshold in lookup.items():
         if reach_id < threshold:
             if region == 'error':
-                return False
+                raise ValueError(f'Unable to determine a region paired with reach_id "{reach_id}"')
             return region
-    return False
+    raise ValueError(f'Unable to determine a region paired with reach_id "{reach_id}"')
+
+
+def latlon_to_reach(lat: float, lon: float) -> dict:
+    # determine the region that the point is in
+    region = latlon_to_region(lat, lon)
+
+    # switch the point because the csv's are lat/lon, backwards from what shapely expects (lon then lat)
+    point = Point(float(lat), float(lon))
+
+    # open the region csv
+    df = pd.read_pickle(f'/app/GSP_API/geometry/{region}-comid_lat_lon_z.pickle')
+    points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
+
+    # determine which point is closest
+    multi_pt = MultiPoint(points_df.tolist())
+    nearest_pt = nearest_points(point, multi_pt)
+    reach_id = int(points_df[points_df == nearest_pt[1]].index[0])
+    distance = nearest_pt[0].distance(nearest_pt[1])
+
+    # if the nearest stream if more than .1 degrees away, you probably didn't find the right stream
+    if distance > 0.11:
+        raise ValueError('This lat/lon pair is too far from a delineated stream. Try again or use the web interface.')
+    else:
+        return reach_id, region, distance
+
+
+def latlon_to_region(lat, lon):
+    # create a shapely point for the querying
+    point = Point(float(lon), float(lat))
+
+    # read the boundaries pickle
+    bounds_pickle = '/app/GSP_API/geometry/boundaries.pickle'
+    with open(bounds_pickle, 'rb') as f:
+        region_bounds = json.loads(pickle.load(f))
+    for region in region_bounds:
+        for polygon in region_bounds[region]['features']:
+            if shape(polygon['geometry']).contains(point):
+                return f'{region}-geoglows'
+    # if there weren't any regions, return that there was an error
+    raise ValueError('This lat/lon point is not within any of the supported delineation regions.')

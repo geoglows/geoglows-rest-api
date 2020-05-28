@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime as dt
 
@@ -6,13 +5,7 @@ import numpy as np
 import pandas as pd
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, reach_to_region
-from main_controller import (get_forecast_streamflow_csv,
-                             get_ecmwf_forecast_statistics,
-                             get_forecast_warnings,
-                             get_forecast_ensemble_csv,
-                             get_ecmwf_ensemble,
-                             get_reach_from_latlon)
+from functions import get_units_title, reach_to_region, latlon_to_reach, latlon_to_region, ecmwf_find_most_current_files
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -27,300 +20,222 @@ def forecast_stats_handler(request):
     Controller that will retrieve forecast statistic data
     in different formats
     """
+    reach_id = int(request.args.get('reach_id', False))
+    region = request.args.get('region', False)
+    lat = request.args.get('lat', '')
+    lon = request.args.get('lon', '')
+    forecast_folder = request.args.get('date', 'most_recent')
+    units = request.args.get('units', 'metric')
     return_format = request.args.get('return_format', 'csv')
 
-    if return_format in ('csv', ''):
-        csv_response = get_forecast_streamflow_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
+    if reach_id:
+        # if there wasn't a region provided, try to guess it
+        if not region:
+            region = reach_to_region(reach_id)
+    elif lat != '' and lon != '':
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
+    else:
+        raise ValueError("Invalid reach_id or lat/lon combination")
 
-    elif return_format in ('waterml', 'json'):
+    # find/check current output datasets
+    path_to_output_files = os.path.join(PATH_TO_FORECASTS, region)
+    forecast_nc_list, start_date = ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
+    forecast_nc_list = sorted(forecast_nc_list)
+    if not forecast_nc_list or not start_date:
+        raise ValueError(f'ECMWF forecast for region "{region}" and date "{start_date}" not found')
 
-        formatted_stat = {
-            'high_res': 'High Resolution',
-            'mean': 'Mean',
-            'min': 'Min',
-            'max': 'Max',
-            'std_dev_range_lower': 'Standard Deviation Lower Range',
-            'std_dev_range_upper': 'Standard Deviation Upper Range',
+    try:
+        # combine 52 ensembles
+        qout_datasets = []
+        ensemble_index_list = []
+        for forecast_nc in forecast_nc_list:
+            ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
+            qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
+        merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+
+        # get an array of all the ensembles, delete the high res before doing averages
+        merged_array = merged_ds.data
+        merged_array = np.delete(merged_array, list(merged_ds.ensemble.data).index(52), axis=0)
+    except:
+        raise ValueError('Error while reading data from the netCDF files')
+
+    # replace any values that went negative because of the muskingham routing
+    merged_array[merged_array <= 0] = 0
+    short_unit, full_unit = get_units_title(units)
+
+    # load all the series into a dataframe
+    df = pd.DataFrame({
+        f'flow_max_{short_unit}^3/s': np.amax(merged_array, axis=0),
+        f'flow_75%_{short_unit}^3/s': np.percentile(merged_array, 75, axis=0),
+        f'flow_avg_{short_unit}^3/s': np.mean(merged_array, axis=0),
+        f'flow_25%_{short_unit}^3/s': np.percentile(merged_array, 25, axis=0),
+        f'flow_min_{short_unit}^3/s': np.min(merged_array, axis=0),
+        f'high_res_{short_unit}^3/s': merged_ds.sel(ensemble=52).data
+    }, index=merged_ds.time.data)
+    df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
+    df.index.name = 'datetime'
+
+    # handle units conversion
+    if short_unit == 'ft':
+        for column in df.columns:
+            df[column] *= M3_TO_FT3
+
+    if return_format == 'csv':
+        response = make_response(df.to_csv())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = \
+            f'attachment; filename=forecasted_streamflow_{region}_{reach_id}_{short_unit}^3/s.csv'
+        return response
+
+    # split the df so that we can use dropna to lists of dates and values without na entries
+    high_res_data = df[f'high_res_{short_unit}^3/s'].dropna()
+    del df[f'high_res_{short_unit}^3/s']
+    df.dropna(inplace=True)
+
+    # create a dictionary with the metadata and series of values
+    context = {
+        'region': region,
+        'comid': reach_id,
+        'gendate': dt.utcnow().isoformat() + 'Z',
+        'startdate': df.index[0],
+        'enddate': df.index[-1],
+        'units': {
+            'name': 'Streamflow',
+            'short': f'{short_unit}^3/s',
+            'long': f'Cubic {full_unit} per Second',
+        },
+        'time_series': {
+            'datetime': df.index.tolist(),
+            'datetime_high_res': high_res_data.index.tolist(),
+            'high_res': high_res_data.to_list(),
         }
+    }
+    context['time_series'].update(df.to_dict(orient='list'))
 
-        # retrieve statistics
-        forecast_statistics, region, river_id, units = get_ecmwf_forecast_statistics(request)
-
-        units_title = get_units_title(units)
-        units_title_long = 'Meters'
-        if units_title == 'ft':
-            units_title_long = 'Feet'
-
-        stat = request.args.get('stat', '')
-
-        context = {
-            'region': region,
-            'comid': river_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
-        }
-
-        stat_ts_dict = {}
-        if stat != '' and stat != 'all':
-
-            if stat not in formatted_stat.keys():
-                logging.error('Invalid value for stat ...')
-                return jsonify({"error": "Invalid value for stat parameter."}), 422
-
-            startdate = forecast_statistics[stat].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_statistics[stat].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-
-            time_series = []
-            for date, value in forecast_statistics[stat].items():
-                time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            context['stats'] = {stat: formatted_stat[stat]}
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-            stat_ts_dict[stat] = time_series
-
-        else:
-            startdate = forecast_statistics['mean'].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_statistics['mean'].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-
-            high_r_time_series = []
-            for date, value in forecast_statistics['high_res'].items():
-                high_r_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            mean_time_series = []
-            for date, value in forecast_statistics['mean'].items():
-                mean_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            max_time_series = []
-            for date, value in forecast_statistics['max'].items():
-                max_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            min_time_series = []
-            for date, value in forecast_statistics['min'].items():
-                min_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            std_d_lower_time_series = []
-            for date, value in forecast_statistics['std_dev_range_lower'].items():
-                std_d_lower_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            std_d_upper_time_series = []
-            for date, value in forecast_statistics['std_dev_range_upper'].items():
-                std_d_upper_time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            context['stats'] = formatted_stat
-
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-            stat_ts_dict['high_res'] = high_r_time_series
-            stat_ts_dict['mean'] = mean_time_series
-            stat_ts_dict['max'] = max_time_series
-            stat_ts_dict['min'] = min_time_series
-            stat_ts_dict['std_dev_range_lower'] = std_d_lower_time_series
-            stat_ts_dict['std_dev_range_upper'] = std_d_upper_time_series
-
-        context['time_series'] = stat_ts_dict
-
-        if return_format == "waterml":
-            xml_response = make_response(render_template('forecast_stats.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
-
+    if return_format == "json":
+        return jsonify(context)
+    # todo fix this
+    # elif return_format == "waterml":
+    # xml_response = make_response(render_template('forecast_stats.xml', **context))
+    # xml_response.headers.set('Content-Type', 'application/xml')
+    # return xml_response
     else:
         return jsonify({"error": "Invalid return_format."}), 422
 
 
 def forecast_ensembles_handler(request):
     """
-    Controller that will retrieve forecast ensemble data
-    in different formats
+    Controller that will retrieve forecast ensemble data in different formats
     """
+    reach_id = int(request.args.get('reach_id', False))
+    ensemble = request.args.get('ensemble', 'all')
+    region = request.args.get('region', False)
+    lat = request.args.get('lat', '')
+    lon = request.args.get('lon', '')
+    forecast_folder = request.args.get('date', 'most_recent')
+    units = request.args.get('units', 'metric')
     return_format = request.args.get('return_format', 'csv')
 
-    if return_format in ('csv', ''):
-        csv_response = get_forecast_ensemble_csv(request)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
-        else:
-            return csv_response
+    if reach_id:
+        # if there wasn't a region provided, try to guess it
+        if not region:
+            region = reach_to_region(reach_id)
+    elif lat != '' and lon != '':
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
+    else:
+        raise ValueError("Invalid reach_id or lat/lon combination")
 
-    elif return_format in ('waterml', 'json'):
+    # find/check current output datasets
+    path_to_output_files = os.path.join(PATH_TO_FORECASTS, region)
+    forecast_nc_list, start_date = ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
+    forecast_nc_list = sorted(forecast_nc_list)
+    if not forecast_nc_list or not start_date:
+        raise ValueError(f'ECMWF forecast for region "{region}" and date "{start_date}" not found')
 
-        # retrieve statistics
-        forecast_ensembles, region, reach_id, units = get_ecmwf_ensemble(request)
+    try:
+        # combine 52 ensembles with xarray
+        qout_datasets = []
+        ensemble_index_list = []
+        for forecast_nc in forecast_nc_list:
+            ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
+            qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
+        merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+    except:
+        raise ValueError('Error while reading data from the netCDF files')
 
-        formatted_ensemble = {}
-        for ens in sorted(forecast_ensembles.keys()):
-            formatted_ensemble[ens.split('_')[1]] = ens.title().replace('_', ' ')
+    short_unit, full_unit = get_units_title(units)
 
-        units_title = get_units_title(units)
-        units_title_long = 'Meters'
-        if units_title == 'ft':
-            units_title_long = 'Feet'
+    # make a list column names (with zero padded numbers) for the pandas DataFrame
+    ensemble_column_names = []
+    for i in ensemble_index_list:
+        ensemble_column_names.append(f'ensemble_{i:02}_{short_unit}^3/s')
 
-        ensemble = request.args.get('ensemble', 'all')
+    # make the data into a pandas dataframe
+    df = pd.DataFrame(data=np.transpose(merged_ds.data), columns=ensemble_column_names, index=merged_ds.time.data)
+    df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
+    df.index.name = 'datetime'
 
-        context = {
-            'region': region,
-            'comid': reach_id,
-            'gendate': dt.utcnow().isoformat() + 'Z',
-            'units': {
-                'name': 'Streamflow',
-                'short': '{}3/s'.format(units_title),
-                'long': 'Cubic {} per Second'.format(units_title_long)
-            }
+    # handle units conversion
+    if short_unit == 'ft':
+        for column in df.columns:
+            df[column] *= M3_TO_FT3
+
+    # filtering which ensembles you want to get out of the dataframe of them all
+    if ensemble != 'all':
+        requested_ensembles = []
+        for ens in ensemble.split(','):
+            # if there was a range requested with a '-', generate a list of numbers between the 2
+            if '-' in ens:
+                start, end = ens.split('-')
+                for i in range(int(start), int(end) + 1):
+                    requested_ensembles.append(f'ensemble_{int(i):02}_{short_unit}^3/s')
+            else:
+                requested_ensembles.append(f'ensemble_{int(ens):02}_{short_unit}^3/s')
+        # make a list of columns to remove from the dataframe deleting the requested ens from all ens columns
+        for ens in requested_ensembles:
+            if ens in ensemble_column_names:
+                ensemble_column_names.remove(ens)
+        # delete the dataframe columns we aren't interested
+        for ens in ensemble_column_names:
+            del df[ens]
+
+    if return_format == 'csv':
+        response = make_response(df.to_csv())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = \
+            f'attachment; filename=forecasted_ensembles_{region}_{reach_id}_{short_unit}^3/s.csv'
+        return response
+
+    # for any column in the dataframe (e.g. each ensemble)
+    ensemble_ts_dict = {
+        'datetime': df[f'ensemble_01_{short_unit}^3/s'].dropna(inplace=False).index.tolist(),
+        'datetime_high_res': df[f'ensemble_52_{short_unit}^3/s'].dropna(inplace=False).index.tolist(),
+    }
+    for column in df.columns:
+        ensemble_ts_dict[column] = df[column].dropna(inplace=False).tolist()
+
+    context = {
+        'region': region,
+        'comid': reach_id,
+        'startdate': df.index[0],
+        'enddate': df.index[-1],
+        'gendate': dt.utcnow().isoformat() + 'Z',
+        'time_series': ensemble_ts_dict,
+        'units': {
+            'name': 'Streamflow',
+            'short': f'{short_unit}3/s',
+            'long': f'Cubic {full_unit} per Second'
         }
+    }
 
-        ensemble_ts_dict = {}
-        if ensemble != '' and ensemble != 'all' and '-' not in ensemble and ',' not in ensemble:
+    if return_format == 'json':
+        return jsonify(context)
 
-            if int(ensemble) not in map(int, sorted(formatted_ensemble.keys())):
-                logging.error('Invalid value for ensemble ...')
-                return jsonify({"error": "Invalid value for ensemble parameter."}), 422
+    if return_format == 'waterml':
+        xml_response = make_response(render_template('forecast_ensembles.xml', **context))
+        xml_response.headers.set('Content-Type', 'application/xml')
 
-            startdate = forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-
-            time_series = []
-            for date, value in forecast_ensembles['ensemble_{0:02}'.format(int(ensemble))].items():
-                time_series.append({
-                    'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                    'val': value
-                })
-
-            context['ensembles'] = {'{0:02}'.format(int(ensemble)): formatted_ensemble['{0:02}'.format(int(ensemble))]}
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-            ensemble_ts_dict['{0:02}'.format(int(ensemble))] = time_series
-
-        elif ensemble in ('', 'all'):
-
-            startdate = forecast_ensembles['ensemble_01'].index[0].strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_ensembles['ensemble_01'].index[-1].strftime('%Y-%m-%dT%H:%M:%SZ')
-
-            for i in range(1, 53):
-                ens_time_series = []
-
-                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].items():
-                    ens_time_series.append({
-                        'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                        'val': value
-                    })
-
-                ensemble_ts_dict['{0:02}'.format(i)] = ens_time_series
-
-            context['ensembles'] = formatted_ensemble
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-
-        elif ensemble != '' and ensemble != 'all' and '-' in ensemble and ',' not in ensemble:
-
-            if ensemble.split('-')[0] == '':
-                start = 1
-            else:
-                start = int(ensemble.split('-')[0])
-
-            if ensemble.split('-')[1] == '':
-                stop = 53
-            else:
-                stop = int(ensemble.split('-')[1]) + 1
-
-            if start > 53:
-                start = 1
-            if stop > 53:
-                stop = 53
-
-            startdate = forecast_ensembles['ensemble_{0:02}'.format(start)].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_ensembles['ensemble_{0:02}'.format(start)].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-
-            for i in range(start, stop):
-                ens_time_series = []
-
-                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].items():
-                    ens_time_series.append({
-                        'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                        'val': value
-                    })
-
-                ensemble_ts_dict['{0:02}'.format(i)] = ens_time_series
-
-            context['ensembles'] = formatted_ensemble
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-
-        elif ensemble != '' and ensemble != 'all' and '-' not in ensemble and ',' in ensemble:
-
-            ens_list = list(map(int, ensemble.replace(' ', '').split(',')))
-
-            startdate = forecast_ensembles['ensemble_{0:02}'.format(ens_list[0])].index[0] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-            enddate = forecast_ensembles['ensemble_{0:02}'.format(ens_list[0])].index[-1] \
-                .strftime('%Y-%m-%dT%H:%M:%SZ')
-
-            for i in ens_list:
-                ens_time_series = []
-
-                for date, value in forecast_ensembles['ensemble_{0:02}'.format(i)].items():
-                    ens_time_series.append({
-                        'date': date.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                        'val': value
-                    })
-
-                ensemble_ts_dict['{0:02}'.format(i)] = ens_time_series
-
-            context['ensembles'] = formatted_ensemble
-            context['startdate'] = startdate
-            context['enddate'] = enddate
-
-        context['time_series'] = ensemble_ts_dict
-
-        if return_format == "waterml":
-            xml_response = make_response(render_template('forecast_ensembles.xml', **context))
-            xml_response.headers.set('Content-Type', 'application/xml')
-
-            return xml_response
-
-        if return_format == "json":
-            return jsonify(context)
+        return xml_response
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422
@@ -331,21 +246,53 @@ def forecast_warnings_handler(request):
     lat = request.args.get('lat', False)
     lon = request.args.get('lon', False)
     forecast_date = request.args.get('forecast_date', 'most_recent')
+    return_format = request.args.get('return_format', 'csv')
 
-    try:
-        csv_response = get_forecast_warnings(region, lat, lon, forecast_date)
-        if isinstance(csv_response, dict) and "error" in csv_response.keys():
-            return jsonify(csv_response)
+    if not region:
+        if lat and lon:
+            region = latlon_to_region(lat, lon)
         else:
-            return csv_response
-    except Exception as e:
-        return jsonify({"error": e}), 422
+            return {"error": 'Provide a valid latitude and longitude'}
+
+    # find/check current output datasets
+    path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, region)
+    if forecast_date == 'most_recent':
+        date_folders = sorted(
+            [d for d in os.listdir(path_to_region_forecasts)
+             if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
+            reverse=True
+        )
+        folder = os.path.join(path_to_region_forecasts, date_folders[0])
+    else:
+        folder = os.path.join(path_to_region_forecasts, forecast_date)
+        if not os.path.isdir(folder):
+            return {"error": f'Forecast date {forecast_date} was not found'}
+
+    # locate the forecast warning csv
+    summary_file = os.path.join(folder, 'forecasted_return_periods_summary.csv')
+
+    if not os.path.isfile(summary_file):
+        return {"error": "summary file was not found for this region and forecast date"}
+
+    warning_summary = pd.read_csv(summary_file)
+
+    if return_format == 'csv':
+        response = make_response(warning_summary.to_csv(index=False))
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=ForecastWarnings-{region}.csv'
+        return response
+
+    elif return_format == 'json':
+        warning_summary.index = warning_summary['comid']
+        del warning_summary['comid']
+        return jsonify(warning_summary.to_dict(orient='index'))
 
 
 def forecast_records_handler(request):
     reach_id = int(request.args.get('reach_id', False))
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
+    units = request.args.get('units', 'metric')
     return_format = request.args.get('return_format', 'csv')
 
     year = dt.utcnow().year
@@ -355,14 +302,12 @@ def forecast_records_handler(request):
     # determine if you have a reach_id and region from the inputs
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return jsonify({"error": "Unable to determine a region paired with this reach_id"}, 422)
     elif lat != '' and lon != '':
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
         if dist_error:
             return jsonify(dist_error)
     else:
-        return jsonify({"error": "Invalid reach_id or lat/lon/region combination"}, 422)
+        return jsonify({"error": "Invalid reach_id or lat/lon combination"}, 422)
 
     # validate the times
     try:
@@ -372,23 +317,49 @@ def forecast_records_handler(request):
         return jsonify({'Error': 'Unrecognized start_date or end_date. Use YYYYMMDD format'})
 
     # open and read the forecast record netcdf
-    record_path = os.path.join(PATH_TO_FORECAST_RECORDS, region, 'forecast_record-{0}-{1}.nc'.format(year, region))
+    record_path = os.path.join(PATH_TO_FORECAST_RECORDS, region, f'forecast_record-{year}-{region}.nc')
     forecast_record = xarray.open_dataset(record_path)
     times = pd.to_datetime(pd.Series(forecast_record['time'].data, name='datetime'), unit='s', origin='unix')
     record_flows = forecast_record.sel(rivid=reach_id)['Qout']
     forecast_record.close()
+    short_unit, full_unit = get_units_title(units)
 
     # create a dataframe and filter by date
-    flow_series_df = times.to_frame().join(pd.Series(record_flows, name='streamflow (m^3/s)'))
-    flow_series_df = flow_series_df[flow_series_df['datetime'].between(start_date, end_date)]
-    flow_series_df[flow_series_df['streamflow (m^3/s)'] > 1000000000] = np.nan
-    flow_series_df.dropna(inplace=True)
+    df = times.to_frame().join(pd.Series(record_flows, name=f'streamflow_{short_unit}^3/s'))
+    df = df[df['datetime'].between(start_date, end_date)]
+    df.index = df['datetime']
+    del df['datetime']
+    df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
+    df.index.name = 'datetime'
+    df[df[f'streamflow_{short_unit}^3/s'] > 1000000000] = np.nan
+    df.dropna(inplace=True)
+    if units == 'english':
+        df[f'streamflow_{short_unit}^3/s'] *= M3_TO_FT3
 
     # create the http response
-    response = make_response(flow_series_df.to_csv(index=False))
-    response.headers['content-type'] = 'text/csv'
-    response.headers['Content-Disposition'] = 'attachment; filename=forecast_record_{0}.csv'.format(reach_id)
-    return response
+    if return_format == 'csv':
+        response = make_response(df.to_csv())
+        response.headers['content-type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=forecast_record_{reach_id}.csv'
+        return response
+
+    elif return_format == 'json':
+        return {
+            'region': region,
+            'comid': reach_id,
+            'gendate': dt.utcnow().isoformat() + 'Z',
+            'startdate': df.index[0],
+            'enddate': df.index[-1],
+            'units': {
+                'name': 'Streamflow',
+                'short': f'{short_unit}^3/s',
+                'long': f'Cubic {full_unit} per Second',
+            },
+            'time_series': {
+                'datetime': df.index.tolist(),
+                'flow': df[f'streamflow_{short_unit}^3/s'].tolist(),
+            }
+        }
 
 
 def available_dates_handler(request):

@@ -53,13 +53,16 @@ def forecast_stats():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     try:
         return forecast_stats_handler(request)
+    except ValueError as e:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": e}), 422
     except Exception:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
@@ -80,10 +83,14 @@ def forecast_ensembles():
 
     try:
         return forecast_ensembles_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API ForecastWarnings endpoint
@@ -134,8 +141,7 @@ def historic_simulation():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -155,8 +161,7 @@ def return_periods():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -176,8 +181,7 @@ def seasonal_average():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
