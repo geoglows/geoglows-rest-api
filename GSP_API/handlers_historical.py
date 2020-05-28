@@ -5,7 +5,7 @@ import os
 
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, reach_to_region, get_reach_from_latlon
+from functions import get_units_title, reach_to_region, latlon_to_reach
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -28,12 +28,8 @@ def historic_data_handler(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat and lon:
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -113,12 +109,8 @@ def seasonal_average_handler(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to determine a region paired with this reach_id"}
     elif lat and lon:
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
@@ -192,12 +184,8 @@ def return_periods_handler(request):
 
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return {"error": "Unable to dete rmine a region paired with this reach_id"}
     elif lat and lon:
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            return dist_error
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 

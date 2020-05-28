@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, reach_to_region, get_reach_from_latlon, get_region_from_latlon, \
-    ecmwf_find_most_current_files
+from functions import get_units_title, reach_to_region, latlon_to_reach, latlon_to_region, ecmwf_find_most_current_files
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -33,14 +32,10 @@ def forecast_stats_handler(request):
         # if there wasn't a region provided, try to guess it
         if not region:
             region = reach_to_region(reach_id)
-        if not region:
-            raise ValueError("Unable to determine a region paired with this reach_id")
     elif lat != '' and lon != '':
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            raise ValueError("Unable to find a stream near the lat/lon provided")
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
-        raise ValueError("Invalid reach_id or lat/lon/region combination")
+        raise ValueError("Invalid reach_id or lat/lon combination")
 
     # find/check current output datasets
     path_to_output_files = os.path.join(PATH_TO_FORECASTS, region)
@@ -145,14 +140,10 @@ def forecast_ensembles_handler(request):
         # if there wasn't a region provided, try to guess it
         if not region:
             region = reach_to_region(reach_id)
-        if not region:
-            raise ValueError("Unable to determine a region paired with this reach_id")
     elif lat != '' and lon != '':
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
-        if dist_error:
-            raise ValueError("Unable to find a stream near the lat/lon provided")
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
     else:
-        raise ValueError("Invalid reach_id or lat/lon/region combination")
+        raise ValueError("Invalid reach_id or lat/lon combination")
 
     # find/check current output datasets
     path_to_output_files = os.path.join(PATH_TO_FORECASTS, region)
@@ -259,7 +250,7 @@ def forecast_warnings_handler(request):
 
     if not region:
         if lat and lon:
-            region = get_region_from_latlon(lat, lon)
+            region = latlon_to_region(lat, lon)
         else:
             return {"error": 'Provide a valid latitude and longitude'}
 
@@ -311,14 +302,12 @@ def forecast_records_handler(request):
     # determine if you have a reach_id and region from the inputs
     if reach_id:
         region = reach_to_region(reach_id)
-        if not region:
-            return jsonify({"error": "Unable to determine a region paired with this reach_id"}, 422)
     elif lat != '' and lon != '':
-        reach_id, region, dist_error = get_reach_from_latlon(lat, lon)
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
         if dist_error:
             return jsonify(dist_error)
     else:
-        return jsonify({"error": "Invalid reach_id or lat/lon/region combination"}, 422)
+        return jsonify({"error": "Invalid reach_id or lat/lon combination"}, 422)
 
     # validate the times
     try:

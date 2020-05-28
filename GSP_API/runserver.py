@@ -53,8 +53,7 @@ def forecast_stats():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -142,8 +141,7 @@ def historic_simulation():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -163,8 +161,7 @@ def return_periods():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
@@ -184,8 +181,7 @@ def seasonal_average():
 
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '' or \
-                request.args.get('region', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
