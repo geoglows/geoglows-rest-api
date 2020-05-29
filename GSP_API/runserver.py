@@ -17,6 +17,9 @@ from handlers_utilities import (get_available_data_handler,
                                 get_region_handler,
                                 get_reach_id_from_latlon_handler, )
 
+# todo test speed of new daily/monthly averages on the fly with hydrostats
+# todo use try/except to return better error messages on all functions
+
 print("Creating Application")
 
 api_prefix = getenv('API_PREFIX')
@@ -107,10 +110,14 @@ def forecast_warnings():
 
     try:
         return forecast_warnings_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API ForecastRecords endpoint
@@ -127,10 +134,14 @@ def forecast_records():
 
     try:
         return forecast_records_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API HistoricSimulation endpoint
@@ -147,10 +158,14 @@ def historic_simulation():
 
     try:
         return historic_data_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API ReturnPeriods endpoint
@@ -167,10 +182,14 @@ def return_periods():
 
     try:
         return return_periods_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API SeasonalAverage endpoint
@@ -187,10 +206,14 @@ def seasonal_average():
 
     try:
         return seasonal_average_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API AvailableData endpoint
@@ -201,10 +224,14 @@ def available_data():
 
     try:
         return get_available_data_handler()
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API AvailableRegions endpoint
@@ -215,10 +242,14 @@ def regions():
         # Call the service
         return get_region_handler()
 
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API AvailableDates endpoint
@@ -233,10 +264,14 @@ def dates():
         # Call the service
         return available_dates_handler(request)
 
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 # GET, API GetReachID endpoint
@@ -252,10 +287,14 @@ def determine_reach_id():
 
     try:
         return get_reach_id_from_latlon_handler(request)
-    except:
+    except ValueError as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occured."}), 400
+        return jsonify({"error": e}), 422
+    except Exception:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": "An unexpected error occurred."}), 400
 
 
 if __name__ == '__main__':
