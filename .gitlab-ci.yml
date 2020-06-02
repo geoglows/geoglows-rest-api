@@ -1,0 +1,29 @@
+stages:
+  - Deploy
+
+### DEPLOY ###
+"Deploy to Staging":
+  stage: Deploy
+  image: docker.aquaveo.com/msouffront/gsp_rest_api:latest
+  dependencies: [] # Deploys do not depend on the Build phase artifacts
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    K8S_CLUSTER: staging-cluster
+  script:
+    # Ensure all required variables are set
+    - ": \"${HELM_CHART:?must be set}\""
+    - ": \"${HELM_RELEASE:?must be set}\""
+    - ": \"${HELM_VALUES:?must be set}\""
+    - ": \"${K8S_NS:?must be set}\""
+    - ": \"${K8S_STAGING_PASS:?must be set}\""
+    - export K8S_PASS=${K8S_STAGING_PASS}
+    - setup_k8s_user
+    - helm dep up $HELM_CHART
+    - |
+      cat > values.yaml << EOF
+      ${HELM_VALUES}
+      EOF
+    - helm-fresh-deploy --namespace $K8S_NS $HELM_RELEASE --max-pvc-checks 24 $HELM_CHART -f values.yaml
+  when: manual
+  only:
+    - tags

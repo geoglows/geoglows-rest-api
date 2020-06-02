@@ -18,8 +18,12 @@ RUN conda config --set channel_priority strict && \
 RUN mkdir -p /mnt/output/forecasts && \
     mkdir -p /mnt/output/era-interim && \
     mkdir -p /mnt/output/era-5 && \
-    mkdir -p /mnt/output/forecast-records && \
-    mkdir -p /app/azcopy/
+    mkdir -p /mnt/output/forecast-records
+
+#COPY ./sample_data/forecasts /mnt/output/forecasts
+#COPY ./sample_data/era-interim /mnt/output/era-interim
+#COPY ./sample_data/era-5 /mnt/output/era-5
+#COPY ./sample_data/forecast-records /mnt/output/forecast-records
 
 # Copy API code
 COPY ./GSP_API /app/GSP_API/

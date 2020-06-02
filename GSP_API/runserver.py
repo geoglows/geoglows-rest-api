@@ -4,6 +4,7 @@ from os import getenv
 
 from deprecated import (seasonal_average_handler)
 from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS, cross_origin
 from flask_restful import Api
 from handlers_forecasts import (forecast_stats_handler,
@@ -44,6 +45,19 @@ def init_logger():
     formatter = logging.Formatter('%(asctime)s: %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
+# API home page
+@app.route('/')
+@cross_origin()
+def home():
+    return render_template('home.html')
+
+
+# API documentation
+@app.route('/documentation')
+@cross_origin()
+def documentation():
+    return render_template('documentation.html')
 
 
 # GET, API ForecastStats endpoint

@@ -1,3 +1,2 @@
-.spyproject
-output/**
-deploy-aci.yaml
+.idea/
+sample_data/**
