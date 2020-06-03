@@ -2,6 +2,7 @@ import logging
 import sys
 from os import getenv
 
+from deprecated import (seasonal_average_handler)
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from flask_restful import Api
@@ -11,14 +12,11 @@ from handlers_forecasts import (forecast_stats_handler,
                                 forecast_records_handler,
                                 available_dates_handler, )
 from handlers_historical import (historic_data_handler,
-                                 seasonal_average_handler,
+                                 historic_averages_handler,
                                  return_periods_handler, )
 from handlers_utilities import (get_available_data_handler,
                                 get_region_handler,
                                 get_reach_id_from_latlon_handler, )
-
-# todo test speed of new daily/monthly averages on the fly with hydrostats
-# todo use try/except to return better error messages on all functions
 
 print("Creating Application")
 
@@ -53,23 +51,14 @@ def init_logger():
 @cross_origin()
 def forecast_stats():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
-
     try:
         return forecast_stats_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API ForecastEnsembles endpoint
@@ -77,23 +66,14 @@ def forecast_stats():
 @cross_origin()
 def forecast_ensembles():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
-
     try:
         return forecast_ensembles_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API ForecastWarnings endpoint
@@ -101,23 +81,14 @@ def forecast_ensembles():
 @cross_origin()
 def forecast_warnings():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if not request.args.get('region', False):
-        if not request.args.get('lat', False) or not request.args.get('lon', False):
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either region or lat and lon parameters are required as input."}), 422
-
     try:
         return forecast_warnings_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API ForecastRecords endpoint
@@ -125,23 +96,14 @@ def forecast_warnings():
 @cross_origin()
 def forecast_records():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
-
     try:
         return forecast_records_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API HistoricSimulation endpoint
@@ -149,23 +111,14 @@ def forecast_records():
 @cross_origin()
 def historic_simulation():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
-
     try:
         return historic_data_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API ReturnPeriods endpoint
@@ -173,47 +126,44 @@ def historic_simulation():
 @cross_origin()
 def return_periods():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
-
     try:
         return return_periods_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API SeasonalAverage endpoint
-@app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
+@app.route(api_prefix + '/DailyAverages/', methods=['GET'])
 @cross_origin()
-def seasonal_average():
+def daily_averages():
     init_logger()
-
-    # ensure you have enough information provided to return a response
-    if request.args.get('reach_id', '') == '':
-        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-            logging.error("Either reach_id or lat and lon parameters are required as input.")
-            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
-
     try:
-        return seasonal_average_handler(request)
+        return historic_averages_handler(request, 'daily')
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+
+
+# GET, API SeasonalAverage endpoint
+@app.route(api_prefix + '/MonthlyAverages/', methods=['GET'])
+@cross_origin()
+def monthly_averages():
+    init_logger()
+    try:
+        return historic_averages_handler(request, 'monthly')
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API AvailableData endpoint
@@ -225,31 +175,26 @@ def available_data():
     try:
         return get_available_data_handler()
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API AvailableRegions endpoint
 @app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
 @cross_origin()
 def regions():
+    init_logger()
     try:
-        # Call the service
         return get_region_handler()
-
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API AvailableDates endpoint
@@ -257,7 +202,6 @@ def regions():
 @cross_origin()
 def dates():
     if request.args.get('region', '') == '':
-        logging.error("region is required as input.")
         return jsonify({"error": "region is required as input."}), 422
 
     try:
@@ -265,13 +209,11 @@ def dates():
         return available_dates_handler(request)
 
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 # GET, API GetReachID endpoint
@@ -288,13 +230,34 @@ def determine_reach_id():
     try:
         return get_reach_id_from_latlon_handler(request)
     except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": e}), 422
-    except Exception:
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DEPRECATED
+# GET, API SeasonalAverage endpoint
+@app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
+@cross_origin()
+def seasonal_average():
+    init_logger()
+
+    # ensure you have enough information provided to return a response
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
+
+    try:
+        return seasonal_average_handler(request)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
         print(sys.exc_info()[0])
         logging.exception(sys.exc_info()[0])
-        return jsonify({"error": "An unexpected error occurred."}), 400
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
 
 
 if __name__ == '__main__':

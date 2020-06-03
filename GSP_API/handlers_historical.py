@@ -6,7 +6,7 @@ import os
 import hydrostats.data as hd
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, reach_to_region, latlon_to_reach
+from functions import get_units_title, handle_parameters, find_historical_files
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -20,28 +20,13 @@ def historic_data_handler(request):
     """
     Controller for retrieving simulated historic data
     """
-    reach_id = int(request.args.get('reach_id', False))
-    lat = request.args.get('lat', False)
-    lon = request.args.get('lon', False)
-    units = request.args.get('units', 'metric')
+    # handle the parameters from the user
+    try:
+        reach_id, region, units, return_format = handle_parameters(request)
+    except Exception as e:
+        raise e
     forcing = request.args.get('forcing', 'era_5')
-    return_format = request.args.get('return_format', 'csv')
-
-    if reach_id:
-        region = reach_to_region(reach_id)
-    elif lat and lon:
-        reach_id, region, dist_error = latlon_to_reach(lat, lon)
-    else:
-        raise ValueError("Invalid reach_id or lat/lon/region combination")
-
-    if forcing == 'era_interim':
-        forcing_fullname = 'ERA Interim'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
-    elif forcing == 'era_5':
-        forcing_fullname = 'ERA 5'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc'))[0]
-    else:
-        raise ValueError("Invalid forcing specified, choose era_interim or era_5")
+    historical_data_file, forcing_fullname = find_historical_files(region, forcing)
 
     # handle the units
     units_title, units_title_long = get_units_title(units)
@@ -50,11 +35,11 @@ def historic_data_handler(request):
     qout_nc = xarray.open_dataset(historical_data_file)
     qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe()
     del qout_data['rivid'], qout_data['lon'], qout_data['lat']
-    qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
-    qout_data.index.name = 'datetime'
     if units == 'english':
         qout_data['Qout'] *= M3_TO_FT3
     qout_data.rename(columns={'Qout': f'streamflow_{units_title}^3/s'}, inplace=True)
+    qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
+    qout_data.index.name = 'datetime'
 
     # if csv, return the dataframe as csv
     if return_format == 'csv':
@@ -63,127 +48,48 @@ def historic_data_handler(request):
         response.headers['Content-Disposition'] = f'attachment; filename=historic_streamflow_{forcing}_{reach_id}.csv'
         return response
 
-    # create a json of the data
-    json_output = {
-        'region': region,
-        'simulation_forcing': forcing,
-        'forcing_fullname': forcing_fullname,
-        'comid': reach_id,
-        'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
-        'startdate': qout_data.index[0],
-        'enddate': qout_data.index[-1],
-        'time_series': {
-            'datetime': qout_data.index.tolist(),
-            'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
-        },
-        'units': {
-            'name': 'Streamflow',
-            'short': f'{units_title}3/s',
-            'long': f'Cubic {units_title_long} per Second'
-        }
-    }
-
-    # if you wanted json out, return json
+    # if you wanted json out, create and return json
     if return_format == "json":
-        return jsonify(json_output)
+        return {
+            'region': region,
+            'simulation_forcing': forcing,
+            'forcing_fullname': forcing_fullname,
+            'comid': reach_id,
+            'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
+            'startdate': qout_data.index[0],
+            'enddate': qout_data.index[-1],
+            'time_series': {
+                'datetime': qout_data.index.tolist(),
+                'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
+            },
+            'units': {
+                'name': 'Streamflow',
+                'short': f'{units_title}3/s',
+                'long': f'Cubic {units_title_long} per Second'
+            }
+        }
 
-    # use the json to render a waterml document
-    if return_format == "waterml":
-        xml_response = make_response(render_template('historic_simulation.xml', **json_output))
-        xml_response.headers.set('Content-Type', 'application/xml')
-        return xml_response
+    # todo waterml historic simulation
+    # if return_format == "waterml":
+    #     xml_response = make_response(render_template('historic_simulation.xml', **json_output))
+    #     xml_response.headers.set('Content-Type', 'application/xml')
+    #     return xml_response
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422
 
 
-def seasonal_average_handler(request):
-    """
-    Controller for retrieving seasonal averages
-    """
-    reach_id = int(request.args.get('reach_id', False))
-    lat = request.args.get('lat', False)
-    lon = request.args.get('lon', False)
-    units = request.args.get('units', 'metric')
-    forcing = request.args.get('forcing', 'era_5')
-    return_format = request.args.get('return_format', 'csv')
-
-    if reach_id:
-        region = reach_to_region(reach_id)
-    elif lat and lon:
-        reach_id, region, dist_error = latlon_to_reach(lat, lon)
-    else:
-        raise ValueError("Invalid reach_id or lat/lon/region combination")
-
-    if forcing == 'era_interim':
-        forcing_fullname = 'ERA Interim'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
-    elif forcing == 'era_5':
-        forcing_fullname = 'ERA 5'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc'))[0]
-    else:
-        raise ValueError("Invalid forcing specified, choose era_interim or era_5")
-
-    # handle the units
-    units_title, units_title_long = get_units_title(units)
-
-    # collect the data in a dataframe
-    qout_nc = xarray.open_dataset(historical_data_file)
-    qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe()
-    del qout_data['rivid'], qout_data['lon'], qout_data['lat']
-    qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
-    qout_data.index.name = 'datetime'
-    if units == 'english':
-        qout_data['Qout'] *= M3_TO_FT3
-    qout_data.rename(columns={'Qout': f'streamflow_{units_title}^3/s'}, inplace=True)
-
-    if return_format == 'csv':
-        response = make_response(qout_data.to_csv())
-        response.headers['content-type'] = 'text/csv'
-        response.headers['Content-Disposition'] = f'attachment; filename=seasonal_average_{forcing}_{reach_id}.csv'
-        return response
-
-    json_output = {
-        'region': region,
-        'simulation_forcing': forcing,
-        'forcing_fullname': forcing_fullname,
-        'comid': reach_id,
-        'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
-        'time_series': {
-            'datetime': qout_data.index.tolist(),
-            'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
-        },
-        'units': {
-            'name': 'Streamflow',
-            'short': f'{units_title}3/s',
-            'long': f'Cubic {units_title_long} per Second'
-        }
-    }
-
-    if return_format == "json":
-        return jsonify(json_output)
-
-    elif return_format == "waterml":
-        xml_response = make_response(render_template('seasonal_averages.xml', **json_output))
-        xml_response.headers.set('Content-Type', 'application/xml')
-        return xml_response
-
-    else:
-        return jsonify({"error": "Invalid return_format."}), 422
-
-
-def historic_average_handler(reach_id, region, forcing, units, return_format, average_type):
+def historic_averages_handler(request, average_type):
     """
     Controller for retrieving averages
     """
-    if forcing == 'era_interim':
-        forcing_fullname = 'ERA Interim'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
-    elif forcing == 'era_5':
-        forcing_fullname = 'ERA 5'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc'))[0]
-    else:
-        raise ValueError("Invalid forcing specified, choose era_interim or era_5")
+    # handle the parameters from the user
+    try:
+        reach_id, region, units, return_format = handle_parameters(request)
+    except Exception as e:
+        raise e
+    forcing = request.args.get('forcing', 'era_5')
+    historical_data_file, forcing_fullname = find_historical_files(region, forcing)
 
     # handle the units
     units_title, units_title_long = get_units_title(units)
@@ -200,7 +106,6 @@ def historic_average_handler(reach_id, region, forcing, units, return_format, av
         qout_data = hd.daily_average(qout_data, rolling=True)
     else:
         qout_data = hd.monthly_average(qout_data)
-    qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
     qout_data.index.name = 'datetime'
 
     if return_format == 'csv':
@@ -209,52 +114,44 @@ def historic_average_handler(reach_id, region, forcing, units, return_format, av
         response.headers['Content-Disposition'] = f'attachment; filename=seasonal_average_{forcing}_{reach_id}.csv'
         return response
 
-    json_output = {
-        'region': region,
-        'simulation_forcing': forcing,
-        'forcing_fullname': forcing_fullname,
-        'comid': reach_id,
-        'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
-        'time_series': {
-            'datetime': qout_data.index.tolist(),
-            'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
-        },
-        'units': {
-            'name': 'Streamflow',
-            'short': f'{units_title}3/s',
-            'long': f'Cubic {units_title_long} per Second'
-        }
-    }
-
     if return_format == "json":
-        return jsonify(json_output)
+        return jsonify({
+            'region': region,
+            'simulation_forcing': forcing,
+            'forcing_fullname': forcing_fullname,
+            'comid': reach_id,
+            'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
+            'time_series': {
+                'datetime': qout_data.index.tolist(),
+                'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
+            },
+            'units': {
+                'name': 'Streamflow',
+                'short': f'{units_title}3/s',
+                'long': f'Cubic {units_title_long} per Second'
+            }
+        })
 
-    elif return_format == "waterml":
-        xml_response = make_response(render_template('seasonal_averages.xml', **json_output))
-        xml_response.headers.set('Content-Type', 'application/xml')
-        return xml_response
+    # todo waterml historic averages
+    # elif return_format == "waterml":
+    #     xml_response = make_response(render_template('seasonal_averages.xml', **json_output))
+    #     xml_response.headers.set('Content-Type', 'application/xml')
+    #     return xml_response
 
     else:
-        return jsonify({"error": "Invalid return_format."}), 422
+        raise ValueError(f'Invalid return_format: {return_format}')
 
 
 def return_periods_handler(request):
     """
     Controller for retrieving seasonal averages
     """
-    reach_id = int(request.args.get('reach_id', False))
-    lat = request.args.get('lat', False)
-    lon = request.args.get('lon', False)
-    units = request.args.get('units', 'metric')
+    # handle the parameters from the user
+    try:
+        reach_id, region, units, return_format = handle_parameters(request)
+    except Exception as e:
+        raise e
     forcing = request.args.get('forcing', 'era_5')
-    return_format = request.args.get('return_format', 'csv')
-
-    if reach_id:
-        region = reach_to_region(reach_id)
-    elif lat and lon:
-        reach_id, region, dist_error = latlon_to_reach(lat, lon)
-    else:
-        return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
     if forcing == 'era_interim':
         forcing_fullname = 'ERA Interim'
