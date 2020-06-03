@@ -1,9 +1,9 @@
 import datetime
+import glob
 import json
 import os
 import pickle
 from collections import OrderedDict
-from glob import glob
 
 import pandas as pd
 from pytz import utc
@@ -11,7 +11,43 @@ from shapely.geometry import Point, MultiPoint, shape
 from shapely.ops import nearest_points
 
 # GLOBAL
+PATH_TO_FORECASTS = '/mnt/output/forecasts'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
+PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
+PATH_TO_ERA_5 = '/mnt/output/era-5'
 M3_TO_FT3 = 35.3146667
+
+
+def handle_parameters(request):
+    reach_id = int(request.args.get('reach_id', False))
+    region = request.args.get('region', False)
+    if not reach_id:
+        lat = request.args.get('lat', False)
+        lon = request.args.get('lon', False)
+        if not lat or not lon:
+            raise ValueError('Insufficient information. Provide a reach_id or both a latitude and longitude')
+        try:
+            reach_id, region, distance = latlon_to_reach(lat, lon)
+        except Exception:
+            raise ValueError('This lat/lon pair is too far from a delineated stream')
+    if not region:
+        region = reach_to_region(reach_id)
+    units = request.args.get('units', 'metric')
+    return_format = request.args.get('return_format', 'csv')
+    return reach_id, region, units, return_format
+
+
+def find_historical_files(region, forcing):
+    if forcing == 'era_interim':
+        path = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
+        name = 'ERA Interim'
+    elif forcing == 'era_5':
+        path = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc'))[0]
+        name = 'ERA 5'
+    else:
+        raise ValueError("Invalid forcing specified, choose era_interim or era_5")
+
+    return path, name
 
 
 def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
@@ -35,7 +71,7 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
             time = directory.split(".")[-1]
             path_to_files = os.path.join(path_to_watershed_files, directory)
             if os.path.exists(path_to_files):
-                basin_files = sorted(glob(os.path.join(path_to_files, "*.nc")),
+                basin_files = sorted(glob.glob(os.path.join(path_to_files, "*.nc")),
                                      reverse=True)
                 if len(basin_files) > 0:
                     seconds = int(int(time) / 100) * 60 * 60
@@ -65,7 +101,7 @@ def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder, file_ex
         hour = int(directory.split(".")[-1]) / 100
         path_to_files = os.path.join(main_watershed_forecast_folder, directory)
         if os.path.exists(path_to_files):
-            basin_files = glob(os.path.join(path_to_files, "*{0}".format(file_extension)))
+            basin_files = glob.glob(os.path.join(path_to_files, "*{0}".format(file_extension)))
             # only add directory to the list if valid
             if len(basin_files) > 0:
                 output_directories.append({
@@ -128,7 +164,7 @@ def reach_to_region(reach_id=None):
     raise ValueError(f'Unable to determine a region paired with reach_id "{reach_id}"')
 
 
-def latlon_to_reach(lat: float, lon: float) -> dict:
+def latlon_to_reach(lat: float, lon: float) -> tuple:
     # determine the region that the point is in
     region = latlon_to_region(lat, lon)
 
