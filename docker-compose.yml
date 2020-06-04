@@ -12,5 +12,11 @@ services:
     ports:
       - 8090:80
     volumes:
-      - ./output:/mnt/output/
       - ./GSP_API:/app/GSP_API
+#      - LOCAL DEVELOPMENT MOUNTS
+      - ./output:/mnt/output/
+#      - TETHYS2 MOUNTS
+#      - /home/tethys/spt_files/era:/mnt/output/era-interim/
+#      - /home/tethys/spt_files/ecmwf:/mnt/output/forecasts/
+#      - /home/riley/more_spt_data/forecast-records:/mnt/output/forecast-records/
+#      - /home/riley/more_spt_data/era5data/:/mnt/output/era-5/

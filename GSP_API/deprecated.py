@@ -1,8 +1,10 @@
 import datetime
+import glob
+import os
 
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, handle_parameters, find_historical_files
+from functions import get_units_title, reach_to_region, latlon_to_reach
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -16,23 +18,41 @@ def seasonal_average_handler(request):
     """
     Controller for retrieving seasonal averages
     """
-    # handle the parameters from the user
-    reach_id, region, units, return_format = handle_parameters(request)
+    reach_id = int(request.args.get('reach_id', False))
+    lat = request.args.get('lat', False)
+    lon = request.args.get('lon', False)
+    units = request.args.get('units', 'metric')
     forcing = request.args.get('forcing', 'era_5')
-    historical_data_file, forcing_fullname = find_historical_files(region, forcing)
+    return_format = request.args.get('return_format', 'csv')
+
+    if reach_id:
+        region = reach_to_region(reach_id)
+    elif lat and lon:
+        reach_id, region, dist_error = latlon_to_reach(lat, lon)
+    else:
+        return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
+
+    if forcing == 'era_interim':
+        forcing_fullname = 'ERA Interim'
+        seasonal_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'seasonal_average*.nc'))[0]
+    elif forcing == 'era_5':
+        forcing_fullname = 'ERA 5'
+        seasonal_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'seasonal_average*.nc'))[0]
+    else:
+        return {"error": "Invalid forcing specified, choose era_interim or era_5"}, 422
 
     # handle the units
     units_title, units_title_long = get_units_title(units)
 
     # collect the data in a dataframe
-    qout_nc = xarray.open_dataset(historical_data_file)
-    qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe()
+    qout_nc = xarray.open_dataset(seasonal_data_file)
+    qout_data = qout_nc.sel(rivid=reach_id).to_dataframe()
     del qout_data['rivid'], qout_data['lon'], qout_data['lat']
-    qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
-    qout_data.index.name = 'datetime'
+    qout_data.index.rename('day_of_year', inplace=True)
+    qout_data.rename(columns={'average_flow': f'streamflow_{units_title}^3/s'}, inplace=True)
     if units == 'english':
-        qout_data['Qout'] *= M3_TO_FT3
-    qout_data.rename(columns={'Qout': f'streamflow_{units_title}^3/s'}, inplace=True)
+        for column in qout_data:
+            qout_data[column] *= M3_TO_FT3
 
     if return_format == 'csv':
         response = make_response(qout_data.to_csv())
@@ -67,4 +87,3 @@ def seasonal_average_handler(request):
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422
-
