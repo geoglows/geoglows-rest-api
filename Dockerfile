@@ -32,10 +32,6 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
     
-# Copy files
-COPY ./azcopy/* /app/azcopy/
-RUN chmod -R +x /app/azcopy/
-
 # Expose the port that is to be used when calling your API
 EXPOSE 80
 HEALTHCHECK --interval=1m --timeout=3s --start-period=20s \
