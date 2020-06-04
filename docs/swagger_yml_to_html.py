@@ -12,7 +12,10 @@ Usage:
     python swagger_yml_to_html.py < swagger_doc.yaml > index.html
 """
 # pip install PyYAML
-import yaml, json, sys
+import json
+import os
+import sys
+import yaml
 
 TEMPLATE = """
 <!DOCTYPE html>
@@ -71,3 +74,6 @@ window.onload = function() {
 
 spec = yaml.load(sys.stdin, Loader=yaml.FullLoader)
 sys.stdout.write(TEMPLATE % json.dumps(spec))
+with open('index.html', 'r') as idx:
+    with open(os.path.join(os.path.pardir, 'GSP_API', 'templates', 'documentation.html'), 'w') as doc:
+        doc.write(idx.read())
