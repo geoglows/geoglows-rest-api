@@ -3,10 +3,7 @@ FROM continuumio/miniconda3:latest
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/envs/gsp_api/bin:$PATH API_PREFIX=/api
 RUN mkdir /var/uwsgi
 
-RUN apt-get update --fix-missing && \
-    apt-get install -y wget tar supervisor bzip2 curl apt-transport-https ca-certificates curl vim cron && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq && apt-get install -yqq supervisor
 
 COPY ./environment.yml ./startup.sh ./
 
@@ -31,7 +28,7 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
-    
+
 # Expose the port that is to be used when calling your API
 EXPOSE 80
 HEALTHCHECK --interval=1m --timeout=3s --start-period=20s \

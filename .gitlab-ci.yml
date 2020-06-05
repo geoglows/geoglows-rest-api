@@ -1,14 +1,125 @@
 stages:
+  - Build
   - Deploy
+
+### Build ###
+"Check Helm":
+  stage: Build
+  image: docker.aquaveo.com/tethys/kubernetes/helm-docker:0.7.1
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+  script:
+    # Ensure all required variables are set
+    - ": \"${HELM_CHART:?must be set}\""
+    - helm lint $HELM_CHART
+    - check_helm_chart $HELM_CHART
+  except:
+   - tags
+   - master
+
+"Update Helm":
+  stage: Build
+  image: docker.aquaveo.com/tethys/kubernetes/helm-docker:0.7.1
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    HELM_REPO_USERNAME: aquaveo
+    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+  script:
+    # Ensure all required variables are set
+    - ": \"${HELM_CHART:?must be set}\""
+    - ": \"${HELM_KEY_PASSPHRASE:?must be set}\""
+    - ": \"${HELM_REPO_PASSWORD:?must be set}\""
+    - helm lint $HELM_CHART
+    - check_helm_chart $HELM_CHART --upload
+  only:
+    - master
+
+.kaniko_build:
+  stage: Build
+  image:
+    name: gcr.io/kaniko-project/executor:debug-v0.23.0
+    entrypoint: [""]
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  before_script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    # Ensure all required variables are set
+    - ": \"${KANIKO_DOCKERFILE:?must be set}\""
+    - ": \"${KANIKO_CONTEXT:?must be set}\""
+    - ": \"${KANIKO_DESTINATIONS:?must be set}\""
+    # Run Kaniko
+    - export KANIKO_CMD="/kaniko/executor
+        --context $KANIKO_CONTEXT
+        --dockerfile $KANIKO_DOCKERFILE
+        $(for DEST in $KANIKO_DESTINATIONS; do echo "--destination $DEST "; done)
+        --cache=true
+        --cache-repo $CI_REGISTRY_IMAGE/cache"
+    - echo $KANIKO_CMD
+    - $KANIKO_CMD
+
+"Build Commit":
+  extends: .kaniko_build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    KANIKO_CONTEXT: $CI_PROJECT_DIR
+    KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
+    KANIKO_DESTINATIONS: $CI_REGISTRY_IMAGE/dev:$CI_COMMIT_SHORT_SHA
+
+  except:
+    - tags
+
+"Build Tag":
+  extends: .kaniko_build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    KANIKO_CONTEXT: $CI_PROJECT_DIR
+    KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
+    KANIKO_DESTINATIONS: >
+      $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+      $CI_REGISTRY_IMAGE:latest
+  only:
+    - tags
+
+"Build Stable":
+  extends: .kaniko_build
+  variables:
+    KANIKO_CONTEXT: $CI_PROJECT_DIR
+    KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
+    KANIKO_DESTINATIONS: $CI_REGISTRY_IMAGE:stable
+  only:
+    - /^stable$/
 
 ### DEPLOY ###
 "Deploy to Staging":
   stage: Deploy
-  image: docker.aquaveo.com/msouffront/gsp_rest_api:latest
+  image: docker.aquaveo.com/tethys/kubernetes/helm-docker:2.0.0-rc1
   dependencies: [] # Deploys do not depend on the Build phase artifacts
   variables:
     GIT_SUBMODULE_STRATEGY: none
     K8S_CLUSTER: staging-cluster
+    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+    HELM_RELEASE: gsprestapi
+    K8S_NS: gsprestapi
+    HELM_VALUES: |
+      init_staging_data: true
+      image:
+        tag: $CI_COMMIT_TAG
+      ingress:
+        enabled: true
+        annotations:
+          certmanager.k8s.io/cluster-issuer: aqua-ca
+          kubernetes.io/ingress.class: nginx
+          nginx.ingress.kubernetes.io/proxy-body-size: "75m"
+        hosts:
+          - host: gsprestapi.staging.aquaveo.com
+            paths:
+               - "/"
+        tls:
+          - secretName: gsprestapi-tls
+            hosts:
+              - gsprestapi.staging.aquaveo.com
   script:
     # Ensure all required variables are set
     - ": \"${HELM_CHART:?must be set}\""
@@ -27,3 +138,57 @@ stages:
   when: manual
   only:
     - tags
+
+"Deploy to Production":
+  stage: Deploy
+  image: docker.aquaveo.com/tethys/kubernetes/helm-docker:2.0.0-rc1
+  dependencies: [] # Deploys do not depend on the Build phase artifacts
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    K8S_CLUSTER: production-cluster
+    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+    HELM_RELEASE: gsprestapi
+    K8S_NS: gsprestapi
+    HELM_VALUES: |
+      init_staging_data: true
+      image:
+        tag: $CI_COMMIT_TAG
+
+      ingress:
+        enabled: true
+        annotations:
+          kubernetes.io/ingress.class: nginx
+          nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+          certmanager.k8s.io/cluster-issuer: letsencrypt
+        hosts:
+          - host: gsprestapi.aquaveo.com
+            paths:
+              - "/"
+          - host: gsprestapi.apps.aquaveo.com
+            paths:
+              - "/"
+        tls:
+          - secretName: gsprestapi-tls
+            hosts:
+              - gsprestapi.aquaveo.com
+  script:
+    # Ensure all required variables are set
+    - ": \"${HELM_CHART:?must be set}\""
+    - ": \"${HELM_RELEASE:?must be set}\""
+    - ": \"${HELM_TLS_KEY_VALUE:?must be set}\""
+    - ": \"${HELM_VALUES:?must be set}\""
+    - ": \"${K8S_NS:?must be set}\""
+    - ": \"${K8S_PRODUCTION_PASS:?must be set}\""
+    - export K8S_PASS=${K8S_PRODUCTION_PASS}
+    - echo "${HELM_TLS_KEY_VALUE}" > ~/.helm/key.pem
+    - setup_k8s_user
+    - helm dep up $HELM_CHART
+    - |
+      cat > values.yaml << EOF
+      ${HELM_VALUES}
+      EOF
+    - helm upgrade --install --namespace $K8S_NS $HELM_RELEASE $HELM_CHART -f values.yaml
+  when: manual
+  only:
+    - tags
+
