@@ -2,8 +2,9 @@ import logging
 import sys
 from os import getenv
 
-from deprecated import (seasonal_average_handler)
-from flask import Flask, request, jsonify
+from deprecated import (seasonal_average_handler,
+                        deprecated_forecast_stats_handler,
+                        deprecated_historic_data_handler)
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS, cross_origin
 from flask_restful import Api
@@ -266,6 +267,50 @@ def seasonal_average():
 
     try:
         return seasonal_average_handler(request)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+
+
+# GET, API SeasonalAverage endpoint
+@app.route(api_prefix + '/DeprecatedForecastStats/', methods=['GET'])
+@cross_origin()
+def deprecated_forecast_stats():
+    init_logger()
+
+    # ensure you have enough information provided to return a response
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
+
+    try:
+        return deprecated_forecast_stats_handler(request)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 422
+    except Exception as e:
+        print(sys.exc_info()[0])
+        logging.exception(sys.exc_info()[0])
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+
+
+# GET, API SeasonalAverage endpoint
+@app.route(api_prefix + '/DeprecatedHistoricSimulation/', methods=['GET'])
+@cross_origin()
+def deprecated_historic_simulation():
+    init_logger()
+
+    # ensure you have enough information provided to return a response
+    if request.args.get('reach_id', '') == '':
+        if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+            logging.error("Either reach_id or lat and lon parameters are required as input.")
+            return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
+
+    try:
+        return deprecated_historic_data_handler(request)
     except ValueError as e:
         return jsonify({"error": str(e)}), 422
     except Exception as e:
