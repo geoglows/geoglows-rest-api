@@ -175,18 +175,9 @@ def get_forecast_streamflow_csv(request):
         # retrieve statistics
         forecast_statistics, region, reach_id, units = get_ecmwf_forecast_statistics(request)
 
-        # prepare to write response for CSV
-        si = StringIO()
-        writer = csv_writer(si)
-
         forecast_df = pd.DataFrame(forecast_statistics)
-        column_names = (forecast_df.columns.values + [' ({}3/s)'.format(get_units_title(units)[0])]).tolist()
-        writer.writerow(['datetime'] + column_names)
 
-        for row_data in forecast_df.itertuples():
-            writer.writerow(row_data)
-
-        response = make_response(si.getvalue())
+        response = make_response(forecast_df.to_csv())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = \
             'attachment; filename=forecasted_streamflow_{0}_{1}.csv'.format(region, reach_id)
@@ -364,9 +355,7 @@ def get_historic_streamflow_series(request):
     else:
         return {"error": "Invalid reach_id or lat/lon/region combination"}, 422
 
-    print('1')
     historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
-    print('2')
 
     # write data to csv stream
     with xarray.open_dataset(historical_data_file) as qout_nc:
