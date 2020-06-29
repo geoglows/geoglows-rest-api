@@ -120,7 +120,6 @@ def get_ecmwf_forecast_statistics(request):
     forecast_nc_list, start_date = ecmwf_find_most_current_files(path_to_output_files, forecast_folder)
     if not forecast_nc_list or not start_date:
         return {"error": 'ECMWF forecast for ' + region}, 422
-    print('1')
 
     # combine 52 ensembles
     qout_datasets = []
@@ -130,7 +129,6 @@ def get_ecmwf_forecast_statistics(request):
         qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
 
     merged_ds = xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
-    print('2')
 
     return_dict = {}
     if stat_type in ('high_res', 'all') or not stat_type:
@@ -180,6 +178,7 @@ def get_forecast_streamflow_csv(request):
         writer = csv_writer(si)
 
         forecast_df = pd.DataFrame(forecast_statistics)
+
         column_names = (forecast_df.columns.values + [' ({}3/s)'.format(get_units_title(units)[0])]).tolist()
         writer.writerow(['datetime'] + column_names)
 
