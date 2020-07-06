@@ -39,10 +39,10 @@ def handle_parameters(request):
 
 def find_historical_files(region, forcing):
     if forcing == 'era_interim':
-        path = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc'))[0]
+        path = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc*'))[0]
         name = 'ERA Interim'
     elif forcing == 'era_5':
-        path = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc'))[0]
+        path = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
         name = 'ERA 5'
     else:
         raise ValueError("Invalid forcing specified, choose era_interim or era_5")

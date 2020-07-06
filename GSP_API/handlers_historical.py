@@ -155,12 +155,12 @@ def return_periods_handler(request):
 
     if forcing == 'era_interim':
         forcing_fullname = 'ERA Interim'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, '*return_periods*.nc'))[0]
+        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, '*return_periods*.nc*'))[0]
         startdate = '1980-01-01T00:00:00Z'
         enddate = '2014-12-31T00:00:00Z'
     elif forcing == 'era_5':
         forcing_fullname = 'ERA 5'
-        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc'))[0]
+        historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc*'))[0]
         startdate = '1979-01-01T00:00:00Z'
         enddate = '2018-12-31T00:00:00Z'
     else:
