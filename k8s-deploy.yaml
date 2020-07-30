@@ -29,7 +29,7 @@ spec:
       - env:
         - name: ALLOWED_HOSTS
           value: gsprestapi.staging.aquaveo.com localhost 127.0.0.1
-        image: docker.aquaveo.com/msouffront/gsp_rest_api:latest
+        image: docker.aquaveo.com/geoglows/gsp_rest_api:latest
         imagePullPolicy: Always
         name: gsprestapi
         ports:
