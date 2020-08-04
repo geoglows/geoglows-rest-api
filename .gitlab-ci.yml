@@ -43,7 +43,7 @@ stages:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   before_script:
-    - |
+    - >
       echo "{\"auths\":
         {\"$CI_REGISTRY\":{
           \"username\":\"$CI_REGISTRY_USER\",
@@ -87,8 +87,8 @@ stages:
     KANIKO_CONTEXT: $CI_PROJECT_DIR
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
     KANIKO_DESTINATIONS: >
-      eccr.ecmwf.int/geoglows_api/IMAGE[:$CI_COMMIT_TAG]
-      eccr.ecmwf.int/geoglows_api/IMAGE[:latest]
+      eccr.ecmwf.int/geoglows_api:$CI_COMMIT_TAG
+      eccr.ecmwf.int/geoglows_api:latest
   only:
     - tags
 
@@ -97,7 +97,7 @@ stages:
   variables:
     KANIKO_CONTEXT: $CI_PROJECT_DIR
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
-    KANIKO_DESTINATIONS: eccr.ecmwf.int/geoglows_api/IMAGE[:stable]
+    KANIKO_DESTINATIONS: eccr.ecmwf.int/geoglows_api:stable
   only:
     - /^stable$/
 
