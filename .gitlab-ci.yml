@@ -44,15 +44,9 @@ stages:
     GIT_SUBMODULE_STRATEGY: recursive
   before_script:
     - >
-      echo "{\"auths\":
-        {\"$CI_REGISTRY\":{
-          \"username\":\"$CI_REGISTRY_USER\",
-          \"password\":\"$CI_REGISTRY_PASSWORD\"
-        },
-        {\"eccr.ecmwf.int\":{
-          \"username\":\"$ECCR_USER\",
-          \"password\":\"$ECCR_PASSWORD\"
-        }
+      echo "{\"auths\":{
+        \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
+        \"eccr.ecmwf.int\": {\"username\":\"$ECCR_USER\", \"password\":\"$ECCR_PASSWORD\"}
       }}" > /kaniko/.docker/config.json
   script:
     # Ensure all required variables are set
