@@ -29,7 +29,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = '*'
 
 api = Api(app)
-print(api_prefix)
+# print(api_prefix)
 
 # GLOBAL
 PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
@@ -48,6 +48,8 @@ def init_logger():
     logger.addHandler(handler)
 
 # API home page
+
+
 @app.route('/')
 @cross_origin()
 def home():
@@ -320,5 +322,5 @@ def deprecated_historic_simulation():
 
 
 if __name__ == '__main__':
-    app.debug = True
+    app.debug = False
     app.run()
