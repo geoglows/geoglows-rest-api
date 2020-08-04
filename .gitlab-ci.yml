@@ -49,7 +49,7 @@ stages:
           \"username\":\"$CI_REGISTRY_USER\",
           \"password\":\"$CI_REGISTRY_PASSWORD\"
         },
-        {\"eccr.ecmwf.int":{
+        {\"eccr.ecmwf.int\":{
           \"username\":\"$ECCR_USER\",
           \"password\":\"$ECCR_PASSWORD\"
         }
