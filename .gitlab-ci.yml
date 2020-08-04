@@ -5,6 +5,7 @@ stages:
 ### Build ###
 "Check Helm":
   stage: Build
+  image: docker.aquaveo.com/tethys/kubernetes/helm-docker:0.7.1
   variables:
     GIT_SUBMODULE_STRATEGY: none
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
@@ -19,6 +20,7 @@ stages:
 
 "Update Helm":
   stage: Build
+  image: docker.aquaveo.com/tethys/kubernetes/helm-docker:0.7.1
   variables:
     GIT_SUBMODULE_STRATEGY: none
     HELM_REPO_USERNAME: aquaveo
