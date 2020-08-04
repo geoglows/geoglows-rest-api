@@ -13,6 +13,7 @@ stages:
     # Ensure all required variables are set
     - ": \"${HELM_CHART:?must be set}\""
     - helm lint $HELM_CHART
+    - chmod +x ./check_helm_chart
     - ./check_helm_chart $HELM_CHART
   except:
    - tags
@@ -31,6 +32,7 @@ stages:
     - ": \"${HELM_KEY_PASSPHRASE:?must be set}\""
     - ": \"${HELM_REPO_PASSWORD:?must be set}\""
     - helm lint $HELM_CHART
+    - chmod +x ./check_helm_chart
     - ./check_helm_chart $HELM_CHART --upload
   only:
     - master
