@@ -1,0 +1,56 @@
+#!/bin/sh
+
+## Exit code legend
+# -2: Unknown error
+# -1: Missing arguments
+#  0: Success (chart matches or chart is new/uploaded)
+#  1: Chart doesn't match
+
+set -e  ## Exit on error
+
+TMPDIR=$(mktemp -d)
+if [ -z "$1" ]; then
+    echo "Missing Arguments" >&2
+    echo "Usage: $0 <path/to/chart> [--upload]"
+    echo "Note: Order is important. If specified `--upload` MUST come after `path/to/chart`"
+    exit -1
+fi
+
+CHARTDIR=$(realpath "$1")
+
+cd ${TMPDIR}
+helm dep up "${CHARTDIR}"
+helm package "${CHARTDIR}"
+LOCAL_PACKAGE=$(ls *.tgz | head -n1)
+REMOTE_PACKAGE=${LOCAL_PACKAGE%%.tgz}.remote.tgz
+
+RESULT=$(curl https://eccr.ecmwf.int/api/geoglows_api/library/charts/${LOCAL_PACKAGE} -so ${REMOTE_PACKAGE}  -w '%{http_code}\n')
+if [ ${RESULT} -eq  404 ]; then
+    echo "Chart not found on remote" >&2
+    if [[ "$2" == "--upload" ]]; then
+        helm package ${CHARTDIR} --sign --key 'Aquaveo Chart Signing Key' --keyring ~/.gnupg/secring.gpg
+        echo "Uploading chart..."
+        curl -F "chart=@${LOCAL_PACKAGE}" -F "prov=@${LOCAL_PACKAGE}.prov" https://eccr.ecmwf.int/api/geoglows_api/library/charts -u ${ECCR_USER}:${ECCR_PASSWORD}
+        echo -e "\nDone."
+    fi
+    exit 0
+elif [ ${RESULT} -ne 200 ]; then
+    echo "Unknown error while trying to retrieve chart from remote" >&2
+    exit -2
+fi
+mkdir local remote
+tar xf ${LOCAL_PACKAGE} -C local
+tar xf ${REMOTE_PACKAGE} -C remote
+for DIR in local remote; do
+    rm -f ${DIR}/**/*.lock
+done
+set +e
+diff -r local remote
+RESULT=$?
+if [ $RESULT -eq 1 ]; then
+    echo "Chart contains changes, but the version number has not been updated!" >&2
+    exit 1
+else
+    echo "No changes detected!"
+fi
+echo "Done."
