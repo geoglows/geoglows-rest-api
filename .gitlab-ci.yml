@@ -133,14 +133,16 @@ stages:
     - ": \"${HELM_VALUES:?must be set}\""
     - ": \"${K8S_NS:?must be set}\""
     - ": \"${K8S_STAGING_PASS:?must be set}\""
-    - export K8S_PASS=${K8S_STAGING_PASS}
-    - setup_k8s_user
+#    - export K8S_PASS=${K8S_STAGING_PASS}
+#    - setup_k8s_user
     - helm dep up $HELM_CHART
     - |
       cat > values.yaml << EOF
       ${HELM_VALUES}
       EOF
-    - helm-fresh-deploy --namespace $K8S_NS $HELM_RELEASE --max-pvc-checks 24 $HELM_CHART -f values.yaml
+#    - helm-fresh-deploy --namespace $K8S_NS $HELM_RELEASE --max-pvc-checks 24 $HELM_CHART -f values.yaml
+    - curl -X POST -u '${ECCR_USER}:${ECCR_PASSWORD}' -d 'bamboo.COMMIT_TAG=$CI_COMMIT_TAG' "https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0"
+
   when: manual
   only:
     - tags
