@@ -104,43 +104,7 @@ stages:
   dependencies: [] # Deploys do not depend on the Build phase artifacts
   variables:
     GIT_SUBMODULE_STRATEGY: none
-    K8S_CLUSTER: staging-cluster
-    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-    HELM_RELEASE: gsprestapi
-    K8S_NS: gsprestapi
-    HELM_VALUES: |
-      init_staging_data: true
-      image:
-        tag: $CI_COMMIT_TAG
-      ingress:
-        enabled: true
-        annotations:
-          certmanager.k8s.io/cluster-issuer: aqua-ca
-          kubernetes.io/ingress.class: nginx
-          nginx.ingress.kubernetes.io/proxy-body-size: "75m"
-        hosts:
-          - host: gsprestapi.staging.aquaveo.com
-            paths:
-               - "/"
-        tls:
-          - secretName: gsprestapi-tls
-            hosts:
-              - gsprestapi.staging.aquaveo.com
   script:
-    # Ensure all required variables are set
-    - ": \"${HELM_CHART:?must be set}\""
-    - ": \"${HELM_RELEASE:?must be set}\""
-    - ": \"${HELM_VALUES:?must be set}\""
-    - ": \"${K8S_NS:?must be set}\""
-    - ": \"${K8S_STAGING_PASS:?must be set}\""
-#    - export K8S_PASS=${K8S_STAGING_PASS}
-#    - setup_k8s_user
-    - helm dep up $HELM_CHART
-    - |
-      cat > values.yaml << EOF
-      ${HELM_VALUES}
-      EOF
-#    - helm-fresh-deploy --namespace $K8S_NS $HELM_RELEASE --max-pvc-checks 24 $HELM_CHART -f values.yaml
     - curl -X POST -u '${ECCR_USER}:${ECCR_PASSWORD}' -d 'bamboo.COMMIT_TAG=$CI_COMMIT_TAG' "https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0"
 
   when: manual
