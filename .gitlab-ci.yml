@@ -109,7 +109,7 @@ stages:
       curl -X POST
       -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}"
       -d 'bamboo.COMMIT_TAG=$CI_COMMIT_TAG'
-      https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0"
+      https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0
 
   when: manual
   only:
