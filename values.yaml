@@ -3,6 +3,6 @@ image:
 ingress:
   enabled: true
   hosts:
-    - host: geoglows.ecmwf.int
+    - host: geoglows-stage.ecmwf.int
       paths:
         -"/"
