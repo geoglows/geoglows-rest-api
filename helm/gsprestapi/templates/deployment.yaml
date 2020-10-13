@@ -53,10 +53,13 @@ spec:
                   value: localhost
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-#      volumes:
-#        - name: workspace-pv
-#          persistentVolumeClaim:
-#            claimName: workspace-pvc
+      volumeMounts:
+        - mountPath: /mnt
+          name: geoglows-data-volume
+      volumes:
+        - name: geoglows-data-volume
+          persistentVolumeClaim:
+            claimName: nfs-geoglows-stage|prod-pvc
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
