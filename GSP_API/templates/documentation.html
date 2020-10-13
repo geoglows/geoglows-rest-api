@@ -49,12 +49,12 @@ window.onload = function() {
     layout: "StandaloneLayout"
   })
   window.ui = ui
-
+  
   var elements = document.getElementsByClassName("topbar");
-  while(elements.length > 0) {
+  while(elements.length > 0){
     elements[0].parentNode.removeChild(elements[0]);
   }
-
+  
   var bodyElement = document.getElementsByTagName("body");
 
   var navElm = document.createElement("nav");
