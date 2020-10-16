@@ -105,7 +105,8 @@ stages:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   script:
-    - 'curl -X POST -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}" -d "bamboo.COMMIT_TAG=$CI_COMMIT_TAG" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0'
+    - echo ${CI_COMMIT_TAG}
+    - 'curl -X POST -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}" -d "bamboo.COMMIT_TAG=${CI_COMMIT_TAG}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0'
 
   when: manual
   only:
@@ -118,7 +119,8 @@ stages:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   script:
-    - 'curl -X POST -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}" -d "bamboo.COMMIT_TAG=$CI_COMMIT_TAG" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES1'
+    - echo ${CI_COMMIT_TAG}
+    - 'curl -X POST -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}" -d "bamboo.COMMIT_TAG=${CI_COMMIT_TAG}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES1'
 
   when: manual
   only:
