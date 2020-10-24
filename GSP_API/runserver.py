@@ -63,6 +63,20 @@ def documentation():
     return render_template('documentation.html')
 
 
+# API documentation
+@app.route('/publications')
+@cross_origin()
+def documentation():
+    return render_template('publications.html')
+
+
+# API documentation
+@app.route('/about')
+@cross_origin()
+def documentation():
+    return render_template('about.html')
+
+
 # GET, API ForecastStats endpoint
 @app.route(api_prefix + '/ForecastStats/', methods=['GET'])
 @cross_origin()
