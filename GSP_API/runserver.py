@@ -47,9 +47,8 @@ def init_logger():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+
 # API home page
-
-
 @app.route('/')
 @cross_origin()
 def home():
@@ -66,14 +65,14 @@ def documentation():
 # API documentation
 @app.route('/publications')
 @cross_origin()
-def documentation():
+def publications():
     return render_template('publications.html')
 
 
 # API documentation
 @app.route('/about')
 @cross_origin()
-def documentation():
+def about():
     return render_template('about.html')
 
 
