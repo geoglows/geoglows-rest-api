@@ -4,9 +4,10 @@ import json
 import os
 
 import hydrostats.data as hd
+import pandas as pd
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import get_units_title, handle_parameters, find_historical_files
+from functions import handle_parameters, get_units_title, get_historical_dataframe
 
 # GLOBAL
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
@@ -14,6 +15,8 @@ PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
 PATH_TO_ERA_5 = '/mnt/output/era-5'
 M3_TO_FT3 = 35.3146667
+
+__all__ = ['historic_data_handler', 'historic_averages_handler', 'return_periods_handler']
 
 
 def historic_data_handler(request):
@@ -23,44 +26,33 @@ def historic_data_handler(request):
     # handle the parameters from the user
     try:
         reach_id, region, units, return_format = handle_parameters(request)
+        units_title, units_title_long = get_units_title(units)
+        forcing = request.args.get('forcing', 'era_5')
+        hist_df = get_historical_dataframe(reach_id, region, units, forcing)
     except Exception as e:
         raise e
-    forcing = request.args.get('forcing', 'era_5')
-    historical_data_file, forcing_fullname = find_historical_files(region, forcing)
-
-    # handle the units
-    units_title, units_title_long = get_units_title(units)
-
-    # collect the data in a dataframe
-    qout_nc = xarray.open_dataset(historical_data_file)
-    qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe()
-    del qout_data['rivid'], qout_data['lon'], qout_data['lat']
-    if units == 'english':
-        qout_data['Qout'] *= M3_TO_FT3
-    qout_data.rename(columns={'Qout': f'streamflow_{units_title}^3/s'}, inplace=True)
-    qout_data.index = qout_data.index.strftime('%Y-%m-%dT%H:%M:%SZ')
-    qout_data.index.name = 'datetime'
 
     # if csv, return the dataframe as csv
     if return_format == 'csv':
-        response = make_response(qout_data.to_csv())
+        response = make_response(hist_df.to_csv())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = f'attachment; filename=historic_streamflow_{forcing}_{reach_id}.csv'
         return response
 
     # if you wanted json out, create and return json
+    #  era_interim or era_5
     if return_format == "json":
         return {
             'region': region,
             'simulation_forcing': forcing,
-            'forcing_fullname': forcing_fullname,
+            'forcing_fullname': forcing.replace('era_', 'ERA ').title(),
             'comid': reach_id,
             'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
-            'startdate': qout_data.index[0],
-            'enddate': qout_data.index[-1],
+            'startdate': hist_df.index[0],
+            'enddate': hist_df.index[-1],
             'time_series': {
-                'datetime': qout_data.index.tolist(),
-                'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
+                'datetime': hist_df.index.tolist(),
+                'flow': hist_df[f'streamflow_{units_title}^3/s'].tolist(),
             },
             'units': {
                 'name': 'Streamflow',
@@ -68,12 +60,6 @@ def historic_data_handler(request):
                 'long': f'Cubic {units_title_long} per Second'
             }
         }
-
-    # todo waterml historic simulation
-    # if return_format == "waterml":
-    #     xml_response = make_response(render_template('historic_simulation.xml', **json_output))
-    #     xml_response.headers.set('Content-Type', 'application/xml')
-    #     return xml_response
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422
@@ -86,30 +72,21 @@ def historic_averages_handler(request, average_type):
     # handle the parameters from the user
     try:
         reach_id, region, units, return_format = handle_parameters(request)
+        units_title, units_title_long = get_units_title(units)
+        forcing = request.args.get('forcing', 'era_5')
+        hist_df = get_historical_dataframe(reach_id, region, units, forcing)
     except Exception as e:
         raise e
-    forcing = request.args.get('forcing', 'era_5')
-    historical_data_file, forcing_fullname = find_historical_files(region, forcing)
 
-    # handle the units
-    units_title, units_title_long = get_units_title(units)
-
-    # collect the data in a dataframe
-    qout_nc = xarray.open_dataset(historical_data_file)
-    qout_data = qout_nc.sel(rivid=reach_id).Qout.to_dataframe()
-    del qout_data['rivid'], qout_data['lon'], qout_data['lat']
-    if units == 'english':
-        qout_data['Qout'] *= M3_TO_FT3
-    qout_data.rename(columns={'Qout': f'streamflow_{units_title}^3/s'}, inplace=True)
-
+    hist_df.index = pd.to_datetime(hist_df.index)
     if average_type == 'daily':
-        qout_data = hd.daily_average(qout_data, rolling=True)
+        hist_df = hd.daily_average(hist_df, rolling=True)
     else:
-        qout_data = hd.monthly_average(qout_data)
-    qout_data.index.name = 'datetime'
+        hist_df = hd.monthly_average(hist_df)
+    hist_df.index.name = 'datetime'
 
     if return_format == 'csv':
-        response = make_response(qout_data.to_csv())
+        response = make_response(hist_df.to_csv())
         response.headers['content-type'] = 'text/csv'
         response.headers['Content-Disposition'] = f'attachment; filename=seasonal_average_{forcing}_{reach_id}.csv'
         return response
@@ -118,12 +95,12 @@ def historic_averages_handler(request, average_type):
         return jsonify({
             'region': region,
             'simulation_forcing': forcing,
-            'forcing_fullname': forcing_fullname,
+            'forcing_fullname': forcing.replace('era_', 'ERA ').title(),
             'comid': reach_id,
             'gendate': datetime.datetime.utcnow().isoformat() + 'Z',
             'time_series': {
-                'datetime': qout_data.index.tolist(),
-                'flow': qout_data[f'streamflow_{units_title}^3/s'].tolist(),
+                'datetime': hist_df.index.tolist(),
+                'flow': hist_df[f'streamflow_{units_title}^3/s'].tolist(),
             },
             'units': {
                 'name': 'Streamflow',
@@ -131,12 +108,6 @@ def historic_averages_handler(request, average_type):
                 'long': f'Cubic {units_title_long} per Second'
             }
         })
-
-    # todo waterml historic averages
-    # elif return_format == "waterml":
-    #     xml_response = make_response(render_template('seasonal_averages.xml', **json_output))
-    #     xml_response.headers.set('Content-Type', 'application/xml')
-    #     return xml_response
 
     else:
         raise ValueError(f'Invalid return_format: {return_format}')

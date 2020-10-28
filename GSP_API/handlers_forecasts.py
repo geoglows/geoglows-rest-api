@@ -14,6 +14,9 @@ PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
 PATH_TO_ERA_5 = '/mnt/output/era-5'
 M3_TO_FT3 = 35.3146667
 
+__all__ = ['forecast_stats_handler', 'forecast_ensembles_handler', 'forecast_warnings_handler',
+           'forecast_records_handler', 'available_dates_handler']
+
 
 def forecast_stats_handler(request):
     """
@@ -106,12 +109,6 @@ def forecast_stats_handler(request):
 
     if return_format == "json":
         return jsonify(context)
-
-    # todo waterml stats
-    # elif return_format == "waterml":
-    # xml_response = make_response(render_template('forecast_stats.xml', **context))
-    # xml_response.headers.set('Content-Type', 'application/xml')
-    # return xml_response
 
     else:
         raise ValueError('Invalid return_format')
@@ -215,12 +212,6 @@ def forecast_ensembles_handler(request):
 
     if return_format == 'json':
         return jsonify(context)
-
-    # todo waterml ensembles
-    # if return_format == 'waterml':
-    #     xml_response = make_response(render_template('forecast_ensembles.xml', **context))
-    #     xml_response.headers.set('Content-Type', 'application/xml')
-    #     return xml_response
 
     else:
         raise ValueError('Invalid return_format')

@@ -12,12 +12,13 @@ services:
     ports:
       - 8090:80
     volumes:
+#      - MOUNT THE FLASK APP CODE
       - ./GSP_API:/app/GSP_API
 
-#      - LOCAL/DEVELOPMENT MOUNTS
+#      - LOCAL/DEVELOPMENT MOUNTS FOR DATA
 #      - ./output:/mnt/output/
 
-#      - TETHYS2 MOUNTS
+#      - TETHYS2 SERVER MOUNTS
 #      - /home/tethys/spt_files/era:/mnt/output/era-interim/
 #      - /home/tethys/spt_files/ecmwf:/mnt/output/forecasts/
 #      - /home/riley/more_spt_data/forecast-records:/mnt/output/forecast-records/

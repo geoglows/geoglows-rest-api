@@ -5,6 +5,7 @@ import os
 import pickle
 from collections import OrderedDict
 
+import netCDF4 as nc
 import pandas as pd
 from pytz import utc
 from shapely.geometry import Point, MultiPoint, shape
@@ -40,20 +41,41 @@ def handle_parameters(request):
 def find_historical_files(region, forcing):
     if forcing == 'era_interim':
         path = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc*'))[0]
-        name = 'ERA Interim'
+        template = os.path.join(PATH_TO_ERA_INTERIM, 'erainterim_pandas_dataframe_template.pickle')
     elif forcing == 'era_5':
         path = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
-        name = 'ERA 5'
+        template = os.path.join(PATH_TO_ERA_5, 'era5_pandas_dataframe_template.pickle')
     else:
         raise ValueError("Invalid forcing specified, choose era_interim or era_5")
 
-    return path, name
+    return path, template
+
+
+def get_historical_dataframe(reach_id, region, units, forcing):
+    historical_data_file, template = find_historical_files(region, forcing)
+
+    # handle the units
+    units_title, units_title_long = get_units_title(units)
+
+    # collect the data in a dataframe
+    df = pd.read_pickle(template)
+    qout_nc = nc.Dataset(historical_data_file)
+    try:
+        df['flow'] = qout_nc['Qout'][:, list(qout_nc['rivid'][:]).index(reach_id)]
+        qout_nc.close()
+    except Exception as e:
+        qout_nc.close()
+        raise e
+    if units == 'english':
+        df['flow'] = df['flow'].values * M3_TO_FT3
+    df.rename(columns={'flow': f'streamflow_{units_title}^3/s'}, inplace=True)
+    return df
 
 
 def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
-    """""
+    """
     Finds the current output from downscaled ECMWF forecasts
-    """""
+    """
     if forecast_folder == "most_recent":
         if not os.path.exists(path_to_watershed_files):
             return None, None
