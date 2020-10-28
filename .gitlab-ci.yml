@@ -13,7 +13,8 @@ stages:
     # Ensure all required variables are set
     - ": \"${HELM_CHART:?must be set}\""
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART
+    - chmod +x ./check_helm_chart
+    - ./check_helm_chart $HELM_CHART
   except:
    - tags
    - master
@@ -31,7 +32,8 @@ stages:
     - ": \"${HELM_KEY_PASSPHRASE:?must be set}\""
     - ": \"${HELM_REPO_PASSWORD:?must be set}\""
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --upload
+    - chmod +x ./check_helm_chart
+    - ./check_helm_chart $HELM_CHART --upload
   only:
     - master
 
@@ -43,7 +45,11 @@ stages:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - >
+      echo "{\"auths\":{
+        \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
+        \"eccr.ecmwf.int/harbor\": {\"username\":\"$ECCR_USER\", \"password\":\"$ECCR_PASSWORD\"}
+      }}" > /kaniko/.docker/config.json
   script:
     # Ensure all required variables are set
     - ": \"${KANIKO_DOCKERFILE:?must be set}\""
@@ -77,8 +83,8 @@ stages:
     KANIKO_CONTEXT: $CI_PROJECT_DIR
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
     KANIKO_DESTINATIONS: >
-      $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-      $CI_REGISTRY_IMAGE:latest
+      eccr.ecmwf.int/geoglows_api/geoglows_api:$CI_COMMIT_TAG
+      eccr.ecmwf.int/geoglows_api/geoglows_api:latest
   only:
     - tags
 
@@ -87,7 +93,7 @@ stages:
   variables:
     KANIKO_CONTEXT: $CI_PROJECT_DIR
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
-    KANIKO_DESTINATIONS: $CI_REGISTRY_IMAGE:stable
+    KANIKO_DESTINATIONS: eccr.ecmwf.int/geoglows_api/geoglows_api:stable
   only:
     - /^stable$/
 
@@ -98,43 +104,10 @@ stages:
   dependencies: [] # Deploys do not depend on the Build phase artifacts
   variables:
     GIT_SUBMODULE_STRATEGY: none
-    K8S_CLUSTER: staging-cluster
-    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-    HELM_RELEASE: gsprestapi
-    K8S_NS: gsprestapi
-    HELM_VALUES: |
-      init_staging_data: true
-      image:
-        tag: $CI_COMMIT_TAG
-      ingress:
-        enabled: true
-        annotations:
-          certmanager.k8s.io/cluster-issuer: aqua-ca
-          kubernetes.io/ingress.class: nginx
-          nginx.ingress.kubernetes.io/proxy-body-size: "75m"
-        hosts:
-          - host: gsprestapi.staging.aquaveo.com
-            paths:
-               - "/"
-        tls:
-          - secretName: gsprestapi-tls
-            hosts:
-              - gsprestapi.staging.aquaveo.com
   script:
-    # Ensure all required variables are set
-    - ": \"${HELM_CHART:?must be set}\""
-    - ": \"${HELM_RELEASE:?must be set}\""
-    - ": \"${HELM_VALUES:?must be set}\""
-    - ": \"${K8S_NS:?must be set}\""
-    - ": \"${K8S_STAGING_PASS:?must be set}\""
-    - export K8S_PASS=${K8S_STAGING_PASS}
-    - setup_k8s_user
-    - helm dep up $HELM_CHART
-    - |
-      cat > values.yaml << EOF
-      ${HELM_VALUES}
-      EOF
-    - helm-fresh-deploy --namespace $K8S_NS $HELM_RELEASE --max-pvc-checks 24 $HELM_CHART -f values.yaml
+    - echo ${CI_COMMIT_TAG}
+    - 'curl -X POST -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}" -d "bamboo.COMMIT_TAG=${CI_COMMIT_TAG}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES0'
+
   when: manual
   only:
     - tags
@@ -145,50 +118,12 @@ stages:
   dependencies: [] # Deploys do not depend on the Build phase artifacts
   variables:
     GIT_SUBMODULE_STRATEGY: none
-    K8S_CLUSTER: production-cluster
-    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-    HELM_RELEASE: gsprestapi
-    K8S_NS: gsprestapi
-    HELM_VALUES: |
-      init_staging_data: true
-      image:
-        tag: $CI_COMMIT_TAG
-
-      ingress:
-        enabled: true
-        annotations:
-          kubernetes.io/ingress.class: nginx
-          nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-          certmanager.k8s.io/cluster-issuer: letsencrypt
-        hosts:
-          - host: gsprestapi.aquaveo.com
-            paths:
-              - "/"
-          - host: gsprestapi.apps.aquaveo.com
-            paths:
-              - "/"
-        tls:
-          - secretName: gsprestapi-tls
-            hosts:
-              - gsprestapi.aquaveo.com
   script:
-    # Ensure all required variables are set
-    - ": \"${HELM_CHART:?must be set}\""
-    - ": \"${HELM_RELEASE:?must be set}\""
-    - ": \"${HELM_TLS_KEY_VALUE:?must be set}\""
-    - ": \"${HELM_VALUES:?must be set}\""
-    - ": \"${K8S_NS:?must be set}\""
-    - ": \"${K8S_PRODUCTION_PASS:?must be set}\""
-    - export K8S_PASS=${K8S_PRODUCTION_PASS}
-    - echo "${HELM_TLS_KEY_VALUE}" > ~/.helm/key.pem
-    - setup_k8s_user
-    - helm dep up $HELM_CHART
-    - |
-      cat > values.yaml << EOF
-      ${HELM_VALUES}
-      EOF
-    - helm upgrade --install --namespace $K8S_NS $HELM_RELEASE $HELM_CHART -f values.yaml
+    - echo ${CI_COMMIT_TAG}
+    - 'curl -X POST -H "Authorization: Bearer ${ECCR_GEOGLOWS_TOKEN}" -d "bamboo.COMMIT_TAG=${CI_COMMIT_TAG}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES1'
+
   when: manual
   only:
     - tags
+
 

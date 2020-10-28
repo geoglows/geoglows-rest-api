@@ -87,7 +87,7 @@ window.onload = function() {
 </html>
 """
 
-spec = yaml.load(sys.stdin, Loader=yaml.FullLoader)
+spec = yaml.safe_load(sys.stdin)
 sys.stdout.write(TEMPLATE % json.dumps(spec))
 with open('index.html', 'r') as idx:
     with open(os.path.join(os.path.pardir, 'GSP_API', 'templates', 'documentation.html'), 'w') as doc:

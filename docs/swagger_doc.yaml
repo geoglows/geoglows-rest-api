@@ -3,9 +3,7 @@ info:
   title: GEOGloWS ECMWF Streamflow API
   description: 'A REST API to access high resolution streamflow forecasts for around the planet. The forecasts are derived using GloFAS runoff and RAPID routing.'
   version: '1.4'
-host: tethys2.byu.edu/localsptapi
-#host: gsf-api-vm.eastus.cloudapp.azure.com
-#host: 0.0.0.0:8090
+host: geoglows.ecmwf.int
 basePath: /api
 schemes:
   - https
