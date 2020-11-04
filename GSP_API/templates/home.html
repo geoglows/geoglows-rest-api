@@ -5,11 +5,12 @@
   <h1>GEOGloWS ECMWF Streamflow Model</h1>
   <p>
     Welcome to the GEOGloWS ECMWF Streamflow Model. This website contains information about the model. It also hosts
-    a REST API for accessing the results of the model and documentation about how to use it.
+    a REST API for accessing the results of the model and documentation about how to use it. Click on the map below to
+    begin exploring the forecasted streamflow around the world.
   </p>
   <hr>
 
-  <div id="map" style="width: 100%; height: 600px"></div>
+  <div id="map" style="width: 100%; height: 600px; cursor: pointer"></div>
   <div id="animation-controls" style="margin: auto; text-align: center;">
     <label class="control-label" for="time-slider">Map Animation Controls</label><br>
     <input type="range" min="0" max="40" value="0" class="slider" id="time-slider">
@@ -27,12 +28,35 @@
   </div>
 {% endblock %}
 
+{% block modals %}
+  <div class="modal modal-dialog modal-xl" id="chart_modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header row" style="margin: auto">
+          <h5 style="text-align: center">Streamflow Results <span id="request-status" class="load-status"></span></h5>
+        </div>
+
+        <div class="modal-body">
+          <div id="forecast-chart"></div>
+        </div><!-- /.modal-body -->
+
+        <div class="modal-footer">
+          <a role="button" class="btn btn-primary" id="download-forecast-btn" target="_blank">Download Streamflow Forecast</a>
+          <button class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
 {% block stylesheets %}
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
 {% endblock %}
 {% block javascript %}
-  <!-- leaflet js dependencies and styles -->
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
   <script src="https://unpkg.com/esri-leaflet@2.2.3/dist/esri-leaflet.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="/static/js/geoglows_esri_map.js"></script>
 {% endblock %}

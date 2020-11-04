@@ -16,10 +16,8 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-  <!-- FontAwesome (icons) -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 </head>
+
 <body>
 {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -39,14 +37,15 @@
 {% endblock %}
 
 {% block body %}
-<div class="container theme-showcase" role="main">
-  <div class="jumbotron">
-    {% block page_content %}
-    {% endblock %}
+  <div class="container theme-showcase" role="main">
+    <div class="jumbotron">
+      {% block modals %}{% endblock %}
+      {% block page_content %}
+      {% endblock %}
+      </div>
     </div>
+  {% endblock %}
   </div>
-{% endblock %}
-</div>
 </body>
 
 <hr>
