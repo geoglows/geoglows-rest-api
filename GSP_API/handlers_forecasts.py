@@ -223,30 +223,48 @@ def forecast_warnings_handler(request):
     return_format = request.args.get('return_format', 'csv')
 
     warnings = None
-    for region in os.listdir(PATH_TO_FORECASTS):
-        # find/check current output datasets
+
+    if region == 'all':
+        for reg in os.listdir(PATH_TO_FORECASTS):
+            # find/check current output datasets
+            path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, reg)
+            if not os.path.isdir(path_to_region_forecasts):
+                continue
+            if forecast_date == 'most_recent':
+                date_folders = sorted([d for d in os.listdir(path_to_region_forecasts)
+                                       if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
+                                      reverse=True)
+                folder = os.path.join(path_to_region_forecasts, date_folders[0])
+            else:
+                folder = os.path.join(path_to_region_forecasts, forecast_date)
+                if not os.path.isdir(folder):
+                    raise ValueError(f'Forecast date {forecast_date} was not found')
+            # locate the forecast warning csv
+            summary_file = os.path.join(folder, 'forecasted_return_periods_summary.csv')
+            if not os.path.isfile(summary_file):
+                continue
+            if warnings is None:
+                warnings = pd.read_csv(summary_file)
+                continue
+            warnings = pd.concat([warnings, pd.read_csv(summary_file)], axis=0)
+    else:
         path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, region)
         if not os.path.isdir(path_to_region_forecasts):
-            continue
+            raise ValueError(f'No region data found for region "{region}"')
         if forecast_date == 'most_recent':
-            date_folders = sorted(
-                [d for d in os.listdir(path_to_region_forecasts)
-                 if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
-                reverse=True
-            )
+            date_folders = sorted([d for d in os.listdir(path_to_region_forecasts)
+                                   if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
+                                  reverse=True)
             folder = os.path.join(path_to_region_forecasts, date_folders[0])
         else:
             folder = os.path.join(path_to_region_forecasts, forecast_date)
             if not os.path.isdir(folder):
-                raise ValueError(f'Forecast date {forecast_date} was not found')
+                raise ValueError(f'Forecast date {forecast_date} was not found. Use YYYYMMDD format.')
         # locate the forecast warning csv
         summary_file = os.path.join(folder, 'forecasted_return_periods_summary.csv')
         if not os.path.isfile(summary_file):
-            continue
-        if warnings is None:
-            warnings = pd.read_csv(summary_file)
-            continue
-        warnings = pd.concat([warnings, pd.read_csv(summary_file)], axis=0)
+            raise ValueError(f'ForecastWarnings tables not found for region: "{region}"')
+        warnings = pd.read_csv(summary_file)
 
     if warnings is None:
         raise ValueError('Unable to find any warnings csv files for any region')
