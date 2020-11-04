@@ -1,126 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="description" content="GEOGloWS ECMWF Streamflow Model">
-  <meta name="author" content="Riley Hales">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "base_template.html" %}
+{% block title %}Publications - GEOGloWS ECMWF Streamflow Model{% endblock %}
 
-  <link rel="stylesheet" href="/static/css/main.css">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <a class="navbar-brand" href="/">GEOGloWS ECMWF Streamflow Model</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav">
-      <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
-      <li class="nav-item"><a class="nav-link" href="/publications">Publications</a></li>
-      <li class="nav-item"><a class="nav-link" href="/documentation">REST API Documentation</a></li>
-      <li class="nav-item"><a class="nav-link" href="https://github.com/BYU-Hydroinformatics/gsp_rest_api" target="_blank">Source Code</a></li>
-    </ul>
-  </div>
-</nav>
+{% block page_content %}
+  <h1>Publications</h1>
+  <p>
+    The GEOGloWS ECMWF Streamflow Model grew from an academic research setting where considerable work was done to develop and evaluate the technologies which enable this hydrologic model. This is
+    an abbreviated list of publications which resulted from this research. We acknowledge that many scientists and researchers contributes to the successful development and operation of this model.
+  </p>
+  <h2>Streamflow Forecast and GEOGloWS - Hydrologic Modeling as a Service</h2>
+  <ul>
+    <li>Souffront, Michael A., E. James Nelson, Kiran Shakya, Christopher Edwards, Wade Roberts, Corey Krewson, Daniel P. Ames, Norman L. Jones, and Angelica Gutierrez, “Hydrologic Modeling as a
+      Service (HMaaS): A New Approach to Address Hydroinformatic Challenges in Developing Countries” Frontiers in Environmental Science: Freshwater Science, October 2019, doi:
+      https://doi.org/10.3389/fenvs.2019.00158
+    </li>
 
-<div class="container theme-showcase" role="main">
-  <ul class="jumbotron">
-    <h1>Publications</h1>
-    <p>
-      The GEOGloWS ECMWF Streamflow Model grew from an academic research setting where considerable work was done to develop and evaluate the technologies which enable this hydrologic model. This is
-      an abbreviated list of publications which resulted from this research. We acknowledge that many scientists and researchers contributes to the successful development and operation of this model.
-    </p>
-    <h2>Streamflow Forecast and GEOGloWS - Hydrologic Modeling as a Service</h2>
-    <ul>
-      <li>Souffront, Michael A., E. James Nelson, Kiran Shakya, Christopher Edwards, Wade Roberts, Corey Krewson, Daniel P. Ames, Norman L. Jones, and Angelica Gutierrez, “Hydrologic Modeling as a
-        Service (HMaaS): A New Approach to Address Hydroinformatic Challenges in Developing Countries” Frontiers in Environmental Science: Freshwater Science, October 2019, doi:
-        https://doi.org/10.3389/fenvs.2019.00158
-      </li>
+    <li>Qiao, Xiaohui, E. James Nelson, Daniel P. Ames, Zhiyu Li, Cedric H. David, Gustavious P. Williams, Wade Roberts, Jorge Luis Sanchez, Chris Edwards, Michael A. Souffront, Mir A. Matin, “A
+      Systems Approach to Routing Global Gridded Runoff through Local High-Resolution Stream Networks for Flood Early Warning Systems” Environmental Modelling and Software, Vol. 120, Article 104501,
+      October 2019, https://doi.org/10.1016/j.envsoft.2019.104501.
+    </li>
 
-      <li>Qiao, Xiaohui, E. James Nelson, Daniel P. Ames, Zhiyu Li, Cedric H. David, Gustavious P. Williams, Wade Roberts, Jorge Luis Sanchez, Chris Edwards, Michael A. Souffront, Mir A. Matin, “A
-        Systems Approach to Routing Global Gridded Runoff through Local High-Resolution Stream Networks for Flood Early Warning Systems” Environmental Modelling and Software, Vol. 120, Article 104501,
-        October 2019, https://doi.org/10.1016/j.envsoft.2019.104501.
-      </li>
+    <li>Sikder, Safat, Cedric H. David, George H. Allen, Xiaohui, Qiao, E. James Nelson, Mir A. Matin, “Evaluation of Available Global Runoff Datasets through a River Model in Support of
+      Transboundary Water Management in South and Southeast Asia” Frontiers in Environmental Science: Landsurface Dynamics, October 2019, https://doi.org/10.3389/fenvs.2019.00171.
+    </li>
+  </ul>
 
-      <li>Sikder, Safat, Cedric H. David, George H. Allen, Xiaohui, Qiao, E. James Nelson, Mir A. Matin, “Evaluation of Available Global Runoff Datasets through a River Model in Support of
-        Transboundary Water Management in South and Southeast Asia” Frontiers in Environmental Science: Landsurface Dynamics, October 2019, https://doi.org/10.3389/fenvs.2019.00171.
-      </li>
-    </ul>
+  <h2>GloFAS - Land Surface Modeling</h2>
+  <ul>
+    <li>Alfieri, L., P. Burek, E. Dutra, B. Krzeminski, D. Muraro, J. Thielen & F. Pappenberger, 2013. GloFAS–global ensemble streamflow forecasting and flood early warning. Hydrol Earth Syst Sci
+      17(3):1161-1175
+    </li>
+    <li>Hirpa, Feyera A, Peter Salamon, Hylke E Beck, Valerio Lorini, Lorenzo Alfieri, Ervin Zsoter, Simon J. Dadson, 2018. Calibration of the Global Flood Awareness System (GloFAS) using daily
+      streamflow data, Jornal of Hydrology, Vol 566, pg 595-606, https://doi.org/10.1016/j.jhydrol.2018.09.052
+    </li>
 
-    <h2>GloFAS - Land Surface Modeling</h2>
-    <ul>
-      <li>Alfieri, L., P. Burek, E. Dutra, B. Krzeminski, D. Muraro, J. Thielen & F. Pappenberger, 2013. GloFAS–global ensemble streamflow forecasting and flood early warning. Hydrol Earth Syst Sci
-        17(3):1161-1175
-      </li>
-      <li>Hirpa, Feyera A, Peter Salamon, Hylke E Beck, Valerio Lorini, Lorenzo Alfieri, Ervin Zsoter, Simon J. Dadson, 2018. Calibration of the Global Flood Awareness System (GloFAS) using daily
-        streamflow data, Jornal of Hydrology, Vol 566, pg 595-606, https://doi.org/10.1016/j.jhydrol.2018.09.052
-      </li>
+  </ul>
 
-    </ul>
+  <h2>RAPID - Mapping to Basins and Routing</h2>
+  <ul>
+    <li>David, C. H., J. S. Famiglietti, Z. –L. Yang, F. Habets, and D. R. Maidment (2016), A Decade of RAPID – Reflections on the Development of an Open Source Geoscience Code, Earth and Space
+      Science, 3, 1-19, DOI: 10.1002/2015EA000142.
+    </li>
+    <li>David, C. H., D. R. Maidment, G.-Y. Niu, Z. -L. Yang, F. Habets and V. Eijkhout (2011), River network routing on the NHDPlus dataset, Journal of Hydrometeorology, 12(5), 913-934. DOI:
+      10.1175/2011JHM1345.1.
+    </li>
+    <li>
+      David, C. H., J. S. Famiglietti, Z. -L. Yang, and V. Eijkhout, 2015.Enhanced Fixed-Size Parallel Speedup with the MuskingumMethod Using a Trans-Boundary Approach and a Large Sub-Basins
+      Approximation. Water Resources Research 51:1-25, DOI:10.1002/2014WR016650.
+    </li>
+  </ul>
+  <h2>Validation and HydroStats</h2>
+  <ul>
+    <li>
+      Jackson, Elise, Wade Roberts, Benjamin Nelsen, Gustavious P. Willliams, E. James Nelson, Daniel P. Ames “Introductory overview: Error metrics for hydrologic modelling – A review of common
+      practices and an open source library to facilitate use and adoption” Environmental Modeling and Software, May 2019, https://doi.org/10.1016/j.envsoft.2019.05.001.
+    </li>
+    <li>
+      Roberts, Wade, Gustavious P. Williams, Elise Jackson, E. James Nelson, Daniel P. Ames, “HydroStats: A Python Package for Characterizing Errors between Observed and Predicted Time Series”
+      Journal of Hydrology, Vol 5, Issue 4, 2018, doi:10.3390/hydrology5040066
+    </li>
+  </ul>
 
-    <h2>RAPID - Mapping to Basins and Routing</h2>
-    <ul>
-      <li>David, C. H., J. S. Famiglietti, Z. –L. Yang, F. Habets, and D. R. Maidment (2016), A Decade of RAPID – Reflections on the Development of an Open Source Geoscience Code, Earth and Space
-        Science, 3, 1-19, DOI: 10.1002/2015EA000142.
-      </li>
-      <li>David, C. H., D. R. Maidment, G.-Y. Niu, Z. -L. Yang, F. Habets and V. Eijkhout (2011), River network routing on the NHDPlus dataset, Journal of Hydrometeorology, 12(5), 913-934. DOI:
-        10.1175/2011JHM1345.1.
-      </li>
-      <li>
-        David, C. H., J. S. Famiglietti, Z. -L. Yang, and V. Eijkhout, 2015.Enhanced Fixed-Size Parallel Speedup with the MuskingumMethod Using a Trans-Boundary Approach and a Large Sub-Basins
-        Approximation. Water Resources Research 51:1-25, DOI:10.1002/2014WR016650.
-      </li>
-    </ul>
-    <h2>Validation and HydroStats</h2>
-    <ul>
-      <li>
-        Jackson, Elise, Wade Roberts, Benjamin Nelsen, Gustavious P. Willliams, E. James Nelson, Daniel P. Ames “Introductory overview: Error metrics for hydrologic modelling – A review of common
-        practices and an open source library to facilitate use and adoption” Environmental Modeling and Software, May 2019, https://doi.org/10.1016/j.envsoft.2019.05.001.
-      </li>
-      <li>
-        Roberts, Wade, Gustavious P. Williams, Elise Jackson, E. James Nelson, Daniel P. Ames, “HydroStats: A Python Package for Characterizing Errors between Observed and Predicted Time Series”
-        Journal of Hydrology, Vol 5, Issue 4, 2018, doi:10.3390/hydrology5040066
-      </li>
-    </ul>
+  <h2>US National Water Model - Original Implementation</h2>
+  <ul>
+    <li>
+      Souffront, Michael A., Shawn Crawley, Michael J. Stealey, E. James Nelson, Daniel P. Ames, Norman L. Jones, “Open Water Data Solutions for Accessing the National Water Model” Open Water
+      Journal, Vol 4 Issue 1, 2017.
+    </li>
+    <li>
+      Snow, Alan D., Scott D. Christensen, Nathan R. Swain, E. James Nelson, Daniel P. Ames, Norman L. Jones, Deng Ding, Nawajish Noman, Cedric H. David, and Florian Pappenberger, “A New
+      High-Resolution National-Scale Ensemble Hydrologic Forecast Model and Dataset,” Journal of American Water Resources Association, Special Collection for the Open Water Data Initiative, Volume
+      52, Number 4, pp 950–964, DOI: 10.1111/1752-1688.12434.
+    </li>
+  </ul>
 
-    <h2>US National Water Model - Original Implementation</h2>
-    <ul>
-      <li>
-        Souffront, Michael A., Shawn Crawley, Michael J. Stealey, E. James Nelson, Daniel P. Ames, Norman L. Jones, “Open Water Data Solutions for Accessing the National Water Model” Open Water
-        Journal, Vol 4 Issue 1, 2017.
-      </li>
-      <li>
-        Snow, Alan D., Scott D. Christensen, Nathan R. Swain, E. James Nelson, Daniel P. Ames, Norman L. Jones, Deng Ding, Nawajish Noman, Cedric H. David, and Florian Pappenberger, “A New
-        High-Resolution National-Scale Ensemble Hydrologic Forecast Model and Dataset,” Journal of American Water Resources Association, Special Collection for the Open Water Data Initiative, Volume
-        52, Number 4, pp 950–964, DOI: 10.1111/1752-1688.12434.
-      </li>
-    </ul>
-
-    <h2>Tethys - Hydroinformatics and Web Applications</h2>
-    <ul>
-      <li>
-        Swain, N. R., S. D. Christensen, A. D. Snow, H. Dolder, G. Espinoza-Dávalos, E. Goharian, N. L. Jones, E. J. Nelson, D. P. Ames and S. J. Burian (2016). "A new open source platform for
-        lowering the barrier for environmental web app development." Environmental Modelling & Software, Volume 85, pp 11-26.
-      </li>
-      <li>
-        Swain, Nathan R., K. Latu, Scott D. Christensen, Norman L. Jones, E. James Nelson, Daniel P. Ames, Gustavious P. Williams, “A Review of Open Source Software Solutions for Developing Water
-        Resources Web Applications,” Environmental Modeling & Software, Volume 67, pp. 108-117, May 2015.
-      </li>
-      <li>
-        Nelson, E. James, Sarva T. Pulla, Mir A. Matin, Kiran Shakya, Norman L. Jones, Daniel P. Ames, Lee Ellenburg, Kel. N. Markert, Cedric H. David, Benjamin F. Zaitchik, Patrick Gatlin, Riley
-        Hales, “Enabling Stakeholder Decision-Making with Earth Observation and Modeling Data Across the SERVIR Hubs using Tethys Platform” Frontiers in Environmental Science: Freshwater Science,
-        doi:10.3389/fenvs.2019.00148
-      </li>
-    </ul>
-</div>
-<hr/>
-<div class="footer">
-  <p>2020 Aquaveo, BYU, ECMWF, GEOGloWS</p>
-</div>
-</div>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-</body>
-</html>
+  <h2>Tethys - Hydroinformatics and Web Applications</h2>
+  <ul>
+    <li>
+      Swain, N. R., S. D. Christensen, A. D. Snow, H. Dolder, G. Espinoza-Dávalos, E. Goharian, N. L. Jones, E. J. Nelson, D. P. Ames and S. J. Burian (2016). "A new open source platform for
+      lowering the barrier for environmental web app development." Environmental Modelling & Software, Volume 85, pp 11-26.
+    </li>
+    <li>
+      Swain, Nathan R., K. Latu, Scott D. Christensen, Norman L. Jones, E. James Nelson, Daniel P. Ames, Gustavious P. Williams, “A Review of Open Source Software Solutions for Developing Water
+      Resources Web Applications,” Environmental Modeling & Software, Volume 67, pp. 108-117, May 2015.
+    </li>
+    <li>
+      Nelson, E. James, Sarva T. Pulla, Mir A. Matin, Kiran Shakya, Norman L. Jones, Daniel P. Ames, Lee Ellenburg, Kel. N. Markert, Cedric H. David, Benjamin F. Zaitchik, Patrick Gatlin, Riley
+      Hales, “Enabling Stakeholder Decision-Making with Earth Observation and Modeling Data Across the SERVIR Hubs using Tethys Platform” Frontiers in Environmental Science: Freshwater Science,
+      doi:10.3389/fenvs.2019.00148
+    </li>
+  </ul>
+{% endblock %}
