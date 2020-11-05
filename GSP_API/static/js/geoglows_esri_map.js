@@ -147,6 +147,7 @@ function plotForecastStats(id) {
             Plotly.newPlot('forecast-chart', traces, {title: 'Forecasted Flow<br>Reach ID: ' + reach_id});
             forecastsLoaded = true;
             updateStatusIcons('ready');
+            updateDownloadLinks('set');
         },
         error: function () {
             console.log('forecast fail');

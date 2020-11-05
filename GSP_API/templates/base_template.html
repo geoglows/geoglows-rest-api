@@ -20,7 +20,7 @@
 
 <body>
 {% block navbar %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#292b47;">
   <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow Model</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -42,16 +42,40 @@
       {% block modals %}{% endblock %}
       {% block page_content %}
       {% endblock %}
-      </div>
     </div>
-  {% endblock %}
   </div>
+{% endblock %}
 </body>
 
 <hr>
 <footer>
-  <div class="footer" style="padding: 2%">
-    <p>&#169; 2020 Aquaveo, BYU, ECMWF, GEOGloWS</p>
+  <div class="footer container-fluid" style="padding: 2%">
+    <div class="row">
+      <div class="col-md-1 text-center" style="line-height: 60px;">
+        <p style="margin:auto;vertical-align:middle;display:inline-block;">&#169; 2020</p>
+      </div>
+      <div class="col-md-3 text-center">
+        <a href="https://www.aquaveo.com/" target="_blank" style="line-height: 60px;">
+          <img src="/static/images/aquaveologo.png" style="width:200px;margin:auto;vertical-align:middle;display:inline-block;" alt="Aquaveo">
+        </a>
+      </div>
+      <div class="col-md-2 text-center">
+        <a href="https://home.byu.edu/" target="_blank" style="line-height: 60px;">
+          <img src="/static/images/byulogo.png" style="height:60px;margin:auto;vertical-align:middle;display:inline-block;" alt="Brigham Young University">
+        </a>
+      </div>
+      <div class="col-md-3 text-center">
+        <a href="https://www.ecmwf.int/" target="_blank" style="line-height: 60px;">
+          <img src="/static/images/ecmwflogo.png" alt="ECMWF" style="width:200px;margin:auto;vertical-align:middle;display:inline-block;">
+        </a>
+      </div>
+      <div class="col-md-3 text-center">
+        <a href="https://www.geoglows.org/" target="_blank" style="line-height: 60px;">
+          <img src="/static/images/geoglowslogo.png" alt="GEOGloWS" style="width:200px;margin:auto;vertical-align:middle;display:inline-block;">
+        </a>
+      </div>
+    </div>
+    </div>
   </div>
 </footer>
 
