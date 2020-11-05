@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: GEOGloWS ECMWF Streamflow API
   description: 'A REST API to access high resolution streamflow forecasts from around the world. The forecasts are derived using GloFAS runoff and RAPID routing.'
-  version: '0.1.8'
+  version: '1.1.0'
 host: geoglows.ecmwf.int
 basePath: /api
 schemes:
