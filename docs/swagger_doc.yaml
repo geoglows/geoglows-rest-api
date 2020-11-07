@@ -31,9 +31,9 @@ paths:
           format: float
         - name: date
           in: query
-          description: The given date for the forecast of interest. If you leave it blank it defaults to most_recent
+          description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
           type: string
-          pattern: YYYYMMDD.HH
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
         - name: return_format
           in: query
           description: The format of the time series response.
@@ -80,10 +80,9 @@ paths:
           format: float
         - name: date
           in: query
-          description: The given date for the forecast of interest.
-          default: most_recent
+          description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
           type: string
-          pattern: YYYYMMDD.HH
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
         - name: ensemble
           in: query
           description: |-
@@ -180,15 +179,13 @@ paths:
         - name: start_date
           in: query
           description: A date in YYYYMMDD format when you would like to start retrieving data (if available). Defaults to Jan 1 of the current year.
-          default: most_recent
           type: string
-          pattern: YYYYMMDD
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
         - name: end_date
           in: query
           description: A date in YYYYMMDD format when you would like to stop retrieving data (if available). Defaults to Dec 31 of the current year.
-          default: most_recent
           type: string
-          pattern: YYYYMMDD
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
         - text/csv
       responses:

@@ -4,7 +4,7 @@
   <title>{% block title %}{% endblock %}</title>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="description" content="GEOGloWS ECMWF Streamflow Model">
+  <meta name="description" content="GEOGloWS ECMWF Streamflow Service">
   <meta name="author" content="Riley Hales">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
@@ -21,12 +21,12 @@
 <body>
 {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#292b47;">
-  <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow Model</a>
+  <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow Service</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav">
+    <ul class="navbar-nav nav-fill w-100">
       <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
       <li class="nav-item"><a class="nav-link" href="{{ url_for('publications') }}">Publications</a></li>
       <li class="nav-item"><a class="nav-link" href="{{ url_for('documentation') }}">REST API Documentation</a></li>
@@ -59,12 +59,12 @@
           <img src="/static/images/aquaveologo.png" style="width:200px;margin:auto;vertical-align:middle;display:inline-block;" alt="Aquaveo">
         </a>
       </div>
-      <div class="col-md-2 text-center">
+      <div class="col-md-1 text-center">
         <a href="https://home.byu.edu/" target="_blank" style="line-height: 60px;">
           <img src="/static/images/byulogo.png" style="height:60px;margin:auto;vertical-align:middle;display:inline-block;" alt="Brigham Young University">
         </a>
       </div>
-      <div class="col-md-3 text-center">
+      <div class="col-md-4 text-center">
         <a href="https://www.ecmwf.int/" target="_blank" style="line-height: 60px;">
           <img src="/static/images/ecmwflogo.png" alt="ECMWF" style="width:200px;margin:auto;vertical-align:middle;display:inline-block;">
         </a>
@@ -74,7 +74,6 @@
           <img src="/static/images/geoglowslogo.png" alt="GEOGloWS" style="width:200px;margin:auto;vertical-align:middle;display:inline-block;">
         </a>
       </div>
-    </div>
     </div>
   </div>
 </footer>

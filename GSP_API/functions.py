@@ -92,6 +92,10 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
             date = datetime.datetime.strptime(directory.split(".")[0], "%Y%m%d")
             time = directory.split(".")[-1]
             path_to_files = os.path.join(path_to_watershed_files, directory)
+            if not path_to_files.endswith(".00") and not path_to_files.endswith(".12"):
+                time = "00"
+                path_to_files += ".00"
+
             if os.path.exists(path_to_files):
                 basin_files = sorted(glob.glob(os.path.join(path_to_files, "*.nc")),
                                      reverse=True)
