@@ -11,9 +11,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8090:80
-#    volumes:
+    volumes:
 #      - MOUNT THE FLASK APP CODE
-#      - ./GSP_API:/app/GSP_API
+      - ./GSP_API:/app/GSP_API
 
 #      - LOCAL/DEVELOPMENT MOUNTS FOR DATA
 #      - ./output:/mnt/output/

@@ -21,16 +21,16 @@
 <body>
 {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#292b47;">
-  <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow Service</a>
+  <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav nav-fill w-100">
       <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('documentation') }}">Documentation</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('training')}}">Training</a></li>
       <li class="nav-item"><a class="nav-link" href="{{ url_for('publications') }}">Publications</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('documentation') }}">REST API Documentation</a></li>
-      <li class="nav-item"><a class="nav-link" href="https://github.com/BYU-Hydroinformatics/gsp_rest_api" target="_blank">Source Code</a></li>
     </ul>
   </div>
 </nav>

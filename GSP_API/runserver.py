@@ -62,18 +62,25 @@ def documentation():
     return render_template('documentation.html')
 
 
-# API documentation
+# Publication List
 @app.route('/publications')
 @cross_origin()
 def publications():
     return render_template('publications.html')
 
 
-# API documentation
+# About page
 @app.route('/about')
 @cross_origin()
 def about():
     return render_template('about.html')
+
+
+# Tutorials/Training list
+@app.route('/training')
+@cross_origin()
+def training():
+    return render_template('training.html')
 
 
 # GET, API ForecastStats endpoint
