@@ -7,12 +7,7 @@ import xarray
 from flask import jsonify, make_response
 from functions import get_units_title, ecmwf_find_most_current_files, handle_parameters
 
-# GLOBAL
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
-M3_TO_FT3 = 35.3146667
+from constants import PATH_TO_FORECASTS, PATH_TO_FORECAST_RECORDS, M3_TO_FT3
 
 __all__ = ['forecast_stats_handler', 'forecast_ensembles_handler', 'forecast_warnings_handler',
            'forecast_records_handler', 'available_dates_handler']
@@ -343,8 +338,6 @@ def forecast_records_handler(request):
                 'flow': df[f'streamflow_{units_title}^3/s'].tolist(),
             }
         }
-
-    # todo waterml records
 
     else:
         raise ValueError(f'Invalid return_format "{return_format}"')

@@ -9,12 +9,7 @@ import xarray
 from flask import jsonify, render_template, make_response
 from functions import handle_parameters, get_units_title, get_historical_dataframe
 
-# GLOBAL
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
-M3_TO_FT3 = 35.3146667
+from constants import PATH_TO_ERA_5, PATH_TO_ERA_INTERIM, M3_TO_FT3
 
 __all__ = ['historic_data_handler', 'historic_averages_handler', 'return_periods_handler']
 
@@ -182,7 +177,7 @@ def return_periods_handler(request):
 
     # use the json to render a waterml document
     if return_format == "waterml":
-        xml_response = make_response(render_template('return_periods.xml', **json_output))
+        xml_response = make_response(render_template('water_one_flow/return_periods.xml', **json_output))
         xml_response.headers.set('Content-Type', 'application/xml')
         return xml_response
 

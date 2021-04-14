@@ -1,11 +1,10 @@
 import logging
-import sys
 from os import getenv
 
 from deprecated import (seasonal_average_handler,
                         deprecated_forecast_stats_handler,
                         deprecated_historic_data_handler)
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
 from flask_restful import Api
 from handlers_forecasts import (forecast_stats_handler,
@@ -22,20 +21,13 @@ from handlers_utilities import (get_available_data_handler,
 
 print("Creating Application")
 
-api_prefix = getenv('API_PREFIX')
-app = Flask(__name__)
+api_path = getenv('API_PREFIX')
+wof_path = 'wof'
 
+app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = '*'
-
 api = Api(app)
-# print(api_prefix)
-
-# GLOBAL
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
 
 
 # create logger function
@@ -48,297 +40,166 @@ def init_logger():
     logger.addHandler(handler)
 
 
-# API home page
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HTML PAGES
 @app.route('/')
 @cross_origin()
 def home():
     return render_template('home.html')
 
 
-# API documentation
 @app.route('/documentation')
 @cross_origin()
 def documentation():
     return render_template('documentation.html')
 
 
-# Publication List
 @app.route('/publications')
 @cross_origin()
 def publications():
     return render_template('publications.html')
 
 
-# About page
 @app.route('/about')
 @cross_origin()
 def about():
     return render_template('about.html')
 
 
-# Tutorials/Training list
 @app.route('/training')
 @cross_origin()
 def training():
     return render_template('training.html')
 
 
-# GET, API ForecastStats endpoint
-@app.route(api_prefix + '/ForecastStats/', methods=['GET'])
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REST API ENDPOINTS
+@app.route(f'{api_path}/ForecastStats/', methods=['GET'])
 @cross_origin()
 def forecast_stats():
-    init_logger()
-    try:
-        return forecast_stats_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return forecast_stats_handler(request)
 
 
-# GET, API ForecastEnsembles endpoint
-@app.route(api_prefix + '/ForecastEnsembles/', methods=['GET'])
+@app.route(f'{api_path}/ForecastEnsembles/', methods=['GET'])
 @cross_origin()
 def forecast_ensembles():
-    init_logger()
-    try:
-        return forecast_ensembles_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return forecast_ensembles_handler(request)
 
 
-# GET, API ForecastWarnings endpoint
-@app.route(api_prefix + '/ForecastWarnings/', methods=['GET'])
+@app.route(f'{api_path}/ForecastWarnings/', methods=['GET'])
 @cross_origin()
 def forecast_warnings():
-    init_logger()
-    try:
-        return forecast_warnings_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return forecast_warnings_handler(request)
 
 
-# GET, API ForecastRecords endpoint
-@app.route(api_prefix + '/ForecastRecords/', methods=['GET'])
+@app.route(f'{api_path}/ForecastRecords/', methods=['GET'])
 @cross_origin()
 def forecast_records():
-    init_logger()
-    try:
-        return forecast_records_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return forecast_records_handler(request)
 
 
-# GET, API HistoricSimulation endpoint
-@app.route(api_prefix + '/HistoricSimulation/', methods=['GET'])
+@app.route(f'{api_path}/HistoricSimulation/', methods=['GET'])
 @cross_origin()
 def historic_simulation():
-    init_logger()
-    try:
-        return historic_data_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return historic_data_handler(request)
 
 
-# GET, API ReturnPeriods endpoint
-@app.route(api_prefix + '/ReturnPeriods/', methods=['GET'])
+@app.route(f'{api_path}/ReturnPeriods/', methods=['GET'])
 @cross_origin()
 def return_periods():
-    init_logger()
-    try:
-        return return_periods_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return return_periods_handler(request)
 
 
-# GET, API SeasonalAverage endpoint
-@app.route(api_prefix + '/DailyAverages/', methods=['GET'])
+@app.route(f'{api_path}/DailyAverages/', methods=['GET'])
 @cross_origin()
 def daily_averages():
-    init_logger()
-    try:
-        return historic_averages_handler(request, 'daily')
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return historic_averages_handler(request, 'daily')
 
 
-# GET, API SeasonalAverage endpoint
-@app.route(api_prefix + '/MonthlyAverages/', methods=['GET'])
+@app.route(f'{api_path}/MonthlyAverages/', methods=['GET'])
 @cross_origin()
 def monthly_averages():
-    init_logger()
-    try:
-        return historic_averages_handler(request, 'monthly')
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return historic_averages_handler(request, 'monthly')
 
 
-# GET, API AvailableData endpoint
-@app.route(api_prefix + '/AvailableData/', methods=['GET'])
+@app.route(f'{api_path}/AvailableData/', methods=['GET'])
 @cross_origin()
 def available_data():
-    init_logger()
-
-    try:
-        return get_available_data_handler()
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return get_available_data_handler()
 
 
-# GET, API AvailableRegions endpoint
-@app.route(api_prefix + '/AvailableRegions/', methods=['GET'])
+@app.route(f'{api_path}/AvailableRegions/', methods=['GET'])
 @cross_origin()
 def regions():
-    init_logger()
-    try:
-        return get_region_handler()
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return get_region_handler()
 
 
-# GET, API AvailableDates endpoint
-@app.route(api_prefix + '/AvailableDates/', methods=['GET'])
+@app.route(f'{api_path}/AvailableDates/', methods=['GET'])
 @cross_origin()
 def dates():
     if request.args.get('region', '') == '':
-        return jsonify({"error": "region is required as input."}), 422
-
-    try:
-        # Call the service
-        return available_dates_handler(request)
-
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+        raise ValueError('region is a required parameter')
+    return available_dates_handler(request)
 
 
-# GET, API GetReachID endpoint
-@app.route(api_prefix + '/GetReachID/', methods=['GET'])
+@app.route(f'{api_path}/GetReachID/', methods=['GET'])
 @cross_origin()
 def determine_reach_id():
-    """
-    returns the reach_id closest to a given latitude/longitude pair
-    """
     if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-        logging.error("Specify both a latitude (lat) and a longitude (lon).")
-        return jsonify({"error": "Specify both a latitude (lat) and a longitude (lon)."}), 422
+        raise ValueError('Specify both a latitude (lat) and a longitude (lon)')
+    return get_reach_id_from_latlon_handler(request)
 
-    try:
-        return get_reach_id_from_latlon_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
+@app.errorhandler(404)
+def errors_404(e):
+    return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
+
+
+@app.errorhandler(ValueError)
+def error_valueerror(e):
+    return jsonify({"error": str(e)}), 422
+
+
+@app.errorhandler(Exception)
+def error_generalexception(e):
+    return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DEPRECATED
 # GET, API SeasonalAverage endpoint
-@app.route(api_prefix + '/SeasonalAverage/', methods=['GET'])
+@app.route(f'{api_path}/SeasonalAverage/', methods=['GET'])
 @cross_origin()
 def seasonal_average():
-    init_logger()
-
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
         if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
-    try:
-        return seasonal_average_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return seasonal_average_handler(request)
 
 
-# GET, API SeasonalAverage endpoint
-@app.route(api_prefix + '/DeprecatedForecastStats/', methods=['GET'])
+@app.route(f'{api_path}/DeprecatedForecastStats/', methods=['GET'])
 @cross_origin()
 def deprecated_forecast_stats():
-    init_logger()
-
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
         if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
-    try:
-        return deprecated_forecast_stats_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return deprecated_forecast_stats_handler(request)
 
 
-# GET, API SeasonalAverage endpoint
-@app.route(api_prefix + '/DeprecatedHistoricSimulation/', methods=['GET'])
+@app.route(f'{api_path}/DeprecatedHistoricSimulation/', methods=['GET'])
 @cross_origin()
 def deprecated_historic_simulation():
-    init_logger()
-
     # ensure you have enough information provided to return a response
     if request.args.get('reach_id', '') == '':
         if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
             logging.error("Either reach_id or lat and lon parameters are required as input.")
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
-    try:
-        return deprecated_historic_data_handler(request)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-    except Exception as e:
-        print(sys.exc_info()[0])
-        logging.exception(sys.exc_info()[0])
-        return jsonify({"error": f"An unexpected error occurred: {e}"}), 400
+    return deprecated_historic_data_handler(request)
 
 
 if __name__ == '__main__':
