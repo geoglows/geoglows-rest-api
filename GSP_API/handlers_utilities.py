@@ -48,6 +48,8 @@ def get_reach_id_from_latlon_handler(request):
     """
     Controller that returns the reach_id nearest to valid lat/lon coordinates
     """
+    if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+        raise ValueError('Specify both a latitude (lat) and a longitude (lon)')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
     reach_id, region, dist_error = latlon_to_reach(lat, lon)

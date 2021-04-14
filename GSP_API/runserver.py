@@ -135,33 +135,13 @@ def regions():
 @app.route(f'{api_path}/AvailableDates/', methods=['GET'])
 @cross_origin()
 def dates():
-    if request.args.get('region', '') == '':
-        raise ValueError('region is a required parameter')
     return available_dates_handler(request)
 
 
 @app.route(f'{api_path}/GetReachID/', methods=['GET'])
 @cross_origin()
 def determine_reach_id():
-    if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
-        raise ValueError('Specify both a latitude (lat) and a longitude (lon)')
     return get_reach_id_from_latlon_handler(request)
-
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
-@app.errorhandler(404)
-def errors_404(e):
-    return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
-
-
-@app.errorhandler(ValueError)
-def error_valueerror(e):
-    return jsonify({"error": str(e)}), 422
-
-
-@app.errorhandler(Exception)
-def error_generalexception(e):
-    return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DEPRECATED
@@ -200,6 +180,24 @@ def deprecated_historic_simulation():
             return jsonify({"error": "Either reach_id or lat and lon parameters are required as input."}), 422
 
     return deprecated_historic_data_handler(request)
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
+@app.errorhandler(404)
+def errors_404(e):
+    if request.path.startswith(f'{api_path}'):
+        return jsonify({"error": f'API Endpoint not found: {request.path} -> Check spelling and the API docs'}), 404
+    return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
+
+
+@app.errorhandler(ValueError)
+def error_valueerror(e):
+    return jsonify({"error": str(e)}), 422
+
+
+@app.errorhandler(Exception)
+def error_generalexception(e):
+    return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 
 if __name__ == '__main__':

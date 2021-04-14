@@ -15,8 +15,7 @@ __all__ = ['forecast_stats_handler', 'forecast_ensembles_handler', 'forecast_war
 
 def forecast_stats_handler(request):
     """
-    Controller that will retrieve forecast statistic data
-    in different formats
+    Controller that will retrieve forecast statistics data in different formats
     """
     # handle the parameters from the user
     try:
@@ -347,7 +346,9 @@ def available_dates_handler(request):
     """
     Controller that returns available dates.
     """
-    region = request.args.get('region', '')
+    region = request.args.get('region', None)
+    if region is None:
+        raise ValueError('region is a required parameter')
 
     region_path = os.path.join(PATH_TO_FORECASTS, region)
 
