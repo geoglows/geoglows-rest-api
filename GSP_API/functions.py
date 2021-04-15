@@ -113,7 +113,7 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
 
 def get_ecmwf_valid_forecast_folder_list(main_watershed_forecast_folder, file_extension):
     """
-    Retreives a list of valid forecast forlders for the watershed
+    Retrieves a list of valid forecast folders for the watershed
     """
     directories = sorted(
         [d for d in os.listdir(main_watershed_forecast_folder)

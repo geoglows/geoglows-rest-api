@@ -7,12 +7,7 @@ import xarray
 from flask import jsonify, make_response
 from functions import get_units_title, ecmwf_find_most_current_files, handle_parameters
 
-# GLOBAL
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
-M3_TO_FT3 = 35.3146667
+from constants import PATH_TO_FORECASTS, PATH_TO_FORECAST_RECORDS, M3_TO_FT3
 
 __all__ = ['forecast_stats_handler', 'forecast_ensembles_handler', 'forecast_warnings_handler',
            'forecast_records_handler', 'available_dates_handler']
@@ -20,8 +15,7 @@ __all__ = ['forecast_stats_handler', 'forecast_ensembles_handler', 'forecast_war
 
 def forecast_stats_handler(request):
     """
-    Controller that will retrieve forecast statistic data
-    in different formats
+    Controller that will retrieve forecast statistics data in different formats
     """
     # handle the parameters from the user
     try:
@@ -344,8 +338,6 @@ def forecast_records_handler(request):
             }
         }
 
-    # todo waterml records
-
     else:
         raise ValueError(f'Invalid return_format "{return_format}"')
 
@@ -354,7 +346,9 @@ def available_dates_handler(request):
     """
     Controller that returns available dates.
     """
-    region = request.args.get('region', '')
+    region = request.args.get('region', None)
+    if region is None:
+        raise ValueError('region is a required parameter')
 
     region_path = os.path.join(PATH_TO_FORECASTS, region)
 

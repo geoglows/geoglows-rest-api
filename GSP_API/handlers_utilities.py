@@ -3,12 +3,7 @@ import os
 from flask import jsonify
 from functions import latlon_to_reach
 
-# GLOBAL
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
-M3_TO_FT3 = 35.3146667
+from constants import PATH_TO_FORECASTS
 
 __all__ = ['get_available_data_handler', 'get_region_handler', 'get_reach_id_from_latlon_handler']
 
@@ -53,6 +48,8 @@ def get_reach_id_from_latlon_handler(request):
     """
     Controller that returns the reach_id nearest to valid lat/lon coordinates
     """
+    if request.args.get('lat', '') == '' or request.args.get('lon', '') == '':
+        raise ValueError('Specify both a latitude (lat) and a longitude (lon)')
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
     reach_id, region, dist_error = latlon_to_reach(lat, lon)
