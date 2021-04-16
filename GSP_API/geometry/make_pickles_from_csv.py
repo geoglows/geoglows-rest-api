@@ -17,10 +17,9 @@ for gj in gjs:
         boundaries_dictionary[os.path.splitext(os.path.basename(gj))[0]] = json.load(f)
 
 # 4 dump it to pickle with protocol 4 (not 5 even though its better because we want maximum compatibility with python verisons)
-picklepath = '/path/to/geometry/directory/in/api/code/direcotry/boundaries.pickle'
+picklepath = '/path/to/geometry/directory/in/api/code/directory/boundaries.pickle'
 with open(picklepath, 'wb') as f:
     pickle.dump(json.dumps(boundaries_dictionary), f, protocol=4)
-
 
 ### to make the lat lon z csv files into pickle
 import pandas as pd

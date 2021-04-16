@@ -5,18 +5,12 @@ import os
 import pickle
 from collections import OrderedDict
 
-import netCDF4 as nc
 import pandas as pd
 from pytz import utc
 from shapely.geometry import Point, MultiPoint, shape
 from shapely.ops import nearest_points
 
-# GLOBAL
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
-M3_TO_FT3 = 35.3146667
+from constants import PATH_TO_ERA_INTERIM, PATH_TO_ERA_5
 
 
 def handle_parameters(request):
@@ -51,27 +45,6 @@ def find_historical_files(region, forcing):
     return path, template
 
 
-def get_historical_dataframe(reach_id, region, units, forcing):
-    historical_data_file, template = find_historical_files(region, forcing)
-
-    # handle the units
-    units_title, units_title_long = get_units_title(units)
-
-    # collect the data in a dataframe
-    df = pd.read_pickle(template)
-    qout_nc = nc.Dataset(historical_data_file)
-    try:
-        df['flow'] = qout_nc['Qout'][:, list(qout_nc['rivid'][:]).index(reach_id)]
-        qout_nc.close()
-    except Exception as e:
-        qout_nc.close()
-        raise e
-    if units == 'english':
-        df['flow'] = df['flow'].values * M3_TO_FT3
-    df.rename(columns={'flow': f'streamflow_{units_title}^3/s'}, inplace=True)
-    return df
-
-
 def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
     """
     Finds the current output from downscaled ECMWF forecasts
@@ -86,7 +59,7 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
                 reverse=True
             )
     else:
-        directories = [forecast_folder]
+        directories = [forecast_folder, ]
     for directory in directories:
         try:
             date = datetime.datetime.strptime(directory.split(".")[0], "%Y%m%d")
@@ -97,7 +70,7 @@ def ecmwf_find_most_current_files(path_to_watershed_files, forecast_folder):
                 path_to_files += ".00"
 
             if os.path.exists(path_to_files):
-                basin_files = sorted(glob.glob(os.path.join(path_to_files, "*.nc")),
+                basin_files = sorted(glob.glob(os.path.join(path_to_files, "Qout*.nc")),
                                      reverse=True)
                 if len(basin_files) > 0:
                     seconds = int(int(time) / 100) * 60 * 60

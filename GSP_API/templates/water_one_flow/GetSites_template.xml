@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<sitesResponse xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.cuahsi.org/waterML/1.1/">
+<queryInfo>
+<creationTime>{{ creation_time }}</creationTime>
+<criteria MethodCalled="GetSites"/>
+</queryInfo>
+{% for reach_id, lat, lon in comid_lat_lon_array %}<site><siteInfo><siteName>Stream Number {{ reach_id }}</siteName><siteCode network="geoglows" siteID="{{ reach_id }}">{{ reach_id }}</siteCode><geoLocation><geogLocation xsi:type="LatLonPointType" srs="EPSG:4326"><latitude>{{ lat }}</latitude><longitude>{{ lon }}</longitude></geogLocation></geoLocation><elevation_m>unknown</elevation_m><verticalDatum>unknown</verticalDatum></siteInfo></site>{% endfor %}
+</sitesResponse>

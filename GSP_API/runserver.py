@@ -1,23 +1,24 @@
 import logging
 from os import getenv
 
-from deprecated import (seasonal_average_handler,
-                        deprecated_forecast_stats_handler,
-                        deprecated_historic_data_handler)
-from flask import Flask, render_template, request, jsonify, url_for, redirect
+from controllers_deprecated import (seasonal_average_handler,
+                                    deprecated_forecast_stats_handler,
+                                    deprecated_historic_data_handler)
+from flask import Flask, render_template, request, jsonify, url_for, redirect, make_response
 from flask_cors import CORS, cross_origin
 from flask_restful import Api
-from handlers_forecasts import (forecast_stats_handler,
-                                forecast_ensembles_handler,
-                                forecast_warnings_handler,
-                                forecast_records_handler,
-                                available_dates_handler, )
-from handlers_historical import (historic_data_handler,
-                                 historic_averages_handler,
-                                 return_periods_handler, )
-from handlers_utilities import (get_available_data_handler,
-                                get_region_handler,
-                                get_reach_id_from_latlon_handler, )
+from controllers_forecasts import (forecast_stats_handler,
+                                   forecast_ensembles_handler,
+                                   forecast_warnings_handler,
+                                   forecast_records_handler,
+                                   available_dates_handler, )
+from controllers_historical import (historic_data_handler,
+                                    historic_averages_handler,
+                                    return_periods_handler, )
+from controllers_utilities import (get_available_data_handler,
+                                   get_region_handler,
+                                   get_reach_id_from_latlon_handler, )
+from controllers_water_one_flow import (wof_get_sites, wof_get_values, )
 
 print("Creating Application")
 
@@ -69,6 +70,28 @@ def about():
 @cross_origin()
 def training():
     return render_template('training.html')
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WATERONEFLOW ENDPOINTS
+@app.route(f'{api_path}/{wof_path}/GetSites', methods=['GET'])
+@api.representation('application/xml')
+@cross_origin()
+def get_sites():
+    """
+    WaterOneFlow GetValues
+    """
+    return make_response(wof_get_sites(), 200, {})
+
+
+@app.route(f'{api_path}/{wof_path}/GetValues', methods=['GET'])
+@api.representation('application/xml')
+@cross_origin()
+def get_values():
+    """
+    WaterOneFlow GetValues
+    """
+    return wof_get_values(request.args.get('location'), request.args.get('variable'),
+                          request.args.get('startDate'), request.args.get('endDate'))
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REST API ENDPOINTS
@@ -195,9 +218,9 @@ def error_valueerror(e):
     return jsonify({"error": str(e)}), 422
 
 
-@app.errorhandler(Exception)
-def error_generalexception(e):
-    return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
+# @app.errorhandler(Exception)
+# def error_generalexception(e):
+#     return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 
 if __name__ == '__main__':
