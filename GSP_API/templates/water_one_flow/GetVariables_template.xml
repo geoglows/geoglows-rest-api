@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfMappedVariable xmlns="http://hiscentral.cuahsi.org/20100205/">
+  <MappedVariable>
+    <variableName>Forecast</variableName>
+    <variableCode>forecast</variableCode>
+  </MappedVariable>
+  <MappedVariable>
+    <variableName>ForecastStats</variableName>
+    <variableCode>forecaststats</variableCode>
+  </MappedVariable>
+  <MappedVariable>
+    <variableName>ForecastEnsembles</variableName>
+    <variableCode>forecastensembles</variableCode>
+  </MappedVariable>
+  <MappedVariable>
+    <variableName>Historical</variableName>
+    <variableCode>historical</variableCode>
+  </MappedVariable>
+  <MappedVariable>
+    <variableName>ReturnPeriods</variableName>
+    <variableCode>returnperiods</variableCode>
+  </MappedVariable>
+  <MappedVariable>
+    <variableName>DailyAverages</variableName>
+    <variableCode>dailyaverages</variableCode>
+  </MappedVariable>
+  <MappedVariable>
+    <variableName>MonthlyAverages</variableName>
+    <variableCode>monthlyaverages</variableCode>
+  </MappedVariable>
+</ArrayOfMappedVariable>
