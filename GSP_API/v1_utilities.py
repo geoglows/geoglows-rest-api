@@ -1,7 +1,7 @@
 import os
 
 from flask import jsonify
-from functions import latlon_to_reach
+from v1_functions import latlon_to_reach
 
 from constants import PATH_TO_FORECASTS
 
@@ -22,7 +22,7 @@ def get_available_data_handler():
         region_path = os.path.join(PATH_TO_FORECASTS, region)
         # get a list of the data in its folder
         dates = [d for d in os.listdir(region_path) if d.split('.')[0].isdigit()]
-        # if there is are dates in that folder
+        # if there are dates in that folder
         if len(dates) != 0:
             # add it to the list of available data
             available_data[region] = dates

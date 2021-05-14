@@ -14,18 +14,5 @@ services:
     volumes:
 #      - MOUNT THE FLASK APP CODE
       - ./GSP_API:/app/GSP_API
-
-#      - LOCAL/DEVELOPMENT MOUNTS FOR DATA
-#      - ./output:/mnt/output/
-
-#      - TETHYS2 SERVER MOUNTS
-#      - /home/tethys/spt_files/era:/mnt/output/era-interim/
-#      - /home/tethys/spt_files/ecmwf:/mnt/output/forecasts/
-#      - /home/riley/more_spt_data/forecast-records:/mnt/output/forecast-records/
-#      - /home/riley/more_spt_data/era5data/:/mnt/output/era-5/
-
-#      - AZURE streamflow-api-vm MOUNTS
-#      - /data_mount/forecasts:/mnt/output/forecasts
-#      - /data_mount/forecast-records:/mnt/output/forecast-records
-#      - /data_mount/era-interim:/mnt/output/era-interim
-#      - /data_mount/era-5:/mnt/output/era-5
+#      - MOUNT THE DATA
+      - /Users/rchales/data/geoglowsdata:/mnt/output
