@@ -3,7 +3,6 @@ from os import getenv
 
 from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
-from flask_restful import Api
 
 import v1_controllers
 import v2_controllers
@@ -14,9 +13,11 @@ api_path = getenv('API_PREFIX')
 wof_path = 'wof'
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
+app.debug = False
+
 cors = CORS(app)
 app.config['CORS_HEADERS'] = '*'
-api = Api(app)
 
 
 # create logger function
@@ -112,10 +113,8 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return jsonify({"status": "success"})
 
 
-@app.route(f'{api_path}/<product>', methods=['GET'],)
-@app.route(f'{api_path}/<product>/', methods=['GET'],)
+@app.route(f'{api_path}/<product>', methods=['GET'], )
 @app.route(f'{api_path}/v1/<product>', methods=['GET'])
-@app.route(f'{api_path}/v1/<product>/', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
 
@@ -169,8 +168,12 @@ def errors_404(e):
 
 @app.errorhandler(ValueError)
 def error_valueerror(e):
-    ValueError()
     return jsonify({"error": str(e)}), 422
+
+
+@app.errorhandler(AssertionError)
+def error_assertion(e):
+    return jsonify({"error": "invalid input argument", "code": 100})
 
 
 @app.errorhandler(Exception)
@@ -179,5 +182,4 @@ def error_generalexception(e):
 
 
 if __name__ == '__main__':
-    app.debug = False
     app.run()

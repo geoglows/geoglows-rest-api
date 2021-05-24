@@ -34,25 +34,26 @@ def historical(reach_id, units, return_format):
 
 
 def historical_averages(reach_id, units, average_type, return_format):
-    hist_df = get_historical_dataframe(reach_id, units)
-    hist_df.index = pd.to_datetime(hist_df.index)
+    df = get_historical_dataframe(reach_id, units)
+    df.index = pd.to_datetime(df.index)
 
     if average_type == 'daily':
-        hist_df = hd.daily_average(hist_df, rolling=True)
+        df = hd.daily_average(df, rolling=True)
     else:
-        hist_df = hd.monthly_average(hist_df)
-    hist_df.index.name = 'datetime'
+        df = hd.monthly_average(df)
+    df.index.name = 'datetime'
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(hist_df, f'historical_{average_type}_average_{reach_id}.csv')
+        return dataframe_to_csv_flask_response(df, f'historical_{average_type}_average_{reach_id}.csv')
     if return_format == "json":
-        json_template = new_json_template(reach_id, units, hist_df.index[0], hist_df.index[-1])
+        json_template = new_json_template(reach_id, units, df.index[0], df.index[-1])
         json_template['simulation_forcing'] = "ERA5"
         json_template['time_series'] = {
-            f'{"month" if average_type == "monthly" else "day_of_year"}': hist_df.index.tolist(),
-            'flow': hist_df[f'flow_{units}'].tolist(),
+            f'{"month" if average_type == "monthly" else "day_of_year"}': df.index.tolist(),
+            'flow': df[f'flow_{units}'].tolist(),
         }
         return jsonify(json_template)
+    return df
 
 
 def return_periods(reach_id, units, return_format):
