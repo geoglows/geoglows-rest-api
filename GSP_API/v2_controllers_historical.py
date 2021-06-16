@@ -31,6 +31,8 @@ def historical(reach_id, units, return_format):
             'flow': hist_df[f'flow_{units}'].tolist(),
         }
         return jsonify(json_template)
+    if return_format == 'df':
+        return hist_df
 
 
 def historical_averages(reach_id, units, average_type, return_format):

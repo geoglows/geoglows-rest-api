@@ -1,16 +1,17 @@
 import logging
 from os import getenv
 
-from flask import Flask, render_template, request, jsonify, url_for, redirect
+from flask import Flask, render_template, request, jsonify, url_for, redirect, make_response
 from flask_cors import CORS, cross_origin
 
 import v1_controllers
 import v2_controllers
+import water_one_flow
 
 print("Creating Application")
 
 api_path = getenv('API_PREFIX')
-wof_path = 'wof'
+wof_path = '/wof'
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -55,20 +56,22 @@ def about():
     return render_template('about.html')
 
 
-@app.route('/training')
+@app.route('/resources')
 @cross_origin()
-def training():
-    return render_template('training.html')
+def resources():
+    return render_template('resources.html')
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REST API ENDPOINTS
-@app.route(f'{api_path}', methods=['GET'])
-@cross_origin()
-def rest_api():
-    return
+# @app.route(f'{api_path}', methods=['GET'])
+# @cross_origin()
+# def rest_api():
+#     return
 
 
-@app.route(f'{api_path}/latest/<product>/<reach_id>', methods=['GET'],)
+@app.route(f'{api_path}/latest/<product>/', methods=['GET'], )
+@app.route(f'{api_path}/v2/<product>/', methods=['GET'])
+@app.route(f'{api_path}/latest/<product>/<reach_id>', methods=['GET'], )
 @app.route(f'{api_path}/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None):
@@ -117,7 +120,6 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 @app.route(f'{api_path}/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
-
     # forecast data products
     if product == 'ForecastStats':
         return v1_controllers.forecast_stats(request)
@@ -152,9 +154,23 @@ def rest_endpoints_v1(product: str):
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WATERONEFLOW ENDPOINTS
-@app.route(f'{api_path}/{wof_path}/<product>', methods=['GET'])
+@app.route(f'{wof_path}', methods=['GET'])
+@app.route(f'{wof_path}/<product>', methods=['GET'])
 @cross_origin()
-def wof_endpoints(product: str):
+def wof_endpoints(product: str = 'WSDL'):
+    if product == 'WSDL':
+        ...
+    elif product == 'GetSites':
+        return make_response(water_one_flow.get_sites(), 200, {})
+    elif product == 'GetSiteInfo':
+        ...
+    elif product == 'GetVariables':
+        ...
+    elif product == 'GetVariableInfo':
+        ...
+    elif product == 'GetValues':
+        return water_one_flow.get_values(request.args.get('location'), request.args.get('variable'),
+                                         request.args.get('startDate'), request.args.get('endDate'))
     return jsonify({"status": "not-implemented"})
 
 
