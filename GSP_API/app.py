@@ -6,6 +6,7 @@ from flask_cors import CORS, cross_origin
 
 import v1_controllers
 import v2_controllers
+import water_one_flow
 
 print("Creating Application")
 
@@ -150,6 +151,27 @@ def rest_endpoints_v1(product: str):
 
     else:
         return jsonify({"status": "success"})
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WATERONEFLOW ENDPOINTS
+@app.route(f'{wof_path}', methods=['GET'])
+@app.route(f'{wof_path}/<product>', methods=['GET'])
+@cross_origin()
+def wof_endpoints(product: str = 'WSDL'):
+    if product == 'WSDL':
+        ...
+    elif product == 'GetSites':
+        return make_response(water_one_flow.get_sites(), 200, {})
+    elif product == 'GetSiteInfo':
+        ...
+    elif product == 'GetVariables':
+        ...
+    elif product == 'GetVariableInfo':
+        ...
+    elif product == 'GetValues':
+        return water_one_flow.get_values(request.args.get('location'), request.args.get('variable'),
+                                         request.args.get('startDate'), request.args.get('endDate'))
+    return jsonify({"status": "not-implemented"})
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
