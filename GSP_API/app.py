@@ -6,11 +6,10 @@ from flask_cors import CORS, cross_origin
 
 import v1_controllers
 import v2_controllers
-import water_one_flow
 
 print("Creating Application")
 
-api_path = getenv('API_PREFIX')
+rest_path = getenv('API_PREFIX')
 wof_path = '/wof'
 
 app = Flask(__name__)
@@ -69,10 +68,10 @@ def resources():
 #     return
 
 
-@app.route(f'{api_path}/latest/<product>/', methods=['GET'], )
-@app.route(f'{api_path}/v2/<product>/', methods=['GET'])
-@app.route(f'{api_path}/latest/<product>/<reach_id>', methods=['GET'], )
-@app.route(f'{api_path}/v2/<product>/<reach_id>', methods=['GET'])
+@app.route(f'{rest_path}/latest/<product>/', methods=['GET'], )
+@app.route(f'{rest_path}/latest/<product>/<reach_id>', methods=['GET'], )
+@app.route(f'{rest_path}/v2/<product>/', methods=['GET'])
+@app.route(f'{rest_path}/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None):
     product, reach_id, units, return_format, date, ensemble, start_date, end_date = \
@@ -116,8 +115,8 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return jsonify({"status": "success"})
 
 
-@app.route(f'{api_path}/<product>', methods=['GET'], )
-@app.route(f'{api_path}/v1/<product>', methods=['GET'])
+@app.route(f'{rest_path}/<product>', methods=['GET'], )
+@app.route(f'{rest_path}/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
     # forecast data products
@@ -153,31 +152,10 @@ def rest_endpoints_v1(product: str):
         return jsonify({"status": "success"})
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WATERONEFLOW ENDPOINTS
-@app.route(f'{wof_path}', methods=['GET'])
-@app.route(f'{wof_path}/<product>', methods=['GET'])
-@cross_origin()
-def wof_endpoints(product: str = 'WSDL'):
-    if product == 'WSDL':
-        ...
-    elif product == 'GetSites':
-        return make_response(water_one_flow.get_sites(), 200, {})
-    elif product == 'GetSiteInfo':
-        ...
-    elif product == 'GetVariables':
-        ...
-    elif product == 'GetVariableInfo':
-        ...
-    elif product == 'GetValues':
-        return water_one_flow.get_values(request.args.get('location'), request.args.get('variable'),
-                                         request.args.get('startDate'), request.args.get('endDate'))
-    return jsonify({"status": "not-implemented"})
-
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
 @app.errorhandler(404)
 def errors_404(e):
-    if request.path.startswith(f'{api_path}'):
+    if request.path.startswith(f'{rest_path}'):
         return jsonify({"error": f'API Endpoint not found: {request.path} -> Check spelling and the API docs'}), 404
     return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
 
