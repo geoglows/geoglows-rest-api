@@ -175,11 +175,5 @@ def return_periods(request):
     if return_format == "json":
         return jsonify(json_output)
 
-    # use the json to render a waterml document
-    if return_format == "waterml":
-        xml_response = make_response(render_template('water_one_flow/return_periods.xml', **json_output))
-        xml_response.headers.set('Content-Type', 'application/xml')
-        return xml_response
-
     else:
         return jsonify({"error": "Invalid return_format."}), 422

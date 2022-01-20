@@ -15,4 +15,4 @@ services:
 #      - MOUNT THE FLASK APP CODE
       - ./GSP_API:/app/GSP_API
 #      - MOUNT THE DATA
-      - /Users/rchales/data/geoglowsdata:/mnt/output
+      - ./sample_data:/mnt/output
