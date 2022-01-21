@@ -2,10 +2,9 @@ name: gsp_api
 channels:
   - conda-forge
 dependencies:
-  - python=3.7
+  - python>=3.7
   - uwsgi
   - flask
-  - flask-restful
   - flask-cors
   - pandas
   - xarray

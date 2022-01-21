@@ -1,8 +1,7 @@
-# Global Streamflow Prediction REST API
-This is a container containing a REST API that can be used to access data from the GEOGloWS ECMWF Streamflow Project. 
-This draft is a stripped-down version of the Streamflow Prediction Tool (SPT) REST API that can be installed without 
-Tethys Platform and the SPT app.
+# GEOGloWS ECMWF Streamflow Model Data Service
 
-[Streamflow Prediction Tool Source Code](https://github.com/BYU-Hydroinformatics/tethysapp-streamflow_prediction_tool)
+This is a container of the flask based REST data service for the GEOGloWS ECMWF Streamflow Project.
 
-[Streamflow Prediction Tool Documentation](https://byu-streamflow-prediction-tool.readthedocs.io/en/latest/)
+This container is deployed at https://geoglows.ecmwf.int.
+
+Documentation and tutorials can be found at https://geoglows.ecmwf.int/training

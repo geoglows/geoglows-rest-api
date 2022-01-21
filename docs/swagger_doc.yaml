@@ -42,11 +42,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
@@ -100,11 +98,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a time series for each ensemble along with metadata about the stream reach of interest.
@@ -140,7 +136,6 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
       responses:
@@ -228,11 +223,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
@@ -272,11 +265,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
@@ -316,11 +307,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
@@ -361,11 +350,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a key-value pairs for each return period along with metadata about the stream reach of interest.
@@ -466,11 +453,9 @@ paths:
           enum:
             - csv
             - json
-      #            - waterml
       produces:
         - text/csv
         - application/json
-      #        - application/xml
       responses:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
