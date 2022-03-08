@@ -7,14 +7,14 @@ import hydrostats.data as hd
 import pandas as pd
 import xarray
 from flask import jsonify, render_template, make_response
-from functions import handle_parameters, get_units_title, get_historical_dataframe
+from v1_functions import handle_parameters, get_units_title, get_historical_dataframe
 
 from constants import PATH_TO_ERA_5, PATH_TO_ERA_INTERIM, M3_TO_FT3
 
-__all__ = ['historic_data_handler', 'historic_averages_handler', 'return_periods_handler']
+__all__ = ['historical', 'historical_averages', 'return_periods']
 
 
-def historic_data_handler(request):
+def historical(request):
     """
     Controller for retrieving simulated historic data
     """
@@ -60,7 +60,7 @@ def historic_data_handler(request):
         return jsonify({"error": "Invalid return_format."}), 422
 
 
-def historic_averages_handler(request, average_type):
+def historical_averages(request, average_type):
     """
     Controller for retrieving averages
     """
@@ -108,7 +108,7 @@ def historic_averages_handler(request, average_type):
         raise ValueError(f'Invalid return_format: {return_format}')
 
 
-def return_periods_handler(request):
+def return_periods(request):
     """
     Controller for retrieving seasonal averages
     """
@@ -174,12 +174,6 @@ def return_periods_handler(request):
     # if you wanted json out, return json
     if return_format == "json":
         return jsonify(json_output)
-
-    # use the json to render a waterml document
-    if return_format == "waterml":
-        xml_response = make_response(render_template('water_one_flow/return_periods.xml', **json_output))
-        xml_response.headers.set('Content-Type', 'application/xml')
-        return xml_response
 
     else:
         return jsonify({"error": "Invalid return_format."}), 422

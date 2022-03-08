@@ -5,15 +5,14 @@ import numpy as np
 import pandas as pd
 import xarray
 from flask import jsonify, make_response
-from functions import get_units_title, ecmwf_find_most_current_files, handle_parameters
+from v1_functions import get_units_title, ecmwf_find_most_current_files, handle_parameters
 
 from constants import PATH_TO_FORECASTS, PATH_TO_FORECAST_RECORDS, M3_TO_FT3
 
-__all__ = ['forecast_stats_handler', 'forecast_ensembles_handler', 'forecast_warnings_handler',
-           'forecast_records_handler', 'available_dates_handler']
+__all__ = ['forecast_stats', 'forecast_ensembles', 'forecast_warnings', 'forecast_records', 'available_dates']
 
 
-def forecast_stats_handler(request):
+def forecast_stats(request):
     """
     Controller that will retrieve forecast statistics data in different formats
     """
@@ -108,7 +107,7 @@ def forecast_stats_handler(request):
         raise ValueError('Invalid return_format')
 
 
-def forecast_ensembles_handler(request):
+def forecast_ensembles(request):
     """
     Controller that will retrieve forecast ensemble data in different formats
     """
@@ -211,7 +210,7 @@ def forecast_ensembles_handler(request):
         raise ValueError('Invalid return_format')
 
 
-def forecast_warnings_handler(request):
+def forecast_warnings(request):
     region = request.args.get('region', 'all')
     forecast_date = request.args.get('forecast_date', 'most_recent')
     return_format = request.args.get('return_format', 'csv')
@@ -275,7 +274,7 @@ def forecast_warnings_handler(request):
         raise ValueError('Invalid return_format')
 
 
-def forecast_records_handler(request):
+def forecast_records(request):
     # handle the parameters from the user
     try:
         reach_id, region, units, return_format = handle_parameters(request)
@@ -342,7 +341,7 @@ def forecast_records_handler(request):
         raise ValueError(f'Invalid return_format "{return_format}"')
 
 
-def available_dates_handler(request):
+def available_dates(request):
     """
     Controller that returns available dates.
     """
