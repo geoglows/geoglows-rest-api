@@ -1,5 +1,5 @@
 import logging
-from os import getenv
+import os
 
 from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
@@ -7,9 +7,11 @@ from flask_cors import CORS, cross_origin
 import v1_controllers
 import v2_controllers
 
+import analytics
+
 print("Creating Application")
 
-api_path = getenv('API_PREFIX')
+api_path = os.getenv('API_PREFIX')
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -61,20 +63,17 @@ def resources():
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REST API ENDPOINTS
-# @app.route(f'{api_path}', methods=['GET'])
-# @cross_origin()
-# def rest_api():
-#     return
-
 
 @app.route(f'{api_path}/latest/<product>/', methods=['GET'], )
-@app.route(f'{api_path}/v2/<product>/', methods=['GET'])
 @app.route(f'{api_path}/latest/<product>/<reach_id>', methods=['GET'], )
+@app.route(f'{api_path}/v2/<product>/', methods=['GET'])
 @app.route(f'{api_path}/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None):
     product, reach_id, units, return_format, date, ensemble, start_date, end_date = \
         v2_controllers.handle_request(request, product, reach_id)
+
+    analytics.track_event(version="v2", product=product, reach_id=reach_id)
 
     # forecast data products
     if product == 'forecast':
@@ -91,7 +90,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return v2_controllers.forecast_anomalies(reach_id, date, units, return_format)
 
     # historical data products
-    elif product == 'historical':
+    elif product == 'hindcast' or product == 'historical':
         return v2_controllers.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
         return v2_controllers.return_periods(reach_id, units, return_format)
@@ -101,23 +100,25 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return v2_controllers.historical_averages(request, units, 'monthly', return_format)
 
     # data availability
-    elif product == 'AvailableData':
+    elif product == 'availabledata':
         return v1_controllers.get_available_data_handler()
-    elif product == 'AvailableRegions':
+    elif product == 'availableregions':
         return v1_controllers.get_region_handler()
-    elif product == 'AvailableDates':
+    elif product == 'availabledates':
         return v1_controllers.available_dates(request)
-    elif product == 'GetReachID':
+    elif product == 'getreachid':
         return v1_controllers.get_reach_id_from_latlon_handler(request)
 
     else:
-        return jsonify({"status": "success"})
+        return jsonify({'status': f'data product "{product}" not available'}), 201
 
 
 @app.route(f'{api_path}/<product>', methods=['GET'], )
 @app.route(f'{api_path}/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
+    analytics.track_event("v1", product, request.args.get('reach_id', None))
+
     # forecast data products
     if product == 'ForecastStats':
         return v1_controllers.forecast_stats(request)
@@ -148,7 +149,7 @@ def rest_endpoints_v1(product: str):
         return v1_controllers.get_reach_id_from_latlon_handler(request)
 
     else:
-        return jsonify({"status": "success"})
+        return jsonify({'status': f'data product "{product}" not available'}), 201
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
@@ -160,17 +161,17 @@ def errors_404(e):
 
 
 @app.errorhandler(ValueError)
-def error_valueerror(e):
+def errors_valueerror(e):
     return jsonify({"error": str(e)}), 422
 
 
 @app.errorhandler(AssertionError)
-def error_assertion(e):
+def errors_assertion(e):
     return jsonify({"error": "invalid input argument", "code": 100})
 
 
 @app.errorhandler(Exception)
-def error_generalexception(e):
+def errors_general_exception(e):
     return jsonify({"error": f"An unexpected error occurred: {e}", "code": 9999}), 500
 
 
