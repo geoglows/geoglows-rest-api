@@ -14,14 +14,14 @@ from v1_functions import reach_to_region, latlon_to_reach
 def handle_request(request, product, reach_id):
     products = (
         'forecast', 'forecaststats', 'forecastensembles', 'forecastwarnings', 'forecastrecords', 'forecastanomalies',
-        'historical', 'returnperiods', 'dailyaverages', 'monthlyaverages',
+        'historical', 'hindcast', 'returnperiods', 'dailyaverages', 'monthlyaverages',
     )
     data_units = ('cms', 'cfs',)
     return_formats = ('csv', 'json',)
 
     product = str(product).lower()
     if product not in products:
-        return ValueError(f'{product} not recognized. available data products are: {products}')
+        raise ValueError(f'{product} not recognized. available data products are: {products}')
 
     if reach_id is None:
         reach_id = latlon_to_reach(request.args.get('lat', None), request.args.get('lon', None))
