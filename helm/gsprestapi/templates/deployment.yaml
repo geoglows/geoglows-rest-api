@@ -35,12 +35,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: GOOGLE_ANALYTICS_ID
-                  name: google_analytics_auth
+                  name: ga-auth
             - name: "GOOGLE_ANALYTICS_TOKEN"
               valueFrom:
                 secretKeyRef:
                   key: GOOGLE_ANALYTICS_TOKEN
-                  name: google_analytics_auth
+                  name: ga-auth
 
           ports:
             - name: http
