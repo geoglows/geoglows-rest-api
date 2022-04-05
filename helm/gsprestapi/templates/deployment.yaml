@@ -30,6 +30,17 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: "GOOGLE_ANALYTICS_ID"
+              valueFrom:
+                secretKeyRef:
+                  key: GOOGLE_ANALYTICS_ID
+                  name: google_analytics_auth
+            - name: "GOOGLE_ANALYTICS_TOKEN"
+              valueFrom:
+                secretKeyRef:
+                  key: GOOGLE_ANALYTICS_TOKEN
+                  name: google_analytics_auth
 
           ports:
             - name: http
