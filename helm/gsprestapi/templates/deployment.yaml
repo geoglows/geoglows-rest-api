@@ -31,6 +31,14 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: http_proxy
+              value: http://proxy.ecmwf.int:3333
+            - name: https_proxy
+              value: http://proxy.ecmwf.int:3333
+            - name: ftp_proxy
+              value: http://proxy.ecmwf.int:3333
+            - name: no_proxy
+              value: localhost,127.0.0.1,cluster.local
             - name: "GOOGLE_ANALYTICS_ID"
               valueFrom:
                 secretKeyRef:
