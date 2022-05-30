@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 
 from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
@@ -20,15 +21,13 @@ app.debug = False
 cors = CORS(app)
 app.config['CORS_HEADERS'] = '*'
 
-
-# create logger function
-def init_logger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler('/app/api.log', 'a')
-    formatter = logging.Formatter('%(asctime)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+# create logger
+logger = logging.getLogger("DEBUG")
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler('/app/api.log', 'a')
+formatter = logging.Formatter('%(asctime)s: %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HTML PAGES
@@ -66,12 +65,14 @@ def resources():
 
 @app.route(f'{api_path}/latest/<product>/', methods=['GET'], )
 @app.route(f'{api_path}/latest/<product>/<reach_id>', methods=['GET'], )
+@app.route(f'{api_path}/latest/<product>/<reach_id>/<return_format>', methods=['GET'], )
 @app.route(f'{api_path}/v2/<product>/', methods=['GET'])
 @app.route(f'{api_path}/v2/<product>/<reach_id>', methods=['GET'])
+@app.route(f'{api_path}/v2/<product>/<reach_id>/<return_format>', methods=['GET'])
 @cross_origin()
-def rest_endpoints_v2(product: str, reach_id: int = None):
-    product, reach_id, units, return_format, date, ensemble, start_date, end_date = \
-        v2_controllers.handle_request(request, product, reach_id)
+def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = 'csv'):
+    product, reach_id, return_format, units, date, ensemble, start_date, end_date = \
+        v2_controllers.handle_request(request, product, reach_id, return_format)
 
     analytics.track_event(version="v2", product=product, reach_id=reach_id)
 
@@ -90,14 +91,17 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return v2_controllers.forecast_anomalies(reach_id, date, units, return_format)
 
     # historical data products
-    elif product == 'hindcast' or product == 'historical':
+    elif product in ('hindcast', 'historical'):
         return v2_controllers.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
         return v2_controllers.return_periods(reach_id, units, return_format)
     elif product == 'dailyaverages':
-        return v2_controllers.historical_averages(request, units, 'daily', return_format)
+        return v2_controllers.historical_averages(reach_id, units, 'daily', return_format)
     elif product == 'monthlyaverages':
-        return v2_controllers.historical_averages(request, units, 'monthly', return_format)
+        return v2_controllers.historical_averages(reach_id, units, 'monthly', return_format)
+
+    elif product == "hydroviewer":
+        return v2_controllers
 
     # data availability
     elif product == 'availabledata':
@@ -155,6 +159,7 @@ def rest_endpoints_v1(product: str):
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
 @app.errorhandler(404)
 def errors_404(e):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     if request.path.startswith(f'{api_path}'):
         return jsonify({"error": f'API Endpoint not found: {request.path} -> Check spelling and the API docs'}), 404
     return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
@@ -162,16 +167,19 @@ def errors_404(e):
 
 @app.errorhandler(ValueError)
 def errors_valueerror(e):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     return jsonify({"error": str(e)}), 422
 
 
 @app.errorhandler(AssertionError)
 def errors_assertion(e):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     return jsonify({"error": "invalid input argument", "code": 100})
 
 
 @app.errorhandler(Exception)
-def errors_general_exception(e):
+def errors_general_exception(e: Exception):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     return jsonify({"error": f"An unexpected error occurred: {e}", "code": 9999}), 500
 
 

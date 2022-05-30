@@ -4,6 +4,7 @@ import xarray
 import datetime
 import glob
 import netCDF4 as nc
+import numpy as np
 
 from flask import make_response, jsonify
 
@@ -11,7 +12,7 @@ from constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
 from v1_functions import reach_to_region, latlon_to_reach
 
 
-def handle_request(request, product, reach_id):
+def handle_request(request, product, reach_id, return_format):
     products = (
         'forecast', 'forecaststats', 'forecastensembles', 'forecastwarnings', 'forecastrecords', 'forecastanomalies',
         'historical', 'hindcast', 'returnperiods', 'dailyaverages', 'monthlyaverages',
@@ -30,13 +31,12 @@ def handle_request(request, product, reach_id):
     except Exception:
         raise ValueError("reach_id should be an integer corresponding to a valid ID of a stream segment")
 
+    if return_format not in return_formats:
+        raise ValueError('format not recognized. must be either "json" or "csv"')
+
     units = request.args.get('units', 'cms')
     if units not in data_units:
         raise ValueError(f'units not recognized, choose from: {data_units}')
-
-    return_format = request.args.get('format', 'csv')
-    if return_format not in return_formats:
-        raise ValueError('format not recognized')
 
     year = datetime.datetime.utcnow().year
     date = request.args.get('date', 'latest')
@@ -45,7 +45,7 @@ def handle_request(request, product, reach_id):
 
     ensemble = request.args.get('ensemble', 'all')
 
-    return product, reach_id, units, return_format, date, ensemble, start_date, end_date
+    return product, reach_id, return_format, units, date, ensemble, start_date, end_date
 
 
 def get_forecast_dataset(reach_id, date):
@@ -84,44 +84,42 @@ def get_forecast_dataset(reach_id, date):
         raise ValueError('Error while reading data from the netCDF files')
 
 
-def dataframe_to_csv_flask_response(df, csv_name):
+def dataframe_to_csv_flask_response(df: pd.DataFrame, csv_name: str):
     response = make_response(df.to_csv())
     response.headers['content-type'] = 'text/csv'
     response.headers['Content-Disposition'] = f'attachment; filename={csv_name}.csv'
     return response
 
 
-def dataframe_to_jsonify_response(df, df_highres, reach_id, units):
+def dataframe_to_jsonify_response(df: pd.DataFrame, reach_id: int, units: str):
     json_template = new_json_template(reach_id, units, start_date=df.index[0], end_date=df.index[-1])
 
-    # add data from the dataframe of ensembles 1-51
-    json_template['time_series']['datetime'] = df.index.tolist(),
-    json_template['time_series'].update(df.to_dict(orient='list'))
-
-    # add data for the high resolution ensemble 52
-    if df_highres is not None:
-        json_template['time_series']['datetime_high_res'] = df_highres.index.tolist()
-        json_template['high_res'] = df_highres.to_list()
+    # add the columns from the dataframe
+    json_template['datetime'] = df.index.tolist()
+    json_template.update(df.replace(np.nan, '').to_dict(orient='list'))
+    json_template['metadata']['series'] = df.columns.tolist()
 
     return jsonify(json_template)
 
 
 def new_json_template(reach_id, units, start_date, end_date):
     return {
-        'reach_id': reach_id,
-        'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),
-        'start_date': start_date,
-        'end_date': end_date,
-        'units': {
-            'name': 'streamflow',
-            'short': f'{units}',
-            'long': f'Cubic {"Meters" if units == "cms" else "Feet"} per Second',
-        },
-        'time_series': {}
+        'metadata': {
+            'reach_id': reach_id,
+            'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),
+            'start_date': start_date,
+            'end_date': end_date,
+            'series': [],
+            'units': {
+                'name': 'streamflow',
+                'short': f'{units}',
+                'long': f'Cubic {"Meters" if units == "cms" else "Feet"} per Second',
+            },
+        }
     }
 
 
-def get_historical_dataframe(reach_id, units):
+def get_historical_dataframe(reach_id: int, units: str) -> pd.DataFrame:
     region = reach_to_region(reach_id)
     historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
     template = os.path.join(PATH_TO_ERA_5, 'era5_pandas_dataframe_template.pickle')

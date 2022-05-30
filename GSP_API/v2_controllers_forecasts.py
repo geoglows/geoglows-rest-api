@@ -5,7 +5,6 @@ from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import xarray
-from flask import jsonify
 
 from constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3
 from model_utilities import reach_to_region
@@ -42,7 +41,7 @@ def forecast(reach_id, date, units, return_format):
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'streamflow_forecast_{reach_id}_{units}.csv')
     if return_format == 'json':
-        return v2_utilities.dataframe_to_jsonify_response(df=df, df_highres=None, reach_id=reach_id, units=units)
+        return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
 
 
@@ -77,8 +76,7 @@ def forecast_stats(reach_id, date, units, return_format):
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'streamflow_forecast_stats_{reach_id}_{units}.csv')
     if return_format == 'json':
-        df_highres = df[f'high_res_{units}'].dropna()
-        return v2_utilities.dataframe_to_jsonify_response(df=df, df_highres=df_highres, reach_id=reach_id, units=units)
+        return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == "df":
         return df
 
@@ -125,14 +123,16 @@ def forecast_ensembles(reach_id, date, units, return_format, ensemble):
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'streamflow_forecast_ensembles_{reach_id}_{units}.csv')
     if return_format == 'json':
-        json_template = v2_utilities.new_json_template(reach_id, units, df.index[0], df.index[-1])
-        json_template['time_series'] = {
-            'datetime': df[f'ensemble_01_{units}'].dropna(inplace=False).index.tolist(),
-            'datetime_high_res': df[f'ensemble_52_{units}'].dropna(inplace=False).index.tolist(),
-        }
-        for column in df.columns:
-            json_template['time_series'][column] = df[column].dropna(inplace=False).tolist()
-        return jsonify(json_template)
+        return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+    # if return_format == 'json':
+    #     json_template = v2_utilities.new_json_template(reach_id, units, df.index[0], df.index[-1])
+    #     json_template['time_series'] = {
+    #         'datetime': df[f'ensemble_01_{units}'].dropna(inplace=False).index.tolist(),
+    #         'datetime_high_res': df[f'ensemble_52_{units}'].dropna(inplace=False).index.tolist(),
+    #     }
+    #     for column in df.columns:
+    #         json_template['time_series'][column] = df[column].dropna(inplace=False).tolist()
+    #     return jsonify(json_template)
     if return_format == "df":
         return df
 
@@ -169,7 +169,7 @@ def forecast_records(reach_id, start_date, end_date, units, return_format):
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'forecast_record_{reach_id}.csv')
     if return_format == 'json':
-        return v2_utilities.dataframe_to_jsonify_response(df=df, df_highres=None, reach_id=reach_id, units=units)
+        return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == "df":
         return df
 
@@ -191,5 +191,5 @@ def forecast_anomalies(reach_id, date, units, return_format):
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'forecast_anomalies_{reach_id}.csv')
     if return_format == 'json':
-        return v2_utilities.dataframe_to_jsonify_response(df=df, df_highres=None, reach_id=reach_id, units=units)
+        return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
