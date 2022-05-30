@@ -1,4 +1,5 @@
-from v2_controllers_forecasts import (forecast,
+from v2_controllers_forecasts import (hydroviewer,
+                                      forecast,
                                       forecast_stats,
                                       forecast_ensembles,
                                       forecast_records,
@@ -15,6 +16,7 @@ from v1_controllers_forecasts import (forecast_warnings,
 __all__ = [
     'handle_request',
 
+    'hydroviewer',
     'forecast',
     'forecast_stats',
     'forecast_ensembles',

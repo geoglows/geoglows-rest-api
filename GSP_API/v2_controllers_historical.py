@@ -1,28 +1,23 @@
 import datetime
-import glob
 import json
-import os
 
 import hydrostats.data as hd
 import pandas as pd
-import xarray
 from flask import jsonify
 
-from constants import PATH_TO_ERA_5, M3_TO_FT3
 import v2_utilities
-from model_utilities import reach_to_region
 
 __all__ = ['historical', 'historical_averages', 'return_periods']
 
 
-def historical(reach_id, units, return_format):
+def historical(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
     """
     Controller for retrieving simulated historic data
     """
     df = v2_utilities.get_historical_dataframe(reach_id, units)
 
     if return_format == 'csv':
-        return v2_utilities.dataframe_to_csv_flask_response(df, f'historical_streamflow_era5_{reach_id}.csv')
+        return v2_utilities.dataframe_to_csv_flask_response(df, f'hindcast_{reach_id}_{units}')
     if return_format == 'json':
         return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == 'df':
@@ -31,9 +26,7 @@ def historical(reach_id, units, return_format):
 
 def historical_averages(reach_id, units, average_type, return_format):
     df = v2_utilities.get_historical_dataframe(reach_id, units)
-    print('here1')
     df.index = pd.to_datetime(df.index)
-    print('here2')
 
     if average_type == 'daily':
         df = hd.daily_average(df, rolling=True)
@@ -42,46 +35,20 @@ def historical_averages(reach_id, units, average_type, return_format):
     df.index.name = 'datetime'
 
     if return_format == 'csv':
-        return v2_utilities.dataframe_to_csv_flask_response(df, f'historical_{average_type}_average_{reach_id}.csv')
+        return v2_utilities.dataframe_to_csv_flask_response(df, f'{average_type}_averages_{reach_id}_{units}')
     if return_format == 'json':
         return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
-    # if return_format == "json":
-    #     json_template = v2_utilities.new_json_template(reach_id, units, df.index[0], df.index[-1])
-    #     json_template['simulation_forcing'] = "ERA5"
-    #     json_template['time_series'] = {
-    #         f'{"month" if average_type == "monthly" else "day_of_year"}': df.index.tolist(),
-    #         'flow': df[f'flow_{units}'].tolist(),
-    #     }
-    #     return jsonify(json_template)
     return df
 
 
-def return_periods(reach_id, units, return_format):
-    region = reach_to_region(reach_id)
-    return_period_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc*'))
-    if len(return_period_file) == 0:
-        raise ValueError("Unable to find return periods file")
-
-    # collect the data in a dataframe
-    return_periods_nc = xarray.open_dataset(return_period_file[0])
-    return_periods_df = return_periods_nc.to_dataframe()
-    return_periods_df = return_periods_df[return_periods_df.index == reach_id]
-    return_periods_nc.close()
-
-    try:
-        del return_periods_df['lon'], return_periods_df['lat']
-    except Exception:
-        pass
-
-    if units == 'cfs':
-        for column in return_periods_df:
-            return_periods_df[column] *= M3_TO_FT3
+def return_periods(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
+    df = v2_utilities.get_return_periods_dataframe(reach_id, units)
 
     if return_format == 'csv':
-        return v2_utilities.dataframe_to_csv_flask_response(return_periods_df, f'return_periods_{reach_id}.csv')
+        return v2_utilities.dataframe_to_csv_flask_response(df, f'return_periods_{reach_id}_{units}')
     if return_format == 'json':
         return jsonify({
-            'return_periods': json.loads(return_periods_df.to_json(orient='records'))[0],
+            'return_periods': json.loads(df.to_json(orient='records'))[0],
             'reach_id': reach_id,
             'simulation_forcing': 'ERA5',
             'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),

@@ -5,12 +5,12 @@ import traceback
 from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
 
+import analytics
 import v1_controllers
 import v2_controllers
 
-import analytics
 
-print("Creating Application")
+print("Launching Flask App")
 
 api_path = os.getenv('API_PREFIX')
 
@@ -74,12 +74,14 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
     product, reach_id, return_format, units, date, ensemble, start_date, end_date = \
         v2_controllers.handle_request(request, product, reach_id, return_format)
 
-    analytics.track_event(version="v2", product=product, reach_id=reach_id)
+    analytics.track_event(version="v2", product=product, reach_id=reach_id, return_format=return_format)
 
     # forecast data products
-    if product == 'forecast':
+    if product == "hydroviewer":
+        return v2_controllers.hydroviewer(reach_id, start_date, date, units, return_format)
+    elif product == 'forecast':
         return v2_controllers.forecast(reach_id, date, units, return_format)
-    elif product == 'forecaststats':
+    elif product in 'forecaststats':
         return v2_controllers.forecast_stats(reach_id, date, units, return_format)
     elif product == 'forecastensembles':
         return v2_controllers.forecast_ensembles(reach_id, date, units, return_format, ensemble)
@@ -100,9 +102,6 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
     elif product == 'monthlyaverages':
         return v2_controllers.historical_averages(reach_id, units, 'monthly', return_format)
 
-    elif product == "hydroviewer":
-        return v2_controllers
-
     # data availability
     elif product == 'availabledata':
         return v1_controllers.get_available_data_handler()
@@ -121,7 +120,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
 @app.route(f'{api_path}/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
-    analytics.track_event("v1", product, request.args.get('reach_id', None))
+    analytics.track_event("v1", product, request.args.get('reach_id', None), request.args.get('return_format', 'csv'))
 
     # forecast data products
     if product == 'ForecastStats':
