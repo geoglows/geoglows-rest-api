@@ -3,6 +3,7 @@ import json
 
 import hydrostats.data as hd
 import pandas as pd
+import numpy as np
 from flask import jsonify
 
 import v2_utilities
@@ -15,6 +16,7 @@ def historical(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
     Controller for retrieving simulated historic data
     """
     df = v2_utilities.get_historical_dataframe(reach_id, units)
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'hindcast_{reach_id}_{units}')
@@ -33,6 +35,7 @@ def historical_averages(reach_id, units, average_type, return_format):
     else:
         df = hd.monthly_average(df)
     df.index.name = 'datetime'
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'{average_type}_averages_{reach_id}_{units}')
@@ -43,6 +46,7 @@ def historical_averages(reach_id, units, average_type, return_format):
 
 def return_periods(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
     df = v2_utilities.get_return_periods_dataframe(reach_id, units)
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     if return_format == 'csv':
         return v2_utilities.dataframe_to_csv_flask_response(df, f'return_periods_{reach_id}_{units}')

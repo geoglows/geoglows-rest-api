@@ -12,7 +12,7 @@ from constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
 from v1_functions import reach_to_region, latlon_to_reach
 
 __all__ = [
-    'ALL_PRODUCTS', 'PRODUCT_SHORTCUTS',
+    'ALL_PRODUCTS', 'PRODUCT_SHORTCUTS', 'NUM_DECIMALS',
     'handle_request', 'get_forecast_dataset', 'get_historical_dataframe', 'get_return_periods_dataframe',
     'dataframe_to_csv_flask_response', 'dataframe_to_jsonify_response', 'new_json_template'
 ]
@@ -35,6 +35,7 @@ ALL_PRODUCTS = {
     'availabledates': 'avdate',
     'getreachid': 'getid',
 }
+
 # Recognized shorthand names for selected products and their proper name in dict key/value pairs
 PRODUCT_SHORTCUTS = {
     'stats': 'forecaststats',
@@ -46,6 +47,9 @@ PRODUCT_SHORTCUTS = {
     'historical': 'hindcast',
     'historicalsimulation': 'hindcast'
 }
+
+# Max number of decimals to show in results
+NUM_DECIMALS = 2
 
 
 def handle_request(request, product, reach_id, return_format):

@@ -9,6 +9,45 @@ schemes:
   - https
   - http
 paths:
+  /Hydroviewer/{reach_id}/{return_format}:
+    get:
+      description: A shorthand for retrieving the forecast records and stats, and return periods, usually all plotted together.
+      summary: Returns forecast records, forecast stats, and return periods.
+      parameters:
+        - name: reach_id
+          in: path
+          description: The stream reach's unique ID also refered to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          type: number
+          format: integer
+          required: True
+        - name: return_format
+          in: path
+          required: True
+          description: The format of the response
+          type: string
+          default: csv
+          enum:
+            - csv
+            - json
+        - name: date
+          in: query
+          description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
+          type: string
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
+      produces:
+        - text/csv
+        - application/json
+      responses:
+        '200':
+          description: The response body will contain a time series along with metadata about the stream reach of interest.
+        '400':
+          description: Bad request. Check request and paramaters.
+          examples:
+            error: An unexpected error occured.
+        '422':
+          description: Missing a required parameter.
+          examples:
+            error: region is required as input.
   /Forecast/{reach_id}/{return_format}:
     get:
       description: This operation returns the average of the ensemble forecast.
@@ -22,7 +61,8 @@ paths:
           required: True
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -60,7 +100,8 @@ paths:
           required: True
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -112,7 +153,8 @@ paths:
           default: all
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -151,7 +193,8 @@ paths:
           format: string
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -257,7 +300,8 @@ paths:
           required: True
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -290,7 +334,8 @@ paths:
           required: True
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -323,7 +368,8 @@ paths:
           required: True
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:
@@ -357,7 +403,8 @@ paths:
           required: True
         - name: return_format
           in: path
-          description: The format of the time series response.
+          required: True
+          description: The format of the response
           type: string
           default: csv
           enum:

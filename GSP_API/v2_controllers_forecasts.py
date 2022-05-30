@@ -17,8 +17,8 @@ __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'f
 def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> pd.DataFrame:
     stats_df = forecast_stats(reach_id, date, units, "df")
     stats_df = stats_df.replace(np.nan, '')
-    # records_df = forecast_records(reach_id, start_date, date, units, "df")
-    # records_df.columns = f'rec_{records_df.columns[0]}'
+    records_df = forecast_records(reach_id, start_date, date, units, "df")
+    records_df.columns = f'rec_{records_df.columns[0]}'
     rp_df = v2_utilities.get_return_periods_dataframe(reach_id, units)
 
     # add the columns from the dataframe
@@ -52,6 +52,7 @@ def forecast(reach_id: int, date: datetime.datetime, units: str, return_format: 
     df.dropna(inplace=True)
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
     df.index.name = 'datetime'
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     # handle units conversion
     if units == 'cfs':
@@ -83,10 +84,11 @@ def forecast_stats(reach_id: int, date: datetime.datetime, units: str, return_fo
         f'flow_med_{units}': np.median(merged_array, axis=0),
         f'flow_25p_{units}': np.percentile(merged_array, 25, axis=0),
         f'flow_min_{units}': np.min(merged_array, axis=0),
-        f'high_res_{units}': forecast_xarray_dataset.sel(ensemble=52).data
+        f'high_res_{units}': forecast_xarray_dataset.sel(ensemble=52).data,
     }, index=forecast_xarray_dataset.time.data)
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
     df.index.name = 'datetime'
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     # handle units conversion
     if units == 'cfs':
@@ -110,11 +112,12 @@ def forecast_ensembles(reach_id: int, date: datetime.datetime, units: str, retur
         ensemble_column_names.append(f'ensemble_{i:02}_{units}')
 
     # make the data into a pandas dataframe
-    df = pd.DataFrame(data=np.transpose(forecast_xarray_dataset.data),
+    df = pd.DataFrame(data=np.transpose(forecast_xarray_dataset.data).round(v2_utilities.NUM_DECIMALS),
                       columns=ensemble_column_names,
                       index=forecast_xarray_dataset.time.data)
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
     df.index.name = 'datetime'
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     # handle units conversion
     if units == 'cfs':
@@ -165,13 +168,14 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, units: str, 
     forecast_record.close()
 
     # create a dataframe and filter by date
-    df = times.to_frame().join(pd.Series(record_flows, name=f'streamflow_{units}'))
+    df = times.to_frame().join(pd.Series(record_flows, name=f'streamflow_{units}').round(v2_utilities.NUM_DECIMALS))
     df = df[df['datetime'].between(start_date, end_date)]
     df.index = df['datetime']
     del df['datetime']
     df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
     df.index.name = 'datetime'
     df.dropna(inplace=True)
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     if units == 'cfs':
         df[f'flow_avg_{units}'] *= M3_TO_FT3
@@ -197,6 +201,7 @@ def forecast_anomalies(reach_id: int, date: datetime.datetime, units: str, retur
     df.index = df['datetime']
     df = df.rename(columns={f'flow_{units}': f'daily_avg_{units}'})
     del df['datetime']
+    df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
     # create the response
     if return_format == 'csv':

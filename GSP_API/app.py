@@ -93,7 +93,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
         return v2_controllers.forecast_anomalies(reach_id, date, units, return_format)
 
     # historical data products
-    elif product in ('hindcast', 'historical'):
+    elif product == 'hindcast':
         return v2_controllers.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
         return v2_controllers.return_periods(reach_id, units, return_format)
