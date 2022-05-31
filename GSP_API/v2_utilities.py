@@ -200,3 +200,47 @@ def new_json_template(reach_id, units, start_date, end_date):
             },
         }
     }
+
+
+def find_available_dates():
+    sample_region_directory = glob.glob(os.path.join(PATH_TO_FORECASTS, "*-geoglows"))[0]
+    dates = [d for d in os.listdir(sample_region_directory) if d.split('.')[0].isdigit()]
+    if len(dates) > 0:
+        return jsonify({"available_dates": dates})
+    else:
+        return jsonify({"message": "No dates available."}), 204
+
+
+def find_forecast_warnings(date) -> pd.DataFrame:
+    warnings = None
+
+    for region in os.listdir(PATH_TO_FORECASTS):
+        # find/check current output datasets
+        path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, region)
+        if not os.path.isdir(path_to_region_forecasts):
+            continue
+        if date == 'most_recent':
+            date_folders = sorted([d for d in os.listdir(path_to_region_forecasts)
+                                   if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
+                                  reverse=True)
+            folder = os.path.join(path_to_region_forecasts, date_folders[0])
+        else:
+            folder = os.path.join(path_to_region_forecasts, date)
+            if not os.path.isdir(folder):
+                raise ValueError(f'Forecast date {date} was not found')
+        # locate the forecast warning csv
+        summary_file = os.path.join(folder, 'forecasted_return_periods_summary.csv')
+        region_warnings_df = pd.read_csv(summary_file)
+        region_warnings_df['region'] = region.replace('-geoglows', '')
+        if not os.path.isfile(summary_file):
+            continue
+        if warnings is None:
+            warnings = region_warnings_df
+            continue
+
+        warnings = pd.concat([warnings, region_warnings_df], axis=0)
+
+    if warnings is None:
+        raise ValueError('Unable to find any warnings csv files for any region for the specified date')
+
+    return warnings

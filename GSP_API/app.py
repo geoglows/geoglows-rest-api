@@ -85,14 +85,16 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
         return v2_controllers.forecast_stats(reach_id, date, units, return_format)
     elif product == 'forecastensembles':
         return v2_controllers.forecast_ensembles(reach_id, date, units, return_format, ensemble)
-    elif product == 'forecastwarnings':
-        return v2_controllers.forecast_warnings(request)
     elif product == 'forecastrecords':
         return v2_controllers.forecast_records(reach_id, start_date, end_date, units, return_format)
     elif product == 'forecastanomalies':
         return v2_controllers.forecast_anomalies(reach_id, date, units, return_format)
+    elif product == 'forecastwarnings':
+        return v2_controllers.forecast_warnings(date, return_format)
+    elif product == 'availabledates':
+        return v2_controllers.available_dates()
 
-    # historical data products
+    # hindcast data products
     elif product == 'hindcast':
         return v2_controllers.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
@@ -103,12 +105,6 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
         return v2_controllers.historical_averages(reach_id, units, 'monthly', return_format)
 
     # data availability
-    elif product == 'availabledata':
-        return v1_controllers.get_available_data_handler()
-    elif product == 'availableregions':
-        return v1_controllers.get_region_handler()
-    elif product == 'availabledates':
-        return v1_controllers.available_dates(request)
     elif product == 'getreachid':
         return v1_controllers.get_reach_id_from_latlon_handler(request)
 

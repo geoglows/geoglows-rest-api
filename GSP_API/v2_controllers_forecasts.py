@@ -2,6 +2,7 @@ import json
 import os
 import datetime
 
+from flask import jsonify
 import numpy as np
 import pandas as pd
 import xarray
@@ -11,7 +12,8 @@ from model_utilities import reach_to_region
 import v2_utilities
 from v2_controllers_historical import historical_averages
 
-__all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies']
+__all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies',
+           'forecast_warnings', 'available_dates']
 
 
 def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> pd.DataFrame:
@@ -66,7 +68,7 @@ def forecast(reach_id: int, date: datetime.datetime, units: str, return_format: 
     return df
 
 
-def forecast_stats(reach_id: int, date: datetime.datetime, units: str, return_format: str) -> pd.DataFrame:
+def forecast_stats(reach_id: int, date: str, units: str, return_format: str) -> pd.DataFrame:
     forecast_xarray_dataset = v2_utilities.get_forecast_dataset(reach_id, date)
 
     # get an array of all the ensembles, delete the high res before doing averages
@@ -209,3 +211,16 @@ def forecast_anomalies(reach_id: int, date: datetime.datetime, units: str, retur
     if return_format == 'json':
         return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
+
+
+def forecast_warnings(date: str, return_format: str):
+    warnings_df = v2_utilities.find_forecast_warnings(date)
+    if return_format == 'csv':
+        return v2_utilities.dataframe_to_csv_flask_response(warnings_df, f'forecast_warnings_{date}')
+    if return_format == 'json':
+        return jsonify(warnings_df.to_dict(orient='index'))
+    return warnings_df
+
+
+def available_dates():
+    return v2_utilities.find_available_dates()
