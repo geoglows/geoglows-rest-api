@@ -7,7 +7,7 @@ from flask_cors import CORS, cross_origin
 
 import analytics
 import v1_controllers
-import v2_controllers
+import v2_controllers as v2ctl
 
 
 print("Launching Flask App")
@@ -72,37 +72,37 @@ def resources():
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = 'csv'):
     product, reach_id, return_format, units, date, ensemble, start_date, end_date = \
-        v2_controllers.handle_request(request, product, reach_id, return_format)
+        v2ctl.handle_request(request, product, reach_id, return_format)
 
     analytics.track_event(version="v2", product=product, reach_id=reach_id, return_format=return_format)
 
     # forecast data products
-    if product == "hydroviewer":
-        return v2_controllers.hydroviewer(reach_id, start_date, date, units, return_format)
-    elif product == 'forecast':
-        return v2_controllers.forecast(reach_id, date, units, return_format)
+    if product == 'forecast':
+        return v2ctl.forecast(reach_id, date, units, return_format)
     elif product in 'forecaststats':
-        return v2_controllers.forecast_stats(reach_id, date, units, return_format)
+        return v2ctl.forecast_stats(reach_id, date, units, return_format)
     elif product == 'forecastensembles':
-        return v2_controllers.forecast_ensembles(reach_id, date, units, return_format, ensemble)
+        return v2ctl.forecast_ensembles(reach_id, date, units, return_format, ensemble)
     elif product == 'forecastrecords':
-        return v2_controllers.forecast_records(reach_id, start_date, end_date, units, return_format)
+        return v2ctl.forecast_records(reach_id, start_date, end_date, units, return_format)
     elif product == 'forecastanomalies':
-        return v2_controllers.forecast_anomalies(reach_id, date, units, return_format)
+        return v2ctl.forecast_anomalies(reach_id, date, units, return_format)
     elif product == 'forecastwarnings':
-        return v2_controllers.forecast_warnings(date, return_format)
-    elif product == 'availabledates':
-        return v2_controllers.forecast_dates()
+        return v2ctl.forecast_warnings(date, return_format)
+    elif product == 'forecastdates':
+        return v2ctl.forecast_dates()
+    if product == "hydroviewer":
+        return v2ctl.hydroviewer(reach_id, start_date, date, units, return_format)
 
     # hindcast data products
     elif product == 'hindcast':
-        return v2_controllers.historical(reach_id, units, return_format)
+        return v2ctl.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
-        return v2_controllers.return_periods(reach_id, units, return_format)
+        return v2ctl.return_periods(reach_id, units, return_format)
     elif product == 'dailyaverages':
-        return v2_controllers.historical_averages(reach_id, units, 'daily', return_format)
+        return v2ctl.historical_averages(reach_id, units, 'daily', return_format)
     elif product == 'monthlyaverages':
-        return v2_controllers.historical_averages(reach_id, units, 'monthly', return_format)
+        return v2ctl.historical_averages(reach_id, units, 'monthly', return_format)
 
     # data availability
     elif product == 'getreachid':

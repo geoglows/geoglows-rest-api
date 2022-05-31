@@ -446,6 +446,36 @@ paths:
           description: Missing a required parameter.
           examples:
             error: region is required as input.
+  /getReachID:
+    get:
+      description: Find the Reach ID nearest a point using latitude and longitude coordinates
+      summary: Find the Reach ID nearest a point using latitude and longitude coordinates
+      parameters:
+        - name: lat
+          in: query
+          required: True
+          description: The latitude of a point to search
+          type: number
+          format: float
+        - name: lon
+          in: query
+          required: True
+          description: The longitude of a point to search
+          type: number
+          format: float
+      produces:
+        - application/json
+      responses:
+        '200':
+          description:
+        '400':
+          description: Bad request. Check request and paramaters.
+          examples:
+            error: An unexpected error occured.
+        '422':
+          description: Missing a required parameter.
+          examples:
+            error: region is required as input.
   /ForecastStats:
     get:
       description: This operation returns statistics calculated from 51 forecast ensemble members. A successful response will return a time series with date-value pairs.

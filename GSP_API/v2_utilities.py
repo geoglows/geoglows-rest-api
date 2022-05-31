@@ -19,21 +19,19 @@ __all__ = [
 
 # Name of all recognized products and their shorthand name for analytics in dict key/value pairs
 ALL_PRODUCTS = {
-    'hydroviewer': 'hv',
     'forecast': 'fc',
     'forecaststats': 'fcstat',
     'forecastensembles': 'fcens',
     'forecastrecords': 'fcrec',
     'forecastanomalies': 'fcanom',
     'forecastwarnings': 'fcwarn',
+    'forecastdates': 'fcdate',
     'hindcast': 'hc',
     'monthlyaverages': 'monavg',
     'dailyaverages': 'dayavg',
     'returnperiods': 'rp',
-    'availabledata': 'avdata',
-    'availableregions': 'avreg',
-    'availabledates': 'avdate',
     'getreachid': 'getid',
+    'hydroviewer': 'hv',
 }
 
 # Recognized shorthand names for selected products and their proper name in dict key/value pairs
@@ -45,7 +43,8 @@ PRODUCT_SHORTCUTS = {
     'monavg': 'monthlyaverages',
     'dayavg': 'dailyaverages',
     'historical': 'hindcast',
-    'historicalsimulation': 'hindcast'
+    'historicalsimulation': 'hindcast',
+    'availabledates': 'forecastdates',
 }
 
 # Max number of decimals to show in results
@@ -59,7 +58,7 @@ def handle_request(request, product, reach_id, return_format):
     product = str(product).lower()
     if product not in ALL_PRODUCTS.keys():
         if product not in PRODUCT_SHORTCUTS.keys():
-            raise ValueError(f'{product} not recognized. available data products are: {products}')
+            raise ValueError(f'{product} not recognized. available data products: {list(ALL_PRODUCTS.keys())}')
         product = PRODUCT_SHORTCUTS[product]
 
     if reach_id is None:
