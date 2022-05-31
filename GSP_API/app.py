@@ -92,7 +92,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
     elif product == 'forecastwarnings':
         return v2_controllers.forecast_warnings(date, return_format)
     elif product == 'availabledates':
-        return v2_controllers.available_dates()
+        return v2_controllers.forecast_dates()
 
     # hindcast data products
     elif product == 'hindcast':

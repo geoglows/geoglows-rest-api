@@ -27,7 +27,7 @@ TEMPLATE = """{% extends "base_template.html" %}
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <script>
   window.onload = function() {
-    var spec = SWAGGER_YAML_CONTENT;
+    const spec = SWAGGER_YAML_CONTENT;
     // Build a system
     const ui = SwaggerUIBundle({
       spec: spec,
@@ -48,8 +48,6 @@ TEMPLATE = """{% extends "base_template.html" %}
     while(elements.length > 0){
       elements[0].parentNode.removeChild(elements[0]);
     }
-
-    var bodyElement = document.getElementsByTagName("body");
   }
   </script>
 {% endblock %}

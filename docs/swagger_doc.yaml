@@ -149,6 +149,7 @@ paths:
               - An individual ensemble (i.e. 5)
               - A group of ensembles separated by commas (i.e. 1,5,9)
               - A range of ensembles separated by a dash (i.e. 3-15)
+              - A combination of individual numbers and ranges (i.e. 1,5,7-16,24-35)
           type: string
           default: all
         - name: return_format
@@ -286,6 +287,27 @@ paths:
           description: Missing a required parameter.
           examples:
             error: region or both lat and lon are required as input
+  /ForecastDates:
+    get:
+      description: This operation returns the available forecast dates in JSON format.
+      summary: Available dates
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The response body will contain a list of available dates.
+        '204':
+          description: Succesful request but no regions found.
+          examples:
+            message: No dates available.
+        '400':
+          description: Bad request. Check request and paramaters.
+          examples:
+            error: An unexpected error occured.
+        '422':
+          description: Missing a required parameter.
+          examples:
+            error: region is required as input.
   /Hindcast/{reach_id}/{return_format}:
     get:
       description: |-
@@ -424,35 +446,6 @@ paths:
           description: Missing a required parameter.
           examples:
             error: region is required as input.
-  /AvailableDates/:
-    get:
-      description: |-
-        This operation returns the available forecast dates.
-        A successful response will return a list of available dates in JSON format.
-      summary: Available dates
-      parameters:
-        - name: region
-          in: path
-          required: true
-          description: The name of the major region of interest.
-          type: string
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: The response body will contain a list of available dates.
-        '204':
-          description: Succesful request but no regions found.
-          examples:
-            message: No dates available.
-        '400':
-          description: Bad request. Check request and paramaters.
-          examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
   /ForecastStats:
     get:
       description: This operation returns statistics calculated from 51 forecast ensemble members. A successful response will return a time series with date-value pairs.
@@ -522,6 +515,7 @@ paths:
               - An individual ensemble (i.e. 5)
               - A group of ensembles separated by commas (i.e. 1,5,9)
               - A range of ensembles separated by a dash (i.e. 3-15)
+              - A combination of individual numbers and ranges (i.e. 1,5,7-16,24-35)
           type: string
           default: all
         - name: return_format

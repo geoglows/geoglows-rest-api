@@ -5,7 +5,7 @@ from v2_controllers_forecasts import (hydroviewer,
                                       forecast_records,
                                       forecast_anomalies,
                                       forecast_warnings,
-                                      available_dates, )
+                                      forecast_dates, )
 from v2_controllers_historical import (historical,
                                        historical_averages,
                                        return_periods, )
@@ -23,7 +23,7 @@ __all__ = [
     'forecast_records',
     'forecast_anomalies',
     'forecast_warnings',
-    'available_dates',
+    'forecast_dates',
 
     'historical',
     'historical_averages',

@@ -13,7 +13,7 @@ import v2_utilities
 from v2_controllers_historical import historical_averages
 
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies',
-           'forecast_warnings', 'available_dates']
+           'forecast_warnings', 'forecast_dates']
 
 
 def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> pd.DataFrame:
@@ -222,5 +222,5 @@ def forecast_warnings(date: str, return_format: str):
     return warnings_df
 
 
-def available_dates():
+def forecast_dates():
     return v2_utilities.find_available_dates()
