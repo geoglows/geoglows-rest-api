@@ -1,43 +1,49 @@
+import datetime
 import json
 import os
-import datetime
 
-from flask import jsonify
 import numpy as np
 import pandas as pd
 import xarray
+from flask import jsonify
 
+import v2_utilities
 from constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3
 from model_utilities import reach_to_region
-import v2_utilities
 from v2_controllers_historical import historical_averages
 
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies',
            'forecast_warnings', 'forecast_dates']
 
 
-def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> pd.DataFrame:
+def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> jsonify:
+    if date == 'latest':
+        date = v2_utilities.get_most_recent_date()
     stats_df = forecast_stats(reach_id, date, units, "df")
     stats_df = stats_df.replace(np.nan, '')
     records_df = forecast_records(reach_id, start_date, date, units, "df")
-    records_df.columns = f'rec_{records_df.columns[0]}'
-    rp_df = v2_utilities.get_return_periods_dataframe(reach_id, units)
 
-    # add the columns from the dataframe
-    json_template = v2_utilities.new_json_template(reach_id, units, start_date=records_df.index[0],
-                                                   end_date=stats_df.index[-1])
-    json_template['datetime_stats'] = stats_df.index.tolist()
-    json_template['datetime_rec'] = records_df.index.tolist()
-    json_template.update(stats_df.to_dict(orient='list'))
-    json_template['return_periods'] = json.loads(rp_df.to_json(orient='records'))[0],
-    json_template['metadata']['series'] = ['datetime_stats', 'datetime_rec', 'return_periods', ] + \
-                                          stats_df.columns.tolist() + records_df.columns.tolist()
-
+    if return_format == 'csv':
+        return v2_utilities.dataframe_to_csv_flask_response(pd.concat([records_df, stats_df], join='outer'),
+                                                            f'hydroviewer_data_{reach_id}')
     if return_format == 'json':
-        return v2_utilities.dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        records_df.columns = [f'{records_df.columns[0]}_rec', ]
+        rp_df = v2_utilities.get_return_periods_dataframe(reach_id, units)
+
+        # add the columns from the dataframe
+        json_template = v2_utilities.new_json_template(reach_id, units, start_date=records_df.index[0],
+                                                       end_date=stats_df.index[-1])
+        json_template['datetime_stats'] = stats_df.index.tolist()
+        json_template['datetime_rec'] = records_df.index.tolist()
+        json_template.update(stats_df.to_dict(orient='list'))
+        json_template.update(records_df.to_dict(orient='list'))
+        json_template.update(json.loads(rp_df.to_json(orient='records'))[0])
+        json_template['metadata']['series'] = ['datetime_stats', 'datetime_rec', ] + stats_df.columns.tolist() + \
+                                              records_df.columns.tolist() + list(rp_df.keys())
+        return jsonify(json_template), 200
 
 
-def forecast(reach_id: int, date: datetime.datetime, units: str, return_format: str) -> pd.DataFrame:
+def forecast(reach_id: int, date: str, units: str, return_format: str) -> pd.DataFrame:
     forecast_xarray_dataset = v2_utilities.get_forecast_dataset(reach_id, date)
 
     # get an array of all the ensembles, delete the high res before doing averages
@@ -163,17 +169,17 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, units: str, 
 
     # open and read the forecast record netcdf
     record_path = os.path.join(PATH_TO_FORECAST_RECORDS, region,
-                               f'forecast_record-{datetime.datetime.utcnow().year}-{region}.nc')
+                               # f'forecast_record-{datetime.datetime.utcnow().year}-{region}.nc')
+                               f'forecast_record-{2021}-{region}.nc')
     forecast_record = xarray.open_dataset(record_path)
     times = pd.to_datetime(pd.Series(forecast_record['time'].data, name='datetime'), unit='s', origin='unix')
     record_flows = forecast_record.sel(rivid=reach_id)['Qout']
     forecast_record.close()
 
     # create a dataframe and filter by date
-    df = times.to_frame().join(pd.Series(record_flows, name=f'streamflow_{units}').round(v2_utilities.NUM_DECIMALS))
+    df = times.to_frame().join(pd.Series(record_flows, name=f'flow_avg_{units}').round(v2_utilities.NUM_DECIMALS))
     df = df[df['datetime'].between(start_date, end_date)]
-    df.index = df['datetime']
-    del df['datetime']
+    df = df.set_index('datetime')
     df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
     df.index.name = 'datetime'
     df.dropna(inplace=True)

@@ -14,7 +14,7 @@ from v1_functions import reach_to_region, latlon_to_reach
 __all__ = [
     'ALL_PRODUCTS', 'PRODUCT_SHORTCUTS', 'NUM_DECIMALS',
     'handle_request', 'get_forecast_dataset', 'get_historical_dataframe', 'get_return_periods_dataframe',
-    'dataframe_to_csv_flask_response', 'dataframe_to_jsonify_response', 'new_json_template'
+    'dataframe_to_csv_flask_response', 'dataframe_to_jsonify_response', 'new_json_template', 'get_most_recent_date',
 ]
 
 # Name of all recognized products and their shorthand name for analytics in dict key/value pairs
@@ -86,24 +86,15 @@ def handle_request(request, product, reach_id, return_format):
 
 
 def get_forecast_dataset(reach_id, date):
+    if date == 'latest':
+        date = get_most_recent_date()
     region = reach_to_region(reach_id)
-    region_forecast_dir = os.path.join(PATH_TO_FORECASTS, region)
+    forecast_dir = os.path.join(PATH_TO_FORECASTS, region, f'{date}.00')
 
-    if date == "latest":
-        directory_of_forecast_data = sorted(
-            [os.path.join(region_forecast_dir, d) for d in os.listdir(region_forecast_dir)
-             if os.path.isdir(os.path.join(region_forecast_dir, d))],
-            reverse=True
-        )
-        if len(directory_of_forecast_data) > 0:
-            directory_of_forecast_data = directory_of_forecast_data[0]
-    else:
-        directory_of_forecast_data = os.path.join(region_forecast_dir, date)
+    if not os.path.exists(forecast_dir):
+        raise ValueError(f'forecast data not found for date {date} (region: "{region}"). Use YYYYMMDD format.')
 
-    if not os.path.exists(directory_of_forecast_data):
-        raise ValueError(f'forecast data not found for region "{region}" and date {date}')
-
-    forecast_nc_list = sorted(glob.glob(os.path.join(directory_of_forecast_data, "Qout*.nc")), reverse=True)
+    forecast_nc_list = sorted(glob.glob(os.path.join(forecast_dir, "Qout*.nc")), reverse=True)
 
     if len(forecast_nc_list) == 0:
         raise ValueError('forecast data not found')
@@ -243,3 +234,14 @@ def find_forecast_warnings(date) -> pd.DataFrame:
         raise ValueError('Unable to find any warnings csv files for any region for the specified date')
 
     return warnings
+
+
+def get_most_recent_date() -> str:
+    available_dirs = glob.glob(os.path.join(PATH_TO_FORECASTS, '*'))
+    if len(available_dirs) == 0:
+        raise ValueError("unable to find any region folders in the forecast directory")
+    available_dirs = glob.glob(os.path.join(available_dirs[0], '*'))
+    available_dirs = sorted([d for d in available_dirs if os.path.isdir(d)], reverse=True)
+    if len(available_dirs) == 0:
+        raise ValueError("unable to find forecast results in the region forecast directory")
+    return os.path.basename(available_dirs[0]).split('.')[0]
