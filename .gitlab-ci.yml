@@ -61,7 +61,8 @@ stages:
         --dockerfile $KANIKO_DOCKERFILE
         $(for DEST in $KANIKO_DESTINATIONS; do echo "--destination $DEST "; done)
         --cache=true
-        --cache-repo $CI_REGISTRY_IMAGE/cache"
+        --cache-repo $CI_REGISTRY_IMAGE/cache
+        --force"
     - echo $KANIKO_CMD
     - $KANIKO_CMD
 
