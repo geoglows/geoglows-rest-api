@@ -4,6 +4,8 @@ import xarray
 import datetime
 import glob
 import netCDF4 as nc
+import zarr
+
 
 from flask import make_response, jsonify
 
@@ -51,6 +53,8 @@ def handle_request(request, product, reach_id):
 def get_forecast_dataset(reach_id, date):
     region = reach_to_region(reach_id)
     region_forecast_dir = os.path.join(PATH_TO_FORECASTS, region)
+    historical_data_file = xarray.open_zarr(os.path.join(PATH_TO_ERA_5, region))
+    time = pd.to_datetime(historical_data_file['time'][:], unit='s')
 
     if date == "latest":
         directory_of_forecast_data = sorted(
@@ -122,22 +126,24 @@ def new_json_template(reach_id, units, start_date, end_date):
 
 
 def get_historical_dataframe(reach_id, units):
+    print("reading historical data")
+    print(reach_id)
     region = reach_to_region(reach_id)
-    historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
-    template = os.path.join(PATH_TO_ERA_5, 'era5_pandas_dataframe_template.pickle')
-
-    # collect the data in a dataframe
-    df = pd.read_pickle(template)
-    qout_nc = nc.Dataset(historical_data_file)
+    print(region)
+    historical_data_file = xarray.open_zarr(os.path.join(PATH_TO_ERA_5, region))
+    time = pd.to_datetime(historical_data_file['time'][:], unit='s')
+    df = pd.DataFrame()
+    print("check")
     try:
-        df['flow'] = qout_nc['Qout'][:, list(qout_nc['rivid'][:]).index(reach_id)]
-        qout_nc.close()
+        df['flow'] = historical_data_file['Qout'][:, list(historical_data_file['rivid'][:]).index(reach_id)]
+        df.set_index(time, inplace=True)
+        print("check")
     except Exception as e:
-        qout_nc.close()
+        #qout_nc.close()
         raise e
 
     if units == 'cfs':
         df['flow'] = df['flow'].values * M3_TO_FT3
     df.rename(columns={'flow': f'flow_{units}'}, inplace=True)
-
+    print("finished reading historical data")
     return df

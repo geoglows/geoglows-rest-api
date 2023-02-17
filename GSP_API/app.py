@@ -22,13 +22,13 @@ app.config['CORS_HEADERS'] = '*'
 
 
 # create logger function
-def init_logger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler('/app/api.log', 'a')
-    formatter = logging.Formatter('%(asctime)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+#def init_logger():
+    #logger = logging.getLogger()
+    #logger.setLevel(logging.DEBUG)
+    #handler = logging.FileHandler('/app/api.log', 'a')
+    #formatter = logging.Formatter('%(asctime)s: %(message)s')
+    #handler.setFormatter(formatter)
+    #logger.addHandler(handler)
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HTML PAGES
@@ -69,10 +69,11 @@ def resources():
 @app.route(f'{api_path}/v2/<product>/', methods=['GET'])
 @app.route(f'{api_path}/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
+#print("CHECKING")
 def rest_endpoints_v2(product: str, reach_id: int = None):
     product, reach_id, units, return_format, date, ensemble, start_date, end_date = \
         v2_controllers.handle_request(request, product, reach_id)
-
+    print(return_format)
     analytics.track_event(version="v2", product=product, reach_id=reach_id)
 
     # forecast data products
@@ -91,13 +92,13 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     # historical data products
     elif product == 'hindcast' or product == 'historical':
-        return v2_controllers.historical(reach_id, units, return_format)
+       return v2_controllers.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
         return v2_controllers.return_periods(reach_id, units, return_format)
     elif product == 'dailyaverages':
-        return v2_controllers.historical_averages(request, units, 'daily', return_format)
+        return v2_controllers.historical_averages(reach_id, units, 'daily', return_format)
     elif product == 'monthlyaverages':
-        return v2_controllers.historical_averages(request, units, 'monthly', return_format)
+        return v2_controllers.historical_averages(reach_id, units, 'monthly', return_format)
 
     # data availability
     elif product == 'availabledata':

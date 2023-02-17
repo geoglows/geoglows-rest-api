@@ -19,8 +19,9 @@ def historical(reach_id, units, return_format):
     """
     Controller for retrieving simulated historic data
     """
+    print("IN HISTORICAL")
     hist_df = get_historical_dataframe(reach_id, units)
-
+    print("IN HISTORICAL")
     if return_format == 'csv':
         return dataframe_to_csv_flask_response(hist_df, f'historical_streamflow_era5_{reach_id}.csv')
     if return_format == 'json':
@@ -36,8 +37,11 @@ def historical(reach_id, units, return_format):
 
 
 def historical_averages(reach_id, units, average_type, return_format):
+    print("IN HISTORICAL AVERAGES")
     df = get_historical_dataframe(reach_id, units)
+    print(df.head())
     df.index = pd.to_datetime(df.index)
+    print("check")
 
     if average_type == 'daily':
         df = hd.daily_average(df, rolling=True)

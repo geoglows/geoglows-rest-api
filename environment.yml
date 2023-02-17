@@ -12,3 +12,4 @@ dependencies:
   - shapely
   - hydrostats
   - requests
+  - zarr
