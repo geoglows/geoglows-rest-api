@@ -15,6 +15,7 @@ def historical(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
     """
     Controller for retrieving simulated historic data
     """
+
     df = v2_utilities.get_historical_dataframe(reach_id, units)
     df = df.astype(np.float64).round(v2_utilities.NUM_DECIMALS)
 
@@ -28,7 +29,9 @@ def historical(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
 
 def historical_averages(reach_id, units, average_type, return_format):
     df = v2_utilities.get_historical_dataframe(reach_id, units)
+
     df.index = pd.to_datetime(df.index)
+    print("check")
 
     if average_type == 'daily':
         df = hd.daily_average(df, rolling=True)

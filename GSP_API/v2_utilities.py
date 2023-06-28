@@ -4,7 +4,7 @@ import xarray
 import datetime
 import glob
 import netCDF4 as nc
-import numpy as np
+import zarr
 
 from flask import make_response, jsonify
 
@@ -89,7 +89,20 @@ def get_forecast_dataset(reach_id, date):
     if date == 'latest':
         date = get_most_recent_date()
     region = reach_to_region(reach_id)
-    forecast_dir = os.path.join(PATH_TO_FORECASTS, region, f'{date}.00')
+    region_forecast_dir = os.path.join(PATH_TO_FORECASTS, region)
+    historical_data_file = xarray.open_zarr(os.path.join(PATH_TO_ERA_5, region))
+    time = pd.to_datetime(historical_data_file['time'][:], unit='s')
+
+    if date == "latest":
+        directory_of_forecast_data = sorted(
+            [os.path.join(region_forecast_dir, d) for d in os.listdir(region_forecast_dir)
+             if os.path.isdir(os.path.join(region_forecast_dir, d))],
+            reverse=True
+        )
+        if len(directory_of_forecast_data) > 0:
+            directory_of_forecast_data = directory_of_forecast_data[0]
+    else:
+        directory_of_forecast_data = os.path.join(region_forecast_dir, date)
 
     if not os.path.exists(forecast_dir):
         raise ValueError(f'forecast data not found for date {date} (region: "{region}"). Use YYYYMMDD format.')
@@ -112,25 +125,64 @@ def get_forecast_dataset(reach_id, date):
         raise ValueError('Error while reading data from the netCDF files')
 
 
-def get_historical_dataframe(reach_id: int, units: str) -> pd.DataFrame:
-    region = reach_to_region(reach_id)
-    historical_data_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
-    template = os.path.join(PATH_TO_ERA_5, 'era5_pandas_dataframe_template.pickle')
+def dataframe_to_csv_flask_response(df, csv_name):
+    response = make_response(df.to_csv())
+    response.headers['content-type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename={csv_name}.csv'
+    return response
 
-    # collect the data in a dataframe
-    df = pd.read_pickle(template)
-    qout_nc = nc.Dataset(historical_data_file)
+
+def dataframe_to_jsonify_response(df, df_highres, reach_id, units):
+    json_template = new_json_template(reach_id, units, start_date=df.index[0], end_date=df.index[-1])
+
+    # add data from the dataframe of ensembles 1-51
+    json_template['time_series']['datetime'] = df.index.tolist(),
+    json_template['time_series'].update(df.to_dict(orient='list'))
+
+    # add data for the high resolution ensemble 52
+    if df_highres is not None:
+        json_template['time_series']['datetime_high_res'] = df_highres.index.tolist()
+        json_template['high_res'] = df_highres.to_list()
+
+    return jsonify(json_template)
+
+
+def new_json_template(reach_id, units, start_date, end_date):
+    return {
+        'reach_id': reach_id,
+        'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),
+        'start_date': start_date,
+        'end_date': end_date,
+        'units': {
+            'name': 'streamflow',
+            'short': f'{units}',
+            'long': f'Cubic {"Meters" if units == "cms" else "Feet"} per Second',
+        },
+        'time_series': {}
+    }
+
+
+def get_historical_dataframe(reach_id, units):
+    print("reading historical data")
+    print(reach_id)
+    region = reach_to_region(reach_id)
+    print(region)
+    historical_data_file = xarray.open_zarr(os.path.join(PATH_TO_ERA_5, region))
+    time = pd.to_datetime(historical_data_file['time'][:], unit='s')
+    df = pd.DataFrame()
+    print("check")
     try:
-        df['flow'] = qout_nc['Qout'][:, list(qout_nc['rivid'][:]).index(reach_id)]
-        qout_nc.close()
+        df['flow'] = historical_data_file['Qout'][:, list(historical_data_file['rivid'][:]).index(reach_id)]
+        df.set_index(time, inplace=True)
+        print("check")
     except Exception as e:
-        qout_nc.close()
+        #qout_nc.close()
         raise e
 
     if units == 'cfs':
         df['flow'] = df['flow'].values * M3_TO_FT3
     df.rename(columns={'flow': f'flow_{units}'}, inplace=True)
-
+    print("finished reading historical data")
     return df
 
 
