@@ -4,6 +4,8 @@ import boto3
 import logging
 import time
 
+from v2_utilities import ALL_PRODUCTS as product_list
+
 GA_ID = os.getenv('GOOGLE_ANALYTICS_ID')
 GA_TOKEN = os.getenv('GOOGLE_ANALYTICS_TOKEN')
 LOG_GROUP_NAME = os.getenv('AWS_LOG_GROUP_NAME')
@@ -34,9 +36,10 @@ for i, product in enumerate(products_v2):
     product_map_v2[product] = f'{(i + 1):02}'
 
 
-def track_event(version: str, product: str, reach_id: int) -> None:
+def track_event(version: str, product: str, reach_id: int, return_format: str) -> None:
     """
     Posts a custom event to the Google Analytics V4 reporting rest endpoint
+    Refer to https://developers.google.com/analytics/devguides/collection/protocol/ga4/sending-events?client_type=gtag
 
     Requires environment variables
     - GOOGLE_ANALYTICS_ID: a Google Analytics property ID which is set up to receive events
@@ -50,7 +53,7 @@ def track_event(version: str, product: str, reach_id: int) -> None:
         )
     """
 
-    event_name = f'{version}_{product.lower()}_{reach_id if reach_id is not None else 0}'
+    event_name = f'{version}_{product_list[product]}_{reach_id if reach_id is not None else 0}_{return_format}'
     data = {
         'client_id': 'geoglows',
         'events': [{
