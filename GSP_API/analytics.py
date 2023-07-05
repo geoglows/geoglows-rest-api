@@ -72,8 +72,8 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
     Posts a custom log to the aws cloudwatch logging service
 
     Requires environment variables
-    - AWS_LOG_GROUP_NAME: the group name for the AWS CloudWatch log group within "logs". data-service-queries-group
-    - AWS_LOG_STREAM_NAME: the stream name within the CloudWatch log group. data-service-queries-stream
+    - AWS_LOG_GROUP_NAME: the group name for the AWS CloudWatch log group within "logs".
+    - AWS_LOG_STREAM_NAME: the stream name within the CloudWatch log group.
 
     Args:
         version: Either v1 or v2. Will be converted to a two digit code and placed at the beginning of the log message
