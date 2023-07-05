@@ -6,9 +6,7 @@ import time
 
 GA_ID = os.getenv('GOOGLE_ANALYTICS_ID')
 GA_TOKEN = os.getenv('GOOGLE_ANALYTICS_TOKEN')
-LOG_GROUP_NAME = 'data-service-queries-group'
 LOG_GROUP_NAME = os.getenv('AWS_LOG_GROUP_NAME')
-LOG_STREAM_NAME = 'data-service-queries-stream'
 LOG_STREAM_NAME = os.getenv('AWS_LOG_STREAM_NAME')
 # Create a CloudWatch Logs client
 client = boto3.client('logs')

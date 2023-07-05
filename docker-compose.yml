@@ -15,4 +15,4 @@ services:
 #      - MOUNT THE FLASK APP CODE
       - ./GSP_API:/app/GSP_API
 #      - MOUNT THE DATA
-      - /Users/joshogden/Documents/rest-api-test-data:/mnt/output
+      - ./sample_data:/mnt/output
