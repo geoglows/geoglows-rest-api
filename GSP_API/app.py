@@ -74,7 +74,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
     product, reach_id, units, return_format, date, ensemble, start_date, end_date = \
         v2_controllers.handle_request(request, product, reach_id)
     print(return_format)
-    analytics.track_event(version="v2", product=product, reach_id=reach_id)
+    analytics.log_request(version="v2", product=product, reach_id=reach_id)
 
     # forecast data products
     if product == 'forecast':
@@ -118,7 +118,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 @app.route(f'{api_path}/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
-    analytics.track_event("v1", product, request.args.get('reach_id', None))
+    analytics.log_request(version="v1", product=product, reach_id=request.args.get('reach_id', None))
 
     # forecast data products
     if product == 'ForecastStats':
