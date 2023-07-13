@@ -6,8 +6,8 @@ import netCDF4 as nc
 import pandas as pd
 from pytz import utc
 
-from constants import PATH_TO_ERA_INTERIM, PATH_TO_ERA_5, M3_TO_FT3
-from model_utilities import latlon_to_reach, reach_to_region
+from GSP_API.constants import PATH_TO_ERA_INTERIM, PATH_TO_ERA_5, M3_TO_FT3
+from GSP_API.model_utilities import latlon_to_reach, reach_to_region
 
 
 def handle_parameters(request):
@@ -33,7 +33,7 @@ def find_historical_files(region, forcing):
     if forcing == 'era_interim':
         path = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc*'))[0]
         template = os.path.join(PATH_TO_ERA_INTERIM, 'erainterim_pandas_dataframe_template.pickle')
-    elif forcing == 'era_5':
+    elif forcing in ['era5', 'era-5', 'era_5']:
         path = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
         template = os.path.join(PATH_TO_ERA_5, 'era5_pandas_dataframe_template.pickle')
     else:

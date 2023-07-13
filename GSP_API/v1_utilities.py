@@ -1,9 +1,9 @@
 import os
 
 from flask import jsonify
-from v1_functions import latlon_to_reach
+from GSP_API.v1_functions import latlon_to_reach
 
-from constants import PATH_TO_FORECASTS
+from GSP_API.constants import PATH_TO_FORECASTS
 
 __all__ = ['get_available_data_handler', 'get_region_handler', 'get_reach_id_from_latlon_handler']
 

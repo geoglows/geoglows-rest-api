@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from flask import jsonify
 
-import v2_utilities
+from GSP_API import v2_utilities
 
 __all__ = ['historical', 'historical_averages', 'return_periods']
 
@@ -31,7 +31,6 @@ def historical_averages(reach_id, units, average_type, return_format):
     df = v2_utilities.get_historical_dataframe(reach_id, units)
 
     df.index = pd.to_datetime(df.index)
-    print("check")
 
     if average_type == 'daily':
         df = hd.daily_average(df, rolling=True)

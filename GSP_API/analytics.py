@@ -1,7 +1,7 @@
 import os
 import requests
 
-from v2_utilities import ALL_PRODUCTS as product_list
+from GSP_API.v2_utilities import ALL_PRODUCTS as product_list
 
 GA_ID = os.getenv('GOOGLE_ANALYTICS_ID')
 GA_TOKEN = os.getenv('GOOGLE_ANALYTICS_TOKEN')

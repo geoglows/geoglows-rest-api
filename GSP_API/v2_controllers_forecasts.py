@@ -7,10 +7,10 @@ import pandas as pd
 import xarray
 from flask import jsonify
 
-import v2_utilities
-from constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3
-from model_utilities import reach_to_region
-from v2_controllers_historical import historical_averages
+from GSP_API import v2_utilities
+from GSP_API.constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3
+from GSP_API.model_utilities import reach_to_region
+from GSP_API.v2_controllers_historical import historical_averages
 
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies',
            'forecast_warnings', 'forecast_dates']
