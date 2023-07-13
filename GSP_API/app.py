@@ -71,12 +71,10 @@ def resources():
 @app.route(f'{api_path}/v2/<product>/<reach_id>/<return_format>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = 'csv'):
-    product, reach_id, return_format, units, date, ensemble, start_date, end_date = v2ctl.handle_request(
-        request, product,
-        reach_id, return_format
-    )
+    product, reach_id, return_format, units, date, ensemble, start_date, end_date = \
+        v2ctl.handle_request(request, product, reach_id, return_format)
 
-    analytics.track_event(version="v2", product=product, reach_id=reach_id, return_format=return_format)
+    analytics.log_request(version="v2", product=product, reach_id=reach_id, return_format=return_format)
 
     # forecast data products
     if product == 'forecast':
@@ -118,7 +116,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
 @app.route(f'{api_path}/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):
-    analytics.track_event("v1", product, request.args.get('reach_id', None), request.args.get('return_format', 'csv'))
+    analytics.log_request(version="v1", product=product, reach_id=request.args.get('reach_id', None))
 
     # forecast data products
     if product == 'ForecastStats':
