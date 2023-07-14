@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from flask import jsonify
 
-from GSP_API import v2_utilities
+import v2_utilities
 
 __all__ = ['historical', 'historical_averages', 'return_periods']
 

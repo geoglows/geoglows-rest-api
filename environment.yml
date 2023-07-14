@@ -13,3 +13,4 @@ dependencies:
   - hydrostats
   - requests
   - zarr
+  - boto3

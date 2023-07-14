@@ -5,9 +5,9 @@ import traceback
 from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
 
-from GSP_API import analytics
-from GSP_API import v1_controllers
-import GSP_API.v2_controllers as v2ctl
+import analytics
+import v1_controllers
+import v2_controllers as v2ctl
 
 
 print("Launching Flask App")
@@ -71,10 +71,14 @@ def resources():
 @app.route(f'{api_path}/v2/<product>/<reach_id>/<return_format>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = 'csv'):
-    product, reach_id, return_format, units, date, ensemble, start_date, end_date = \
-        v2ctl.handle_request(request, product, reach_id, return_format)
+    product, reach_id, return_format, units, date, ensemble, start_date, end_date = v2ctl.handle_request(
+        request,
+        product,
+        reach_id,
+        return_format
+    )
 
-    analytics.log_request(version="v2", product=product, reach_id=reach_id, return_format=return_format)
+    analytics.log_request(version="v2", product=product, reach_id=reach_id)
 
     # forecast data products
     if product == 'forecast':

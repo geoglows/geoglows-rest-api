@@ -8,8 +8,8 @@ import netCDF4 as nc
 from glob import glob
 from flask import make_response, jsonify
 
-from GSP_API.constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
-from GSP_API.v1_functions import reach_to_region, latlon_to_reach
+from constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
+from v1_functions import reach_to_region, latlon_to_reach
 
 __all__ = [
     'ALL_PRODUCTS', 'PRODUCT_SHORTCUTS', 'NUM_DECIMALS',
