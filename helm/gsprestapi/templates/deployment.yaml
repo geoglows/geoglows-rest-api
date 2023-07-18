@@ -52,10 +52,10 @@ spec:
                   key: AWS_LOG_GROUP_NAME
                   name: aws-auth
             - name: "AWS_LOG_STREAM_NAME"
-                valueFrom:
-                  secretKeyRef:
-                    key: AWS_LOG_STREAM_NAME
-                    name: aws-auth
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_LOG_STREAM_NAME
+                  name: aws-auth
 
           ports:
             - name: http
