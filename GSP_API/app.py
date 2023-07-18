@@ -43,6 +43,12 @@ def documentation():
     return render_template('documentation.html')
 
 
+@app.route('/license')
+@cross_origin()
+def license():
+    return render_template('license.html')
+
+
 @app.route('/publications')
 @cross_origin()
 def publications():
