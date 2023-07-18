@@ -21,7 +21,7 @@ def reach_to_region(reach_id=None):
     # -------central_america 11M (currently 900k's)
     # Europe 12M's
     # North America 13M's
-
+    print(reach_id)
     lookup = OrderedDict([
         ('australia-geoglows', 300000),
         ('middle_east-geoglows', 700000),
@@ -42,6 +42,7 @@ def reach_to_region(reach_id=None):
         if reach_id < threshold:
             if region == 'error':
                 raise ValueError(f'Unable to determine a region paired with reach_id "{reach_id}"')
+            print("FINISH")
             return region
     raise ValueError(f'Unable to determine a region paired with reach_id "{reach_id}"')
 

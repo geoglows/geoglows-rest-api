@@ -16,33 +16,78 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9CRT50V34R"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-9CRT50V34R');
-  </script>
 </head>
 
 <body>
 {% block navbar %}
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#292b47;">
-  <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav nav-fill w-100">
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('documentation') }}">Documentation</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('resources')}}">Resources</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('publications') }}">Publications</a></li>
-    </ul>
-  </div>
-</nav>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#292b47;">
+    <a class="navbar-brand" href="{{ url_for('home') }}">GEOGloWS ECMWF Streamflow</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav nav-fill w-100">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('documentation') }}">Documentation</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('resources')}}">Resources</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('license') }}">License</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('publications') }}">Publications</a></li>
+      </ul>
+    </div>
+  </nav>
+  {% block flash_message %}
+    <div id="flashMessage" class="alert alert-warning alert-dismissible" role="alert" style="display:none;margin:1rem;">
+      <h4 class="alert-heading" style="text-align:center;">
+        Upcoming Updates to the GEOGloWS ECMWF Streamflow Service (GEOGloWS 2.0)
+      </h4>
+      <hr>
+      <div class="container" style="min-width:90%">
+        <div class="row">
+          <div class="col">
+            <h6>TDXHydro Streams</h6>
+            <ul class="list-group">
+              <li>New streams that align with TanDEM-X.</li>
+              <li>5 to 6 million stream reaches.</li>
+              <li>Divides world into ~125 regions (previously 13).</li>
+              <li>Better estimates for routing parameters and travel times.</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h6>Longer Retrospective Simulation</h6>
+            <ul class="list-group">
+              <li>1940 start (previously 1979).</li>
+              <li>Default span Jan 1st, 1990 to present.</li>
+              <li>Computed with less than a month lag.</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h6>Modeling Workflow Improvements</h6>
+            <ul class="list-group">
+              <li>Faster simulations.</li>
+              <li>Finer temporal and spatial resoulutions.</li>
+              <li>Changes to file formats used for improved retrieval speed (NetCDF to Zarr).</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h6>REST API Service Improvements</h6>
+            <ul class="list-group">
+              <li>REST API versioning.</li>
+              <li>OGC API Standard integration.</li>
+              <li>Updates to read result's new Zarr format.</li>
+              <li>New REST API endpoints to facilitate data retrieval.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <hr>
+      <p class="mb-0" style="text-align:center;">
+        These updates are expected to be available in October, 2023. For more information join our Google Group and Mailing List <a href=" https://groups.google.com/g/geoglows-streamflow" target="_blank">Here</a>.
+      </p>
+      <button id="closeFlashMessage" type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  {% endblock %}
 {% endblock %}
 
 {% block body %}
@@ -61,7 +106,7 @@
   <div class="footer container-fluid" style="padding: 2%">
     <div class="row">
       <div class="col-md-1 text-center" style="line-height: 60px;">
-        <p style="margin:auto;vertical-align:middle;display:inline-block;">&#169; 2022</p>
+        <p style="margin:auto;vertical-align:middle;display:inline-block;">&#169; 2023</p>
       </div>
       <div class="col-md-3 text-center">
         <a href="https://www.aquaveo.com/" target="_blank" style="line-height: 60px;">
@@ -90,6 +135,19 @@
 {% block stylesheets %}
 {% endblock %}
 {% block javascript %}
+  <script>
+    $("#flashMessage").fadeIn("slow");
+    window.addEventListener("DOMContentLoaded", () => {
+      if ( sessionStorage.getItem('flashMessageVisible') === 'true' ) {
+        document.querySelector('.alert').style.display = 'none'
+      }
+      const closeButton = document.querySelector('#closeFlashMessage')
+      closeButton.addEventListener('click', (e) => {
+        e.preventDefault()
+        sessionStorage.setItem('flashMessageVisible', 'true')
+      })
+    })
+  </script>
 {% endblock %}
 
 </html>

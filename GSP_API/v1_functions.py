@@ -33,7 +33,7 @@ def find_historical_files(region, forcing):
     if forcing == 'era_interim':
         path = glob.glob(os.path.join(PATH_TO_ERA_INTERIM, region, 'Qout*.nc*'))[0]
         template = os.path.join(PATH_TO_ERA_INTERIM, 'erainterim_pandas_dataframe_template.pickle')
-    elif forcing == 'era_5':
+    elif forcing in ['era5', 'era-5', 'era_5']:
         path = glob.glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.nc*'))[0]
         template = os.path.join(PATH_TO_ERA_5, 'era5_pandas_dataframe_template.pickle')
     else:
