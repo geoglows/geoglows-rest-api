@@ -1,9 +1,12 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "gsprestapi.fullname" . -}}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.org/mergeable-ingress-type: minion
   labels:
 {{ include "gsprestapi.labels" . | indent 4 }}
   {{- with .Values.ingress.annotations }}
@@ -27,8 +30,11 @@ spec:
       http:
         paths:
           - path: "/"
+            pathType: ImplementationSpecific
             backend:
-              serviceName: {{ $fullName }}
-              servicePort: http
+              service:
+                name: {{ $fullName }}
+                port:
+                  name: http
   {{- end }}
 {{- end }}

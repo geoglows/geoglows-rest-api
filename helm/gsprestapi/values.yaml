@@ -26,7 +26,7 @@ ingress:
 
   tls: []
 
-resources: 
+resources:
   requests:
     cpu: 1
     memory: 512Mi
@@ -38,5 +38,13 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
-GOOGLE_ANALYTICS_ID: GOOGLE_ANALYTICS_ID
-GOOGLE_ANALYTICS_TOKEN: GOOGLE_ANALYTICS_TOKEN
+persistentVolumes:
+  geoglows-data-volume:
+    mountPath: /mnt
+    claimName: nfs-geoglows-prod-pvc
+
+AWS_ACCESS_KEY_ID: AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY: AWS_SECRET_ACCESS_KEY
+AWS_LOG_GROUP_NAME: AWS_LOG_GROUP_NAME
+AWS_LOG_STREAM_NAME: AWS_LOG_STREAM_NAME
+AWS_REGION: AWS_REGION

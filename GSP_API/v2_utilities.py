@@ -1,11 +1,11 @@
 import os
 import pandas as pd
-import xarray
+import numpy as np
+import xarray as xr
 import datetime
-import glob
 import netCDF4 as nc
-import zarr
 
+from glob import glob
 from flask import make_response, jsonify
 
 from constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
@@ -86,43 +86,29 @@ def handle_request(request, product, reach_id, return_format):
 
 
 def get_forecast_dataset(reach_id, date):
-    if date == 'latest':
-        date = get_most_recent_date()
     region = reach_to_region(reach_id)
     region_forecast_dir = os.path.join(PATH_TO_FORECASTS, region)
-    historical_data_file = xarray.open_zarr(os.path.join(PATH_TO_ERA_5, region))
-    time = pd.to_datetime(historical_data_file['time'][:], unit='s')
 
     if date == "latest":
-        directory_of_forecast_data = sorted(
-            [os.path.join(region_forecast_dir, d) for d in os.listdir(region_forecast_dir)
-             if os.path.isdir(os.path.join(region_forecast_dir, d))],
-            reverse=True
-        )
-        if len(directory_of_forecast_data) > 0:
-            directory_of_forecast_data = directory_of_forecast_data[0]
+        date = get_most_recent_date()
+        forecast_dir = os.path.join(region_forecast_dir, ".".join([date, '00']))
     else:
-        directory_of_forecast_data = os.path.join(region_forecast_dir, date)
+        forecast_dir = os.path.join(region_forecast_dir, ".".join([date, '00']))
 
     if not os.path.exists(forecast_dir):
         raise ValueError(f'forecast data not found for date {date} (region: "{region}"). Use YYYYMMDD format.')
 
-    forecast_nc_list = sorted(glob.glob(os.path.join(forecast_dir, "Qout*.nc")), reverse=True)
+    forecast_path_list = glob(os.path.join(forecast_dir, "Qout*.zarr"))
 
-    if len(forecast_nc_list) == 0:
+    if len(forecast_path_list) == 0:
         raise ValueError('forecast data not found')
 
     try:
-        # combine 52 ensembles
-        qout_datasets = []
-        ensemble_index_list = []
-        for forecast_nc in forecast_nc_list:
-            ensemble_index_list.append(int(os.path.basename(forecast_nc)[:-3].split("_")[-1]))
-            qout_datasets.append(xarray.open_dataset(forecast_nc).sel(rivid=reach_id).Qout)
-        return xarray.concat(qout_datasets, pd.Index(ensemble_index_list, name='ensemble'))
+        forecast_dataset = xr.open_zarr(forecast_path_list[0])
+        return forecast_dataset.sel(rivid=reach_id).Qout
     except Exception as e:
         print(e)
-        raise ValueError('Error while reading data from the netCDF files')
+        raise ValueError('Error while reading data from the zarr files')
 
 
 def dataframe_to_csv_flask_response(df, csv_name):
@@ -164,17 +150,20 @@ def new_json_template(reach_id, units, start_date, end_date):
 
 def get_historical_dataframe(reach_id, units):
     print("reading historical data")
-    print(reach_id)
-    region = reach_to_region(reach_id)
-    print(region)
-    historical_data_file = xarray.open_zarr(os.path.join(PATH_TO_ERA_5, region))
+    print("reach_id: {reach_id}")
+    region = 'central_america-geoglows'  # reach_to_region(reach_id)
+    print("region {region}")
+    file_path_list = glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.zarr'))
+
+    if len(file_path_list) == 0:
+        raise ValueError('historical data not found')
+
+    historical_data_file = xr.open_zarr(file_path_list[0])
     time = pd.to_datetime(historical_data_file['time'][:], unit='s')
     df = pd.DataFrame()
-    print("check")
     try:
         df['flow'] = historical_data_file['Qout'][:, list(historical_data_file['rivid'][:]).index(reach_id)]
         df.set_index(time, inplace=True)
-        print("check")
     except Exception as e:
         #qout_nc.close()
         raise e
@@ -188,12 +177,12 @@ def get_historical_dataframe(reach_id, units):
 
 def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
     region = reach_to_region(reach_id)
-    return_period_file = glob.glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc*'))
+    return_period_file = glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc*'))
     if len(return_period_file) == 0:
         raise ValueError("Unable to find return periods file")
 
     # collect the data in a dataframe
-    return_periods_nc = xarray.open_dataset(return_period_file[0])
+    return_periods_nc = xr.open_dataset(return_period_file[0])
     return_periods_df = return_periods_nc.to_dataframe()
     return_periods_df = return_periods_df[return_periods_df.index == reach_id]
     return_periods_nc.close()
@@ -245,7 +234,7 @@ def new_json_template(reach_id, units, start_date, end_date):
 
 
 def find_available_dates():
-    sample_region_directory = glob.glob(os.path.join(PATH_TO_FORECASTS, "*-geoglows"))[0]
+    sample_region_directory = glob(os.path.join(PATH_TO_FORECASTS, "*-geoglows"))[0]
     dates = [d for d in os.listdir(sample_region_directory) if d.split('.')[0].isdigit()]
     if len(dates) > 0:
         return jsonify({"available_dates": dates})
@@ -289,10 +278,10 @@ def find_forecast_warnings(date) -> pd.DataFrame:
 
 
 def get_most_recent_date() -> str:
-    available_dirs = glob.glob(os.path.join(PATH_TO_FORECASTS, '*'))
+    available_dirs = glob(os.path.join(PATH_TO_FORECASTS, '*'))
     if len(available_dirs) == 0:
         raise ValueError("unable to find any region folders in the forecast directory")
-    available_dirs = glob.glob(os.path.join(available_dirs[0], '*'))
+    available_dirs = glob(os.path.join(available_dirs[0], '*'))
     available_dirs = sorted([d for d in available_dirs if os.path.isdir(d)], reverse=True)
     if len(available_dirs) == 0:
         raise ValueError("unable to find forecast results in the region forecast directory")

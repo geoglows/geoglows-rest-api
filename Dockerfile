@@ -3,8 +3,11 @@ FROM continuumio/miniconda3:latest
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/envs/gsp_api/bin:$PATH API_PREFIX=/api
 
 # For Development On Analytics Only:
-#ENV GOOGLE_ANALYTICS_ID=
-#ENV GOOGLE_ANALYTICS_TOKEN=
+# ENV AWS_ACCESS_KEY_ID=
+# ENV AWS_SECRET_ACCESS_KEY=
+# ENV AWS_LOG_GROUP_NAME=
+# ENV AWS_LOG_STREAM_NAME=
+# ENV AWS_REGION=
 
 RUN mkdir /var/uwsgi
 
@@ -22,10 +25,10 @@ RUN mkdir -p /mnt/output/forecasts && \
     mkdir -p /mnt/output/era-5 && \
     mkdir -p /mnt/output/forecast-records
 
-#COPY ./sample_data/forecasts /mnt/output/forecasts
-#COPY ./sample_data/era-interim /mnt/output/era-interim
-#COPY ./sample_data/era-5 /mnt/output/era-5
-#COPY ./sample_data/forecast-records /mnt/output/forecast-records
+# COPY ./sample_data/forecasts /mnt/output/forecasts
+# COPY ./sample_data/era-interim /mnt/output/era-interim
+# COPY ./sample_data/era-5 /mnt/output/era-5
+# COPY ./sample_data/forecast-records /mnt/output/forecast-records
 
 # Copy API code
 COPY ./GSP_API /app/GSP_API/
