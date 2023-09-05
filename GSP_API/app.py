@@ -1,15 +1,16 @@
 import logging
 import os
+import traceback
 
 from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_cors import CORS, cross_origin
 
-import v1_controllers
-import v2_controllers
-
 import analytics
+import v1_controllers
+import v2_controllers as v2ctl
 
-print("Creating Application")
+
+print("Launching Flask App")
 
 api_path = os.getenv('API_PREFIX')
 
@@ -20,15 +21,13 @@ app.debug = False
 cors = CORS(app)
 app.config['CORS_HEADERS'] = '*'
 
-
-# create logger function
-#def init_logger():
-    #logger = logging.getLogger()
-    #logger.setLevel(logging.DEBUG)
-    #handler = logging.FileHandler('/app/api.log', 'a')
-    #formatter = logging.Formatter('%(asctime)s: %(message)s')
-    #handler.setFormatter(formatter)
-    #logger.addHandler(handler)
+# create logger
+logger = logging.getLogger("DEBUG")
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler('/app/api.log', 'a')
+formatter = logging.Formatter('%(asctime)s: %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HTML PAGES
@@ -66,47 +65,47 @@ def resources():
 
 @app.route(f'{api_path}/latest/<product>/', methods=['GET'], )
 @app.route(f'{api_path}/latest/<product>/<reach_id>', methods=['GET'], )
+@app.route(f'{api_path}/latest/<product>/<reach_id>/<return_format>', methods=['GET'], )
 @app.route(f'{api_path}/v2/<product>/', methods=['GET'])
 @app.route(f'{api_path}/v2/<product>/<reach_id>', methods=['GET'])
+@app.route(f'{api_path}/v2/<product>/<reach_id>/<return_format>', methods=['GET'])
 @cross_origin()
 #print("CHECKING")
 def rest_endpoints_v2(product: str, reach_id: int = None):
     product, reach_id, units, return_format, date, ensemble, start_date, end_date = \
         v2_controllers.handle_request(request, product, reach_id)
-    print(return_format)
+    
     analytics.log_request(version="v2", product=product, reach_id=reach_id)
 
     # forecast data products
     if product == 'forecast':
-        return v2_controllers.forecast(reach_id, date, units, return_format)
-    elif product == 'forecaststats':
-        return v2_controllers.forecast_stats(reach_id, date, units, return_format)
+        return v2ctl.forecast(reach_id, date, units, return_format)
+    elif product in 'forecaststats':
+        return v2ctl.forecast_stats(reach_id, date, units, return_format)
     elif product == 'forecastensembles':
-        return v2_controllers.forecast_ensembles(reach_id, date, units, return_format, ensemble)
-    elif product == 'forecastwarnings':
-        return v2_controllers.forecast_warnings(request)
+        return v2ctl.forecast_ensembles(reach_id, date, units, return_format, ensemble)
     elif product == 'forecastrecords':
-        return v2_controllers.forecast_records(reach_id, start_date, end_date, units, return_format)
+        return v2ctl.forecast_records(reach_id, start_date, end_date, units, return_format)
     elif product == 'forecastanomalies':
-        return v2_controllers.forecast_anomalies(reach_id, date, units, return_format)
+        return v2ctl.forecast_anomalies(reach_id, date, units, return_format)
+    elif product == 'forecastwarnings':
+        return v2ctl.forecast_warnings(date, return_format)
+    elif product == 'forecastdates':
+        return v2ctl.forecast_dates()
+    if product == "hydroviewer":
+        return v2ctl.hydroviewer(reach_id, start_date, date, units, return_format)
 
-    # historical data products
-    elif product == 'hindcast' or product == 'historical':
-       return v2_controllers.historical(reach_id, units, return_format)
+    # hindcast data products
+    elif product == 'hindcast':
+        return v2ctl.historical(reach_id, units, return_format)
     elif product == 'returnperiods':
-        return v2_controllers.return_periods(reach_id, units, return_format)
+        return v2ctl.return_periods(reach_id, units, return_format)
     elif product == 'dailyaverages':
-        return v2_controllers.historical_averages(reach_id, units, 'daily', return_format)
+        return v2ctl.historical_averages(reach_id, units, 'daily', return_format)
     elif product == 'monthlyaverages':
-        return v2_controllers.historical_averages(reach_id, units, 'monthly', return_format)
+        return v2ctl.historical_averages(reach_id, units, 'monthly', return_format)
 
     # data availability
-    elif product == 'availabledata':
-        return v1_controllers.get_available_data_handler()
-    elif product == 'availableregions':
-        return v1_controllers.get_region_handler()
-    elif product == 'availabledates':
-        return v1_controllers.available_dates(request)
     elif product == 'getreachid':
         return v1_controllers.get_reach_id_from_latlon_handler(request)
 
@@ -156,6 +155,7 @@ def rest_endpoints_v1(product: str):
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
 @app.errorhandler(404)
 def errors_404(e):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     if request.path.startswith(f'{api_path}'):
         return jsonify({"error": f'API Endpoint not found: {request.path} -> Check spelling and the API docs'}), 404
     return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
@@ -163,16 +163,19 @@ def errors_404(e):
 
 @app.errorhandler(ValueError)
 def errors_valueerror(e):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     return jsonify({"error": str(e)}), 422
 
 
 @app.errorhandler(AssertionError)
 def errors_assertion(e):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     return jsonify({"error": "invalid input argument", "code": 100})
 
 
 @app.errorhandler(Exception)
-def errors_general_exception(e):
+def errors_general_exception(e: Exception):
+    logging.getLogger("DEBUG").debug(traceback.format_exc())
     return jsonify({"error": f"An unexpected error occurred: {e}", "code": 9999}), 500
 
 
