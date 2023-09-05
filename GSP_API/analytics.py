@@ -97,13 +97,13 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
     if reach_id is None:
         reach_id = 00
     product_code = product_map_v2[product] if version == 'v2' else product_map_v1[product]
-    message = f'{version.replace("v", "0")}_{product_code}_{reach_id}'
+    message = f'{version}_product-{product.lower().replace(" ", "")}_reachid-{reach_id}'
     if 'region_no' in kwargs:
-        message += f'_{kwargs["region_no"]}'
+        message += f'_regionno-{kwargs["region_no"]}'
     if 'source' in kwargs:
-        message += f'_{kwargs["source"]}'
+        message += f'_source-{kwargs["source"]}'
     else:
-        message += '_2'
+        message += '_source-2'
 
     # Send the log message to CloudWatch
     response = client.put_log_events(
