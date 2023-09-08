@@ -68,6 +68,7 @@ def track_event(version: str, product: str, reach_id: int, return_format: str) -
         json=data
     )
 
+
 def log_request(version: str, product: str, reach_id: int = None, **kwargs):
     """
     Posts a custom log to the aws cloudwatch logging service
