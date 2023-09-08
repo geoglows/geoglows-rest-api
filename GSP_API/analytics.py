@@ -54,6 +54,7 @@ product_map_v2 = {
     'getreachid': '400'
 }
 
+
 def log_request(version: str, product: str, reach_id: int = None, **kwargs):
     """
     Posts a custom log to the aws cloudwatch logging service
