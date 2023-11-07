@@ -31,7 +31,6 @@ def historical_averages(reach_id, units, average_type, return_format):
     df = v2_utilities.get_historical_dataframe(reach_id, units)
 
     df.index = pd.to_datetime(df.index)
-    print("check")
 
     if average_type == 'daily':
         df = hd.daily_average(df, rolling=True)

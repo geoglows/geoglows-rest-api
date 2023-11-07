@@ -1,72 +1,61 @@
-import os
-import requests
-import boto3
+import json
 import logging
+import os
 import time
 
-from v2_utilities import ALL_PRODUCTS as product_list
+import boto3
 
-GA_ID = os.getenv('GOOGLE_ANALYTICS_ID')
-GA_TOKEN = os.getenv('GOOGLE_ANALYTICS_TOKEN')
 LOG_GROUP_NAME = os.getenv('AWS_LOG_GROUP_NAME')
 LOG_STREAM_NAME = os.getenv('AWS_LOG_STREAM_NAME')
+ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+REGION = os.getenv('AWS_REGION')
+
 # Create a CloudWatch Logs client
-client = boto3.client('logs')
+client = boto3.client(
+    'logs',
+    aws_access_key_id=ACCESS_KEY_ID,
+    aws_secret_access_key=SECRET_ACCESS_KEY,
+    region_name=REGION
+)
+
 # Set up logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-products_v1 = (
-    'ForecastStats', 'ForecastEnsembles', 'ForecastWarnings', 'ForecastRecords', 'HistoricSimulation', 'ReturnPeriods',
-    'DailyAverages', 'MonthlyAverages', 'AvailableData', 'AvailableRegions', 'AvailableDates', 'GetReachID'
-)
+product_map_v1 = {
+    'ForecastStats': '100',
+    'ForecastEnsembles': '110',
+    'ForecastWarnings': '120',
+    'ForecastRecords': '130',
+    'HistoricSimulation': '200',
+    'ReturnPeriods': '210',
+    'DailyAverages': '220',
+    'MonthlyAverages': '230',
+    'AvailableData': '300',
+    'AvailableRegions': '310',
+    'AvailableDates': '320',
+    'GetReachID': '400'
+}
 
-products_v2 = (
-    'forecast', 'forecaststats', 'forecastensembles', 'forecastwarnings', 'forecastrecords',
-    'forecastanomalies', 'historical', 'hindcast', 'returnperiods', 'dailyaverages', 'monthlyaverages',
-    'availabledata', 'availableregions', 'availabledates', 'getreachid'
-)
+product_map_v2 = {
+    'forecaststats': '100',
+    'forecastensembles': '110',
+    'forecastwarnings': '120',
+    'forecastrecords': '130',
+    'forecast': '140',
+    'forecastanomalies': '150',
+    'hindcast': '200',
+    'returnperiods': '210',
+    'dailyaverages': '220',
+    'monthlyaverages': '230',
+    'historical': '240',
+    'availabledata': '300',
+    'availableregions': '310',
+    'availabledates': '320',
+    'getreachid': '400'
+}
 
-product_map_v1 = {}
-for i, product in enumerate(products_v1):
-    product_map_v1[product] = f'{(i + 1):02}'
-
-product_map_v2 = {}
-for i, product in enumerate(products_v2):
-    product_map_v2[product] = f'{(i + 1):02}'
-
-
-def track_event(version: str, product: str, reach_id: int, return_format: str) -> None:
-    """
-    Posts a custom event to the Google Analytics V4 reporting rest endpoint
-    Refer to https://developers.google.com/analytics/devguides/collection/protocol/ga4/sending-events?client_type=gtag
-
-    Requires environment variables
-    - GOOGLE_ANALYTICS_ID: a Google Analytics property ID which is set up to receive events
-    - GOOGLE_ANALYTICS_TOKEN: an auth token generated for the analytics property
-
-    Example usage:
-        track_event(
-            product="Forecast",
-            version="v2",
-            reach_id=13001234
-        )
-    """
-
-    event_name = f'{version}_{product_list[product]}_{reach_id if reach_id is not None else 0}_{return_format}'
-    data = {
-        'client_id': 'geoglows',
-        'events': [{
-            'name': event_name,
-            'params': {
-                'value': 1
-            }
-        }],
-    }
-    requests.post(
-        f'https://www.google-analytics.com/mp/collect?measurement_id={GA_ID}&api_secret={GA_TOKEN}',
-        json=data
-    )
 
 
 def log_request(version: str, product: str, reach_id: int = None, **kwargs):
@@ -96,18 +85,12 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
     Returns:
         the response from the CloudWatch service
     """
-
-    # Construct the log message
-    if reach_id is None:
-        reach_id = 00
-    product_code = product_map_v2[product] if version == 'v2' else product_map_v1[product]
-    message = f'{version}_product-{product.lower().replace(" ", "")}_reachid-{reach_id}'
-    if 'region_no' in kwargs:
-        message += f'_vpu-{kwargs["region_no"]}'
-    if 'source' in kwargs:
-        message += f'_source-{kwargs["source"]}'
-    else:
-        message += '_source-app'
+    log_message = {
+        'version': version,
+        'product': product.lower().replace(" ", ""),
+        'reach_id': reach_id,
+        'source': kwargs.get('source', 'other'),
+    }
 
     # Send the log message to CloudWatch
     response = client.put_log_events(
@@ -116,7 +99,7 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
         logEvents=[
             {
                 'timestamp': int(round(time.time() * 1000)),
-                'message': message
+                'message': json.dumps(log_message)
             }
         ]
     )

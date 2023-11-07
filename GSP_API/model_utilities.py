@@ -27,7 +27,7 @@ def reach_to_region(reach_id=None):
         ('middle_east-geoglows', 700000),
         ('central_america-geoglows', 1000000),
         ('islands-geoglows', 2000000),
-        ('japan_20220430.zarr', 4000000),
+        ('japan-geoglows', 4000000),
         ('east_asia-geoglows', 5000000),
         ('south_asia-geoglows', 6000000),
         ('africa-geoglows', 8000000),

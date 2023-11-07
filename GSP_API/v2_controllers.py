@@ -5,12 +5,12 @@ from v2_controllers_forecasts import (forecast,
                                       forecast_anomalies,
                                       forecast_warnings,
                                       forecast_dates,
-                                      hydroviewer, )
+                                      hydroviewer)
 from v2_controllers_historical import (historical,
                                        historical_averages,
-                                       return_periods, )
+                                       return_periods)
 
-from v2_utilities import (handle_request)
+from v2_utilities import handle_request
 
 
 __all__ = [

@@ -31,16 +31,31 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: "GOOGLE_ANALYTICS_ID"
+            - name: "AWS_ACCESS_KEY_ID"
               valueFrom:
                 secretKeyRef:
-                  key: GOOGLE_ANALYTICS_ID
-                  name: ga-auth
-            - name: "GOOGLE_ANALYTICS_TOKEN"
+                  key: AWS_ACCESS_KEY_ID
+                  name: aws-auth
+            - name: "AWS_SECRET_ACCESS_KEY"
               valueFrom:
                 secretKeyRef:
-                  key: GOOGLE_ANALYTICS_TOKEN
-                  name: ga-auth
+                  key: AWS_SECRET_ACCESS_KEY
+                  name: aws-auth
+            - name: "AWS_REGION"
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_REGION
+                  name: aws-auth
+            - name: "AWS_LOG_GROUP_NAME"
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_LOG_GROUP_NAME
+                  name: aws-auth
+            - name: "AWS_LOG_STREAM_NAME"
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_LOG_STREAM_NAME
+                  name: aws-auth
 
           ports:
             - name: http
@@ -65,12 +80,16 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /mnt
-              name: geoglows-data-volume
+            {{- range $key, $value := .Values.persistentVolumes }}
+            - mountPath: {{ $value.mountPath }}
+              name: {{ $key }}
+            {{- end }}
       volumes:
-        - name: geoglows-data-volume
+        {{- range $key, $value := .Values.persistentVolumes }}
+        - name: {{ $key }}
           persistentVolumeClaim:
-            claimName: nfs-geoglows-prod-pvc
+            claimName: {{ $value.claimName }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
