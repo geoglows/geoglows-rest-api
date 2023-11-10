@@ -57,8 +57,7 @@ product_map_v2 = {
 }
 
 
-
-def log_request(version: str, product: str, reach_id: int = None, **kwargs):
+def log_request(version: str, product: str, reach_id: int, return_format: str, source: str):
     """
     Posts a custom log to the aws cloudwatch logging service
 
@@ -89,7 +88,8 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
         'version': version,
         'product': product.lower().replace(" ", ""),
         'reach_id': reach_id,
-        'source': kwargs.get('source', 'other'),
+        'return_format': return_format,
+        'source': source,
     }
 
     # Send the log message to CloudWatch

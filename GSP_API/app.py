@@ -87,6 +87,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None, return_format: str = '
     analytics.log_request(version="v2",
                           product=product,
                           reach_id=request.args.get('reach_id', 0),
+                          return_format=return_format,
                           source=request.args.get('source', 'other'), )
 
     # forecast data products
@@ -132,6 +133,7 @@ def rest_endpoints_v1(product: str):
     analytics.log_request(version="v1",
                           product=product,
                           reach_id=request.args.get('reach_id', 0),
+                          return_format=request.args.get('return_format', 'csv'),
                           source=request.args.get('source', 'other'), )
 
     # forecast data products
