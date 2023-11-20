@@ -1,18 +1,19 @@
-import os
-import pandas as pd
-import numpy as np
-import xarray as xr
 import datetime
-import netCDF4 as nc
-
+import os
 from glob import glob
+
+import numpy as np
+import pandas as pd
+import xarray as xr
 from flask import make_response, jsonify
 
-from constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
-from v1_functions import reach_to_region, latlon_to_reach
+from .constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
+
+# todo
+# from v1_functions import reach_to_region, latlon_to_reach
 
 __all__ = [
-    'ALL_PRODUCTS', 'PRODUCT_SHORTCUTS', 'NUM_DECIMALS',
+    'ALL_PRODUCTS', 'PRODUCT_SHORTCUTS',
     'handle_request', 'get_forecast_dataset', 'get_historical_dataframe', 'get_return_periods_dataframe',
     'dataframe_to_csv_flask_response', 'dataframe_to_jsonify_response', 'new_json_template', 'get_most_recent_date',
 ]
@@ -47,11 +48,13 @@ PRODUCT_SHORTCUTS = {
     'availabledates': 'forecastdates',
 }
 
-# Max number of decimals to show in results
-NUM_DECIMALS = 2
+def latlon_to_reach(lat, lon):
+    return
 
 
-def handle_request(request, product, reach_id, return_format):
+
+
+def handle_request(request, product, reach_id):
     data_units = ('cms', 'cfs',)
     return_formats = ('csv', 'json',)
 
@@ -68,6 +71,7 @@ def handle_request(request, product, reach_id, return_format):
     except Exception:
         raise ValueError("reach_id should be an integer corresponding to a valid ID of a stream segment")
 
+    return_format = request.args.get('return_format', 'csv')
     if return_format not in return_formats:
         raise ValueError('format not recognized. must be either "json" or "csv"')
 
@@ -86,7 +90,9 @@ def handle_request(request, product, reach_id, return_format):
 
 
 def get_forecast_dataset(reach_id, date):
-    region = reach_to_region(reach_id)
+    # todo
+    # region = reach_to_region(reach_id)
+    region = ''
     region_forecast_dir = os.path.join(PATH_TO_FORECASTS, region)
 
     if date == "latest":
@@ -96,7 +102,7 @@ def get_forecast_dataset(reach_id, date):
         forecast_dir = os.path.join(region_forecast_dir, ".".join([date, '00']))
 
     if not os.path.exists(forecast_dir):
-        raise ValueError(f'forecast data not found for date {date} (region: "{region}"). Use YYYYMMDD format.')
+        raise ValueError(f'forecast data not found for date {date}. Use YYYYMMDD format.')
 
     forecast_path_list = glob(os.path.join(forecast_dir, "Qout*.zarr"))
 
@@ -165,7 +171,7 @@ def get_historical_dataframe(reach_id, units):
         df['flow'] = historical_data_file['Qout'][:, list(historical_data_file['rivid'][:]).index(reach_id)]
         df.set_index(time, inplace=True)
     except Exception as e:
-        #qout_nc.close()
+        # qout_nc.close()
         raise e
 
     if units == 'cfs':
@@ -176,7 +182,9 @@ def get_historical_dataframe(reach_id, units):
 
 
 def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
-    region = reach_to_region(reach_id)
+    # todo
+    # region = reach_to_region(reach_id)
+    region = ''
     return_period_file = glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc*'))
     if len(return_period_file) == 0:
         raise ValueError("Unable to find return periods file")
