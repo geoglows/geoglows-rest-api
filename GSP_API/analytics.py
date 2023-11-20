@@ -1,7 +1,9 @@
-import os
-import boto3
+import json
 import logging
+import os
 import time
+
+import boto3
 
 LOG_GROUP_NAME = os.getenv('AWS_LOG_GROUP_NAME')
 LOG_STREAM_NAME = os.getenv('AWS_LOG_STREAM_NAME')
@@ -54,7 +56,8 @@ product_map_v2 = {
     'getreachid': '400'
 }
 
-def log_request(version: str, product: str, reach_id: int = None, **kwargs):
+
+def log_request(version: str, product: str, reach_id: int, return_format: str, source: str):
     """
     Posts a custom log to the aws cloudwatch logging service
 
@@ -81,18 +84,13 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
     Returns:
         the response from the CloudWatch service
     """
-
-    # Construct the log message
-    if reach_id is None:
-        reach_id = 00
-    product_code = product_map_v2[product] if version == 'v2' else product_map_v1[product]
-    message = f'{version.replace("v", "0")}_{product_code}_{reach_id}'
-    if 'region_no' in kwargs:  #TODO: validate
-        message += f'_{kwargs["region_no"]}'
-    if kwargs.get('source') and kwargs.get('source').isdigit() and len(kwargs.get('source')) == 1:
-        message += f'_{kwargs["source"]}'
-    else:
-        message += '_1'
+    log_message = {
+        'version': version,
+        'product': product.lower().replace(" ", ""),
+        'reach_id': reach_id,
+        'return_format': return_format,
+        'source': source,
+    }
 
     # Send the log message to CloudWatch
     response = client.put_log_events(
@@ -101,7 +99,7 @@ def log_request(version: str, product: str, reach_id: int = None, **kwargs):
         logEvents=[
             {
                 'timestamp': int(round(time.time() * 1000)),
-                'message': message
+                'message': json.dumps(log_message)
             }
         ]
     )
