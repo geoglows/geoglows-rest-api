@@ -2,15 +2,7 @@ FROM continuumio/miniconda3:latest
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/envs/gsp_api/bin:$PATH API_PREFIX=/api
 
-# For Development On Analytics Only:
-# ENV AWS_ACCESS_KEY_ID=
-# ENV AWS_SECRET_ACCESS_KEY=
-# ENV AWS_LOG_GROUP_NAME=
-# ENV AWS_LOG_STREAM_NAME=
-# ENV AWS_REGION=
-
 RUN mkdir /var/uwsgi
-
 RUN apt-get update -qq && apt-get install -yqq supervisor vim
 
 COPY ./environment.yml ./startup.sh ./
@@ -18,21 +10,22 @@ COPY ./environment.yml ./startup.sh ./
 RUN conda config --set channel_priority strict && \
     conda config --add channels conda-forge && \
     conda env create -f environment.yml && \
-    echo "conda activate gsp_api" >> ~/.bashrc
+    echo "conda activate app-env" >> ~/.bashrc
 
 RUN mkdir -p /mnt/output/forecasts && \
     mkdir -p /mnt/output/era-interim && \
     mkdir -p /mnt/output/era-5 && \
     mkdir -p /mnt/output/forecast-records
 
-# COPY ./sample_data/forecasts /mnt/output/forecasts
-# COPY ./sample_data/era-interim /mnt/output/era-interim
-# COPY ./sample_data/era-5 /mnt/output/era-5
-# COPY ./sample_data/forecast-records /mnt/output/forecast-records
-
 # Copy API code
-COPY ./GSP_API /app/GSP_API/
+COPY app /app
 COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
+
+ENV AWS_ACCESS_KEY_ID="AKIAV265L747H2E2QY4J"
+ENV AWS_SECRET_ACCESS_KEY="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"
+ENV AWS_LOG_GROUP_NAME="geoglows.ecmwf.int"
+ENV AWS_LOG_STREAM_NAME="rest-service-dev"
+ENV AWS_REGION="eu-central-1"
 
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
