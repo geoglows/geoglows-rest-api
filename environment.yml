@@ -1,4 +1,4 @@
-name: gsp_api
+name: app-env
 channels:
   - conda-forge
 dependencies:
