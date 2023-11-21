@@ -1,19 +1,24 @@
+import logging
+import traceback
+
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
 from .analytics import log_request
-from .v2_controllers_forecasts import (forecast,
-                                       forecast_stats,
-                                       forecast_ensembles,
-                                       forecast_records,
-                                       forecast_anomalies,
-                                       forecast_warnings,
-                                       forecast_dates,
-                                       hydroviewer)
-from .v2_controllers_historical import (historical,
-                                        historical_averages,
-                                        return_periods)
-from .v2_utilities import handle_request
+from .controllers_forecasts import (forecast,
+                                    forecast_stats,
+                                    forecast_ensembles,
+                                    forecast_records,
+                                    forecast_anomalies,
+                                    forecast_warnings,
+                                    forecast_dates,
+                                    hydroviewer)
+from .controllers_historical import (historical,
+                                     historical_averages,
+                                     return_periods)
+from .utilities import handle_request
+
+logger = logging.getLogger("DEBUG")
 
 app = Blueprint('rest-endpoints-v2', __name__)
 
@@ -49,8 +54,8 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return forecast_anomalies(reach_id, date, units, return_format)
     elif product == 'forecastwarnings':
         return forecast_warnings(date, return_format)
-    elif product == 'forecastdates':
-        return forecast_dates()
+    elif product == 'dates':
+        return forecast_dates(return_format=return_format)
     if product == "hydroviewer":
         return hydroviewer(reach_id, start_date, date, units, return_format)
 
@@ -70,4 +75,10 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
     #     return v1_controllers.get_reach_id_from_latlon_handler(request)
 
     else:
-        return jsonify({'status': f'data product "{product}" not available'}), 201
+        return jsonify({'error': f'data product "{product}" not available'}), 201
+
+
+@app.errorhandler(Exception)
+def errors_general_exception(e: Exception):
+    logger.debug(traceback.format_exc())
+    return jsonify({"error": f"An unexpected error occurred: {e}", "code": 9999}), 500

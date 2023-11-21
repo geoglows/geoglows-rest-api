@@ -7,7 +7,7 @@ import pandas as pd
 from flask import jsonify
 
 from .constants import NUM_DECIMALS
-from .v2_utilities import get_historical_dataframe, dataframe_to_jsonify_response, dataframe_to_csv_flask_response, \
+from .utilities import get_historical_dataframe, dataframe_to_jsonify_response, dataframe_to_csv_flask_response, \
     get_return_periods_dataframe
 
 __all__ = ['historical', 'historical_averages', 'return_periods']

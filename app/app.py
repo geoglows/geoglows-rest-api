@@ -5,7 +5,6 @@ from flask import Flask
 from flask_cors import CORS
 
 from blueprint_pages import app as blueprint_pages
-from blueprint_errors import app as blueprint_errors
 import v2
 import v1
 
@@ -35,8 +34,6 @@ app.register_blueprint(blueprint_pages)
 app.register_blueprint(v2.V2BLUEPRINT)
 app.register_blueprint(v1.V1BLUEPRINT)
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ERROR HANDLERS
-app.register_blueprint(blueprint_errors)
 
 if __name__ == '__main__':
     app.run()

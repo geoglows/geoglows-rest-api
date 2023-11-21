@@ -3,14 +3,15 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.7
-  - uwsgi
+  - boto3
   - flask
   - flask-cors
-  - pandas
-  - xarray
-  - netCDF4
-  - shapely
   - hydrostats
+  - natsort
+  - netCDF4
+  - pandas
   - requests
+  - shapely
+  - uwsgi
+  - xarray
   - zarr
-  - boto3
