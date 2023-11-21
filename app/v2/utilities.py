@@ -2,6 +2,7 @@ import datetime
 import os
 from glob import glob
 
+import natsort
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -20,19 +21,22 @@ __all__ = [
 
 # Name of all recognized products and their shorthand name for analytics in dict key/value pairs
 ALL_PRODUCTS = {
-    'forecast': 'fc',
-    'forecaststats': 'fcstat',
-    'forecastensembles': 'fcens',
-    'forecastrecords': 'fcrec',
-    'forecastanomalies': 'fcanom',
-    'forecastwarnings': 'fcwarn',
-    'forecastdates': 'fcdate',
-    'hindcast': 'hc',
-    'monthlyaverages': 'monavg',
-    'dailyaverages': 'dayavg',
-    'returnperiods': 'rp',
-    'getreachid': 'getid',
-    'hydroviewer': 'hv',
+    'getreachid',
+
+    'dates',
+    'forecast',
+    'forecaststats',
+    'forecastensembles',
+    'forecastrecords',
+    'forecastanomalies',
+    'forecastwarnings',
+
+    'hindcast',
+    'monthlyaverages',
+    'dailyaverages',
+    'returnperiods',
+
+    'hydroviewer',
 }
 
 # Recognized shorthand names for selected products and their proper name in dict key/value pairs
@@ -45,13 +49,14 @@ PRODUCT_SHORTCUTS = {
     'dayavg': 'dailyaverages',
     'historical': 'hindcast',
     'historicalsimulation': 'hindcast',
-    'availabledates': 'forecastdates',
+    'availabledates': 'dates',
+    'forecastdates': 'dates',
 }
 
+
+# todo
 def latlon_to_reach(lat, lon):
     return
-
-
 
 
 def handle_request(request, product, reach_id):
@@ -59,19 +64,23 @@ def handle_request(request, product, reach_id):
     return_formats = ('csv', 'json',)
 
     product = str(product).lower()
-    if product not in ALL_PRODUCTS.keys():
+    if product not in ALL_PRODUCTS:
         if product not in PRODUCT_SHORTCUTS.keys():
             raise ValueError(f'{product} not recognized. available data products: {list(ALL_PRODUCTS.keys())}')
         product = PRODUCT_SHORTCUTS[product]
 
-    if reach_id is None:
+    if product == 'dates':
+        pass  # does not need a reach_id
+    elif reach_id is None:
         reach_id = latlon_to_reach(request.args.get('lat', None), request.args.get('lon', None))
-    try:
-        reach_id = int(reach_id)
-    except Exception:
-        raise ValueError("reach_id should be an integer corresponding to a valid ID of a stream segment")
 
-    return_format = request.args.get('return_format', 'csv')
+    if reach_id is not None:
+        try:
+            reach_id = int(reach_id)
+        except Exception:
+            raise ValueError("reach_id should be an integer corresponding to a valid ID of a stream segment")
+
+    return_format = request.args.get('format', 'csv')
     if return_format not in return_formats:
         raise ValueError('format not recognized. must be either "json" or "csv"')
 
@@ -241,13 +250,10 @@ def new_json_template(reach_id, units, start_date, end_date):
     }
 
 
-def find_available_dates():
-    sample_region_directory = glob(os.path.join(PATH_TO_FORECASTS, "*-geoglows"))[0]
-    dates = [d for d in os.listdir(sample_region_directory) if d.split('.')[0].isdigit()]
-    if len(dates) > 0:
-        return jsonify({"available_dates": dates})
-    else:
-        return jsonify({"message": "No dates available."}), 204
+def find_available_dates() -> list:
+    forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, "Qout*.zarr"))
+    dates = [os.path.basename(d).replace('.zarr', '').split('_')[1] for d in forecast_zarrs]
+    return dates
 
 
 def find_forecast_warnings(date) -> pd.DataFrame:
@@ -286,11 +292,6 @@ def find_forecast_warnings(date) -> pd.DataFrame:
 
 
 def get_most_recent_date() -> str:
-    available_dirs = glob(os.path.join(PATH_TO_FORECASTS, '*'))
-    if len(available_dirs) == 0:
-        raise ValueError("unable to find any region folders in the forecast directory")
-    available_dirs = glob(os.path.join(available_dirs[0], '*'))
-    available_dirs = sorted([d for d in available_dirs if os.path.isdir(d)], reverse=True)
-    if len(available_dirs) == 0:
-        raise ValueError("unable to find forecast results in the region forecast directory")
-    return os.path.basename(available_dirs[0]).split('.')[0]
+    forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, 'Qout*.zarr'))
+    forecast_zarrs = natsort.natsorted(forecast_zarrs, reverse=True)
+    return os.path.basename(forecast_zarrs[0]).split('.')[0].split('_')[1]

@@ -8,8 +8,8 @@ import xarray
 from flask import jsonify
 
 from .constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3, NUM_DECIMALS
-from .v2_controllers_historical import historical_averages
-from .v2_utilities import get_most_recent_date, dataframe_to_jsonify_response, dataframe_to_csv_flask_response, \
+from .controllers_historical import historical_averages
+from .utilities import get_most_recent_date, dataframe_to_jsonify_response, dataframe_to_csv_flask_response, \
     get_forecast_dataset, new_json_template, get_return_periods_dataframe, \
     find_available_dates, find_forecast_warnings
 
@@ -231,5 +231,11 @@ def forecast_warnings(date: str, return_format: str):
     return warnings_df
 
 
-def forecast_dates():
-    return find_available_dates()
+def forecast_dates(return_format: str):
+    dates = find_available_dates()
+    if return_format == 'csv':
+        return dataframe_to_csv_flask_response(pd.DataFrame(dates, columns=['dates', ]), f'forecast_dates')
+    elif return_format == 'json':
+        return jsonify({'dates': dates})
+    else:
+        raise ValueError(f'Unsupported return format requested: {return_format}')
