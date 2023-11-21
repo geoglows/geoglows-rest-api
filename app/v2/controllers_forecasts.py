@@ -8,9 +8,7 @@ import xarray
 from flask import jsonify
 
 from .constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3, NUM_DECIMALS
-from .controllers_historical import historical_averages
-from .data import (get_most_recent_date,
-                   get_forecast_dataset,
+from .data import (get_forecast_dataset,
                    get_return_periods_dataframe,
                    find_available_dates,
                    find_forecast_warnings, )
@@ -24,7 +22,7 @@ __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'f
 
 def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> jsonify:
     if date == 'latest':
-        date = get_most_recent_date()
+        date = find_available_dates()[-1]
     stats_df = forecast_stats(reach_id, date, units, "df")
     stats_df = stats_df.replace(np.nan, '')
     records_df = forecast_records(reach_id, start_date, date, units, "df")
@@ -59,13 +57,18 @@ def forecast(reach_id: int, date: str, units: str, return_format: str) -> pd.Dat
     merged_array[merged_array <= 0] = 0
 
     # load all the series into a dataframe
-    df = pd.DataFrame({
-        f'flow_avg_{units}': np.mean(merged_array, axis=0),
-    }, index=forecast_xarray_dataset.time.data)
-    df.dropna(inplace=True)
+    df = (
+        pd.DataFrame({
+            f'flow_uncertainty_upper_{units}': np.percentile(merged_array, 80, axis=0),
+            f'flow_med_{units}': np.median(merged_array, axis=0),
+            f'flow_uncertainty_lower_{units}': np.percentile(merged_array, 20, axis=0),
+        }, index=forecast_xarray_dataset.time.data)
+        .dropna()
+        .astype(np.float64)
+        .round(NUM_DECIMALS)
+    )
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
     df.index.name = 'datetime'
-    df = df.astype(np.float64).round(NUM_DECIMALS)
 
     # handle units conversion
     if units == 'cfs':
@@ -202,28 +205,6 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, units: str, 
         return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == "df":
         return df
-
-
-def forecast_anomalies(reach_id: int, date: datetime.datetime, units: str, return_format: str) -> pd.DataFrame:
-    df = forecast(reach_id, date, units, "df")
-    df = df.dropna()
-    avg_df = historical_averages(reach_id, units, 'daily', 'df')
-
-    df['datetime'] = df.index
-    df.index = pd.to_datetime(df.index).strftime("%m/%d")
-    df = df.join(avg_df, how="inner")
-    df[f'anomaly_{units}'] = df[f'flow_avg_{units}'] - df[f'flow_{units}']
-    df.index = df['datetime']
-    df = df.rename(columns={f'flow_{units}': f'daily_avg_{units}'})
-    del df['datetime']
-    df = df.astype(np.float64).round(NUM_DECIMALS)
-
-    # create the response
-    if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'forecast_anomalies_{reach_id}')
-    if return_format == 'json':
-        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
-    return df
 
 
 def forecast_warnings(date: str, return_format: str):
