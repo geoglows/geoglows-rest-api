@@ -17,7 +17,6 @@ def historical(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
     """
     Controller for retrieving simulated historic data
     """
-
     df = get_historical_dataframe(reach_id, units)
     df = df.astype(np.float64).round(NUM_DECIMALS)
 
