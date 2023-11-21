@@ -184,3 +184,4 @@ dmypy.json
 
 ## Misc
 sample_data/**
+/aws_config.json
