@@ -234,7 +234,7 @@ def forecast_warnings(date: str, return_format: str):
 def forecast_dates(return_format: str):
     dates = find_available_dates()
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(pd.DataFrame(dates, columns=['dates', ]), f'forecast_dates')
+        return dataframe_to_csv_flask_response(pd.DataFrame(dates, columns=['dates', ]), f'forecast_dates', index=False)
     elif return_format == 'json':
         return jsonify({'dates': dates})
     else:
