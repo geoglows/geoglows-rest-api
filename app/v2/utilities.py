@@ -126,44 +126,8 @@ def get_forecast_dataset(reach_id, date):
         raise ValueError('Error while reading data from the zarr files')
 
 
-def dataframe_to_csv_flask_response(df, csv_name):
-    response = make_response(df.to_csv())
-    response.headers['content-type'] = 'text/csv'
-    response.headers['Content-Disposition'] = f'attachment; filename={csv_name}.csv'
-    return response
-
-
-def dataframe_to_jsonify_response(df, df_highres, reach_id, units):
-    json_template = new_json_template(reach_id, units, start_date=df.index[0], end_date=df.index[-1])
-
-    # add data from the dataframe of ensembles 1-51
-    json_template['time_series']['datetime'] = df.index.tolist(),
-    json_template['time_series'].update(df.to_dict(orient='list'))
-
-    # add data for the high resolution ensemble 52
-    if df_highres is not None:
-        json_template['time_series']['datetime_high_res'] = df_highres.index.tolist()
-        json_template['high_res'] = df_highres.to_list()
-
-    return jsonify(json_template)
-
-
-def new_json_template(reach_id, units, start_date, end_date):
-    return {
-        'reach_id': reach_id,
-        'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),
-        'start_date': start_date,
-        'end_date': end_date,
-        'units': {
-            'name': 'streamflow',
-            'short': f'{units}',
-            'long': f'Cubic {"Meters" if units == "cms" else "Feet"} per Second',
-        },
-        'time_series': {}
-    }
-
-
 def get_historical_dataframe(reach_id, units):
+    # todo
     print("reading historical data")
     print("reach_id: {reach_id}")
     region = 'central_america-geoglows'  # reach_to_region(reach_id)
@@ -215,8 +179,8 @@ def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
     return return_periods_df
 
 
-def dataframe_to_csv_flask_response(df: pd.DataFrame, csv_name: str):
-    response = make_response(df.to_csv())
+def dataframe_to_csv_flask_response(df: pd.DataFrame, csv_name: str, *, index: bool = True):
+    response = make_response(df.to_csv(index=index))
     response.headers['content-type'] = 'text/csv'
     response.headers['Content-Disposition'] = f'attachment; filename={csv_name}.csv'
     return response
