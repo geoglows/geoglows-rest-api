@@ -9,9 +9,14 @@ from flask import jsonify
 
 from .constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3, NUM_DECIMALS
 from .controllers_historical import historical_averages
-from .utilities import get_most_recent_date, dataframe_to_jsonify_response, dataframe_to_csv_flask_response, \
-    get_forecast_dataset, new_json_template, get_return_periods_dataframe, \
-    find_available_dates, find_forecast_warnings
+from .data import (get_most_recent_date,
+                   get_forecast_dataset,
+                   get_return_periods_dataframe,
+                   find_available_dates,
+                   find_forecast_warnings, )
+from .response_formatters import (df_to_jsonify_response,
+                                  df_to_csv_flask_response,
+                                  new_json_template, )
 
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies',
            'forecast_warnings', 'forecast_dates']
@@ -25,8 +30,7 @@ def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_fo
     records_df = forecast_records(reach_id, start_date, date, units, "df")
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(pd.concat([records_df, stats_df], join='outer'),
-                                               f'hydroviewer_data_{reach_id}')
+        return df_to_csv_flask_response(pd.concat([records_df, stats_df], join='outer'), f'hydroviewer_data_{reach_id}')
     if return_format == 'json':
         records_df.columns = [f'{records_df.columns[0]}_rec', ]
         rp_df = get_return_periods_dataframe(reach_id, units)
@@ -69,9 +73,9 @@ def forecast(reach_id: int, date: str, units: str, return_format: str) -> pd.Dat
             df[column] *= M3_TO_FT3
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'forecast_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'forecast_{reach_id}_{units}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
 
 
@@ -105,9 +109,9 @@ def forecast_stats(reach_id: int, date: str, units: str, return_format: str) -> 
             df[column] *= M3_TO_FT3
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'forecast_stats_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'forecast_stats_{reach_id}_{units}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == "df":
         return df
 
@@ -153,9 +157,9 @@ def forecast_ensembles(reach_id: int, date: datetime.datetime, units: str, retur
             del df[ens]
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'forecast_ensembles_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'forecast_ensembles_{reach_id}_{units}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == "df":
         return df
 
@@ -193,9 +197,9 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, units: str, 
 
     # create the http response
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'forecast_records_{reach_id}')
+        return df_to_csv_flask_response(df, f'forecast_records_{reach_id}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     if return_format == "df":
         return df
 
@@ -216,16 +220,16 @@ def forecast_anomalies(reach_id: int, date: datetime.datetime, units: str, retur
 
     # create the response
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'forecast_anomalies_{reach_id}')
+        return df_to_csv_flask_response(df, f'forecast_anomalies_{reach_id}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
 
 
 def forecast_warnings(date: str, return_format: str):
     warnings_df = find_forecast_warnings(date)
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(warnings_df, f'forecast_warnings_{date}')
+        return df_to_csv_flask_response(warnings_df, f'forecast_warnings_{date}')
     if return_format == 'json':
         return jsonify(warnings_df.to_dict(orient='index'))
     return warnings_df
@@ -234,7 +238,7 @@ def forecast_warnings(date: str, return_format: str):
 def forecast_dates(return_format: str):
     dates = find_available_dates()
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(pd.DataFrame(dates, columns=['dates', ]), f'forecast_dates', index=False)
+        return df_to_csv_flask_response(pd.DataFrame(dates, columns=['dates', ]), f'forecast_dates', index=False)
     elif return_format == 'json':
         return jsonify({'dates': dates})
     else:
