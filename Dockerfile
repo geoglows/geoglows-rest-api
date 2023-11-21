@@ -21,12 +21,6 @@ RUN mkdir -p /mnt/output/forecasts && \
 COPY app /app
 COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
 
-ENV AWS_ACCESS_KEY_ID="AKIAV265L747H2E2QY4J"
-ENV AWS_SECRET_ACCESS_KEY="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"
-ENV AWS_LOG_GROUP_NAME="geoglows.ecmwf.int"
-ENV AWS_LOG_STREAM_NAME="rest-service-dev"
-ENV AWS_REGION="eu-central-1"
-
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
 
