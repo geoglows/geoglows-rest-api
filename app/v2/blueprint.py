@@ -4,7 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
-from .analytics import log_request
+# from .analytics import log_request
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
@@ -13,8 +13,10 @@ from .controllers_forecasts import (forecast,
                                     forecast_warnings,
                                     forecast_dates,
                                     hydroviewer)
-from .controllers_historical import (historical,
-                                     historical_averages,
+from .controllers_historical import (retrospective,
+                                     daily_averages,
+                                     monthly_averages,
+                                     yearly_averages,
                                      return_periods)
 from .controllers_misc import get_reach_id
 from .data import latlon_to_reach
@@ -36,11 +38,11 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         reach_id,
     )
 
-    log_request(version="v2",
-                product=product,
-                reach_id=request.args.get('reach_id', 0),
-                format=format,
-                source=request.args.get('source', 'other'), )
+    # log_request(version="v2",
+    #             product=product,
+    #             reach_id=request.args.get('reach_id', 0),
+    #             format=format,
+    #             source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'forecast':
@@ -51,8 +53,6 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return forecast_ensembles(reach_id, date, units, format, ensemble)
     elif product == 'forecastrecords':
         return forecast_records(reach_id, start_date, end_date, units, format)
-    elif product == 'forecastanomalies':
-        return forecast_anomalies(reach_id, date, units, format)
     elif product == 'forecastwarnings':
         return forecast_warnings(date, format)
     elif product == 'dates':
@@ -60,13 +60,15 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     # hindcast data products
     elif product == 'retrospective':
-        return historical(reach_id, units, format)
+        return retrospective(reach_id, units, format)
     elif product == 'returnperiods':
         return return_periods(reach_id, units, format)
     elif product == 'dailyaverages':
-        return historical_averages(reach_id, units, 'daily', format)
+        return daily_averages(reach_id, units, format)
     elif product == 'monthlyaverages':
-        return historical_averages(reach_id, units, 'monthly', format)
+        return monthly_averages(reach_id, units, format)
+    elif product == 'yearlyaverages':
+        return yearly_averages(reach_id, units, format)
 
     # data availability
     elif product == 'getreachid':
@@ -88,12 +90,12 @@ def handle_request(request, product, reach_id):
         'forecaststats',
         'forecastensembles',
         'forecastrecords',
-        'forecastanomalies',
         'forecastwarnings',
 
         'retrospective',
         'monthlyaverages',
         'dailyaverages',
+        'yearlyaverages',
         'returnperiods',
 
         'hydroviewer',

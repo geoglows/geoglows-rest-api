@@ -1,58 +1,81 @@
 import datetime
 import json
 
-import hydrostats.data as hd
-import numpy as np
+import geoglows
 import pandas as pd
 from flask import jsonify
 
-from .constants import NUM_DECIMALS
-from .data import get_historical_dataframe, dataframe_to_jsonify_response, dataframe_to_csv_flask_response, \
-    get_return_periods_dataframe
+from .constants import M3_TO_FT3
+from .data import get_return_periods_dataframe
+from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
 
-__all__ = ['historical', 'historical_averages', 'return_periods']
+__all__ = ['retrospective', 'daily_averages', 'monthly_averages', 'yearly_averages', 'return_periods', ]
 
 
-def historical(reach_id: int, units: str, return_format: str) -> pd.DataFrame:
+def retrospective(reach_id: int, units: str, return_format: str, start_date: str = None,
+                  end_date: str = None) -> pd.DataFrame:
     """
     Controller for retrieving simulated historic data
     """
-    df = get_historical_dataframe(reach_id, units)
-    df = df.astype(np.float64).round(NUM_DECIMALS)
+    df = geoglows.data.retrospective(reach_id=reach_id)
+    if units == 'cfs':
+        df *= M3_TO_FT3
+    if start_date is not None:
+        df = df.loc[datetime.datetime.strptime(start_date, '%Y%m%d'):]
+    if end_date is not None:
+        df = df.loc[:datetime.datetime.strptime(end_date, '%Y%m%d')]
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'hindcast_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'hindcast_{reach_id}_{units}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
-    if return_format == 'df':
-        return df
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+    return df
 
 
-def historical_averages(reach_id, units, average_type, return_format):
-    df = get_historical_dataframe(reach_id, units)
+def daily_averages(reach_id: int, units: str, return_format: str):
+    df = geoglows.data.daily_averages(reach_id=reach_id)
 
-    df.index = pd.to_datetime(df.index)
-
-    if average_type == 'daily':
-        df = hd.daily_average(df, rolling=True)
-    else:
-        df = hd.monthly_average(df)
-    df.index.name = 'datetime'
-    df = df.astype(np.float64).round(NUM_DECIMALS)
+    if units == 'cfs':
+        df *= M3_TO_FT3
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'{average_type}_averages_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'daily_averages_{reach_id}_{units}')
     if return_format == 'json':
-        return dataframe_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+    return df
+
+
+def monthly_averages(reach_id: int, units: str, return_format: str):
+    df = geoglows.data.monthly_averages(reach_id=reach_id)
+
+    if units == 'cfs':
+        df *= M3_TO_FT3
+
+    if return_format == 'csv':
+        return df_to_csv_flask_response(df, f'monthly_averages_{reach_id}_{units}')
+    if return_format == 'json':
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
+    return df
+
+
+def yearly_averages(reach_id, units, return_format):
+    df = geoglows.data.yearly_averages(reach_id=reach_id)
+
+    if units == 'cfs':
+        df *= M3_TO_FT3
+
+    if return_format == 'csv':
+        return df_to_csv_flask_response(df, f'yearly_averages_{reach_id}_{units}')
+    if return_format == 'json':
+        return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
 
 
 def return_periods(reach_id: int, units: str, return_format: str):
     df = get_return_periods_dataframe(reach_id, units)
-    df = df.astype(np.float64).round(NUM_DECIMALS)
 
     if return_format == 'csv':
-        return dataframe_to_csv_flask_response(df, f'return_periods_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'return_periods_{reach_id}_{units}')
     if return_format == 'json':
         return jsonify({
             'return_periods': json.loads(df.to_json(orient='records'))[0],

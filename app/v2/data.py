@@ -5,11 +5,10 @@ import natsort
 import pandas as pd
 import xarray as xr
 
-from .constants import PATH_TO_FORECASTS, PATH_TO_ERA_5, M3_TO_FT3
+from .constants import PATH_TO_FORECASTS, M3_TO_FT3
 
 __all__ = [
     'get_forecast_dataset',
-    'get_historical_dataframe',
     'get_return_periods_dataframe',
     'find_available_dates',
     'find_forecast_warnings',
@@ -24,7 +23,7 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
     if date == "latest":
         date = find_available_dates()[-1]
 
-    forecast_file = os.path.join(PATH_TO_FORECASTS, f'Qout_{date}00.zarr')
+    forecast_file = os.path.join(PATH_TO_FORECASTS, f'Qout_{date}.zarr')
 
     if not os.path.exists(forecast_file):
         raise ValueError(f'Data not found for date {date}. Use YYYYMMDD format and the AvailableDates endpoint.')
@@ -41,57 +40,12 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
         raise ValueError(f'Unable to get data for reach_id {reach_id} in the forecast dataset')
 
 
-def get_historical_dataframe(reach_id, units):
-    # todo
-    print("reading historical data")
-    print("reach_id: {reach_id}")
-    region = 'central_america-geoglows'  # reach_to_region(reach_id)
-    print("region {region}")
-    file_path_list = glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.zarr'))
-
-    if len(file_path_list) == 0:
-        raise ValueError('historical data not found')
-
-    historical_data_file = xr.open_zarr(file_path_list[0])
-    time = pd.to_datetime(historical_data_file['time'][:], unit='s')
-    df = pd.DataFrame()
-    try:
-        df['flow'] = historical_data_file['Qout'][:, list(historical_data_file['rivid'][:]).index(reach_id)]
-        df.set_index(time, inplace=True)
-    except Exception as e:
-        # qout_nc.close()
-        raise e
-
-    if units == 'cfs':
-        df['flow'] = df['flow'].values * M3_TO_FT3
-    df.rename(columns={'flow': f'flow_{units}'}, inplace=True)
-    print("finished reading historical data")
-    return df
-
-
 def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
-    # todo
-    # region = reach_to_region(reach_id)
-    region = ''
-    return_period_file = glob(os.path.join(PATH_TO_ERA_5, region, '*return_periods*.nc*'))
-    if len(return_period_file) == 0:
-        raise ValueError("Unable to find return periods file")
-
-    # collect the data in a dataframe
-    return_periods_nc = xr.open_dataset(return_period_file[0])
-    return_periods_df = return_periods_nc.to_dataframe()
-    return_periods_df = return_periods_df[return_periods_df.index == reach_id]
-    return_periods_nc.close()
-
-    try:
-        del return_periods_df['lon'], return_periods_df['lat']
-    except Exception:
-        pass
-
+    df = geoglows.data.return_periods(reach_id=reach_id)
     if units == 'cfs':
-        for column in return_periods_df:
-            return_periods_df[column] *= M3_TO_FT3
-    return return_periods_df
+        for column in df:
+            df[column] *= M3_TO_FT3
+    return df
 
 
 def find_available_dates() -> list:
@@ -144,4 +98,3 @@ def latlon_to_reach(lat: float, lon: float) -> list:
     df = pd.read_parquet('/mnt/configs/geoglows-v2-master-table.parquet', columns=['TDXHydroLinkNo', 'lat', 'lon'])
     df['distance'] = ((df['lat'] - lat) ** 2 + (df['lon'] - lon) ** 2) ** 0.5
     return df.sort_values('distance').reset_index(drop=True).iloc[0][['TDXHydroLinkNo', 'distance']].values.flatten()
-
