@@ -6,7 +6,7 @@ from flask_cors import CORS
 
 from blueprint_pages import app as blueprint_pages
 import v2
-# import v1
+import v1
 
 print("Launching Flask App")
 
@@ -32,7 +32,7 @@ app.register_blueprint(blueprint_pages)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REST API ENDPOINTS
 app.register_blueprint(v2.V2BLUEPRINT)
-# app.register_blueprint(v1.V1BLUEPRINT)
+app.register_blueprint(v1.V1BLUEPRINT)
 
 
 if __name__ == '__main__':
