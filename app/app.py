@@ -34,6 +34,5 @@ app.register_blueprint(blueprint_pages)
 app.register_blueprint(v2.V2BLUEPRINT)
 app.register_blueprint(v1.V1BLUEPRINT)
 
-
 if __name__ == '__main__':
     app.run()

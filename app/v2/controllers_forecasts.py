@@ -11,16 +11,17 @@ from .constants import PATH_TO_FORECAST_RECORDS, M3_TO_FT3, NUM_DECIMALS
 from .data import (get_forecast_dataset,
                    get_return_periods_dataframe,
                    find_available_dates,
-                   find_forecast_warnings, )
+                   get_forecast_warnings_dataframe, )
 from .response_formatters import (df_to_jsonify_response,
                                   df_to_csv_flask_response,
                                   new_json_template, )
 
-__all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_anomalies',
+__all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records',
            'forecast_warnings', 'forecast_dates']
 
 
 def hydroviewer(reach_id: int, start_date: str, date: str, units: str, return_format: str) -> jsonify:
+    # todo send forecast stats, records, and return periods
     if date == 'latest':
         date = find_available_dates()[-1]
     stats_df = forecast_stats(reach_id, date, units, "df")
@@ -59,9 +60,9 @@ def forecast(reach_id: int, date: str, units: str, return_format: str) -> pd.Dat
     # load all the series into a dataframe
     df = (
         pd.DataFrame({
-            f'flow_uncertainty_upper_{units}': np.percentile(merged_array, 80, axis=0),
+            f'flow_uncertainty_upper_{units}': np.nanpercentile(merged_array, 80, axis=0),
             f'flow_med_{units}': np.median(merged_array, axis=0),
-            f'flow_uncertainty_lower_{units}': np.percentile(merged_array, 20, axis=0),
+            f'flow_uncertainty_lower_{units}': np.nanpercentile(merged_array, 20, axis=0),
         }, index=forecast_xarray_dataset.time.data)
         .dropna()
         .astype(np.float64)
@@ -95,10 +96,10 @@ def forecast_stats(reach_id: int, date: str, units: str, return_format: str) -> 
     # load all the series into a dataframe
     df = pd.DataFrame({
         f'flow_max_{units}': np.amax(merged_array, axis=0),
-        f'flow_75p_{units}': np.percentile(merged_array, 75, axis=0),
+        f'flow_75p_{units}': np.nanpercentile(merged_array, 75, axis=0),
         f'flow_avg_{units}': np.mean(merged_array, axis=0),
         f'flow_med_{units}': np.median(merged_array, axis=0),
-        f'flow_25p_{units}': np.percentile(merged_array, 25, axis=0),
+        f'flow_25p_{units}': np.nanpercentile(merged_array, 25, axis=0),
         f'flow_min_{units}': np.min(merged_array, axis=0),
         f'high_res_{units}': forecast_xarray_dataset.sel(ensemble=52).data,
     }, index=forecast_xarray_dataset.time.data)
@@ -119,7 +120,7 @@ def forecast_stats(reach_id: int, date: str, units: str, return_format: str) -> 
         return df
 
 
-def forecast_ensembles(reach_id: int, date: datetime.datetime, units: str, return_format: str, ensemble: str):
+def forecast_ensembles(reach_id: int, date: str, units: str, return_format: str, ensemble: str):
     forecast_xarray_dataset = get_forecast_dataset(reach_id, date)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame
@@ -208,7 +209,8 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, units: str, 
 
 
 def forecast_warnings(date: str, return_format: str):
-    warnings_df = find_forecast_warnings(date)
+    # todo
+    warnings_df = get_forecast_warnings_dataframe(date)
     if return_format == 'csv':
         return df_to_csv_flask_response(warnings_df, f'forecast_warnings_{date}')
     if return_format == 'json':
