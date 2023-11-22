@@ -11,7 +11,7 @@ __all__ = [
     'get_forecast_dataset',
     'get_return_periods_dataframe',
     'find_available_dates',
-    'find_forecast_warnings',
+    'get_forecast_warnings_dataframe',
     'latlon_to_reach',
 ]
 
@@ -41,7 +41,7 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
 
 
 def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
-    df = geoglows.data.return_periods(reach_id=reach_id)
+    df = geoglows.data.return_periods(reach_id=reach_id).drop(columns=['rivid'])
     if units == 'cfs':
         for column in df:
             df[column] *= M3_TO_FT3
@@ -55,39 +55,17 @@ def find_available_dates() -> list:
     return dates
 
 
-def find_forecast_warnings(date) -> pd.DataFrame:
-    warnings = None
+def get_forecast_warnings_dataframe(date) -> pd.DataFrame:
+    # todo
+    if date == 'latest':
+        date = find_available_dates()[-1]
 
-    for region in os.listdir(PATH_TO_FORECASTS):
-        # find/check current output datasets
-        path_to_region_forecasts = os.path.join(PATH_TO_FORECASTS, region)
-        if not os.path.isdir(path_to_region_forecasts):
-            continue
-        if date == 'most_recent':
-            date_folders = sorted([d for d in os.listdir(path_to_region_forecasts)
-                                   if os.path.isdir(os.path.join(path_to_region_forecasts, d))],
-                                  reverse=True)
-            folder = os.path.join(path_to_region_forecasts, date_folders[0])
-        else:
-            folder = os.path.join(path_to_region_forecasts, date)
-            if not os.path.isdir(folder):
-                raise ValueError(f'Forecast date {date} was not found')
-        # locate the forecast warning csv
-        summary_file = os.path.join(folder, 'forecasted_return_periods_summary.csv')
-        region_warnings_df = pd.read_csv(summary_file)
-        region_warnings_df['region'] = region.replace('-geoglows', '')
-        if not os.path.isfile(summary_file):
-            continue
-        if warnings is None:
-            warnings = region_warnings_df
-            continue
+    # find the warnings combined file using the date
 
-        warnings = pd.concat([warnings, region_warnings_df], axis=0)
+    # check that it exists and raise an error if not
 
-    if warnings is None:
-        raise ValueError('Unable to find any warnings csv files for any region for the specified date')
-
-    return warnings
+    # read and return the dataframe with pandas
+    return
 
 
 def latlon_to_reach(lat: float, lon: float) -> list:

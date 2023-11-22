@@ -37,11 +37,11 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         reach_id,
     )
 
-    log_request(version="v2",
-                product=product,
-                reach_id=request.args.get('reach_id', 0),
-                return_format=format,
-                source=request.args.get('source', 'other'), )
+    # log_request(version="v2",
+    #             product=product,
+    #             reach_id=request.args.get('reach_id', 0),
+    #             return_format=format,
+    #             source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'forecast':
@@ -94,7 +94,7 @@ def handle_request(request, product, reach_id):
         'retrospective',
         'monthlyaverages',
         'dailyaverages',
-        'yearlyaverages',
+        'annualaverages',
         'returnperiods',
 
         'hydroviewer',
@@ -120,6 +120,8 @@ def handle_request(request, product, reach_id):
         # aliases for derived historical products
         'monavg': 'monthlyaverages',
         'dayavg': 'dailyaverages',
+        'yearavg': 'annualaverages',
+        'yearlyaverages': 'annualaverages',
     }
 
     data_units = ('cms', 'cfs',)
