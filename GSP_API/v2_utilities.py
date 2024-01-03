@@ -86,29 +86,25 @@ def handle_request(request, product, reach_id, return_format):
 
 
 def get_forecast_dataset(reach_id, date):
-    region = reach_to_region(reach_id)
-    region_forecast_dir = os.path.join(PATH_TO_FORECASTS, region)
+    forecast_dir = os.path.join(PATH_TO_FORECASTS)
 
     if date == "latest":
         date = get_most_recent_date()
-        forecast_dir = os.path.join(region_forecast_dir, ".".join([date, '00']))
-    else:
-        forecast_dir = os.path.join(region_forecast_dir, ".".join([date, '00']))
+        zarr_file = os.path.join(forecast_dir, f"Qout_{date}.zarr")
+    elif len(date) == 10:
+        zarr_file = os.path.join(forecast_dir, f"Qout_{date}.zarr")
+    elif len(date) == 8:
+        zarr_file = os.path.join(forecast_dir, f"Qout_{date}00.zarr")
 
-    if not os.path.exists(forecast_dir):
-        raise ValueError(f'forecast data not found for date {date} (region: "{region}"). Use YYYYMMDD format.')
-
-    forecast_path_list = glob(os.path.join(forecast_dir, "Qout*.zarr"))
-
-    if len(forecast_path_list) == 0:
-        raise ValueError('forecast data not found')
+    if not os.path.exists(zarr_file):
+        raise ValueError(f'forecast data not found for date {date}. Use YYYYMMDD format.')
 
     try:
-        forecast_dataset = xr.open_zarr(forecast_path_list[0])
+        forecast_dataset = xr.open_zarr(zarr_file)
         return forecast_dataset.sel(rivid=reach_id).Qout
     except Exception as e:
         print(e)
-        raise ValueError('Error while reading data from the zarr files')
+        raise ValueError('Error while reading data from the zarr file.')
 
 
 def dataframe_to_csv_flask_response(df, csv_name):
@@ -151,9 +147,8 @@ def new_json_template(reach_id, units, start_date, end_date):
 def get_historical_dataframe(reach_id, units):
     print("reading historical data")
     print("reach_id: {reach_id}")
-    region = 'central_america-geoglows'  # reach_to_region(reach_id)
     print("region {region}")
-    file_path_list = glob(os.path.join(PATH_TO_ERA_5, region, 'Qout*.zarr'))
+    file_path_list = glob(os.path.join(PATH_TO_ERA_5, 'Qout*.zarr'))
 
     if len(file_path_list) == 0:
         raise ValueError('historical data not found')
@@ -278,11 +273,16 @@ def find_forecast_warnings(date) -> pd.DataFrame:
 
 
 def get_most_recent_date() -> str:
-    available_dirs = glob(os.path.join(PATH_TO_FORECASTS, '*'))
-    if len(available_dirs) == 0:
-        raise ValueError("unable to find any region folders in the forecast directory")
-    available_dirs = glob(os.path.join(available_dirs[0], '*'))
-    available_dirs = sorted([d for d in available_dirs if os.path.isdir(d)], reverse=True)
-    if len(available_dirs) == 0:
-        raise ValueError("unable to find forecast results in the region forecast directory")
-    return os.path.basename(available_dirs[0]).split('.')[0]
+    zarr_files = glob(os.path.join(PATH_TO_FORECASTS, 'Qout_*.zarr'))
+    if len(zarr_files) == 0:
+        raise ValueError("unable to find any data in the forecast directory")
+    sorted_zarr_files = sorted(
+        zarr_files,
+        key=lambda x: int(
+            os.path.basename(x).lstrip("Qout_").rstrip(".zarr")
+        ),
+        reverse=True
+    )
+    return os.path.basename(
+        sorted_zarr_files[0]
+    ).lstrip("Qout_").rstrip(".zarr")

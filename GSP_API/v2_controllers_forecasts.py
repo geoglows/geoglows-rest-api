@@ -79,7 +79,7 @@ def forecast_stats(reach_id: int, date: str, units: str, return_format: str) -> 
 
     # get an array of all the ensembles, delete the high res before doing averages
     merged_array = forecast_xarray_dataset.data
-    merged_array = np.delete(merged_array, list(forecast_xarray_dataset.ensemble.data).index(52), axis=0)
+    merged_array = np.delete(merged_array, forecast_xarray_dataset.ensemble.data.tolist().index(52), axis=0)
 
     # replace any values that went negative because of the routing
     merged_array[merged_array <= 0] = 0
