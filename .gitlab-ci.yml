@@ -15,8 +15,6 @@ stages:
     - helm lint $HELM_CHART
     - chmod +x ./check_helm_chart
     - ./check_helm_chart $HELM_CHART
-  only:
-    - merge_requests
   rules:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
 
