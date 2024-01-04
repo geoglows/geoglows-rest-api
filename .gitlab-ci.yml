@@ -8,12 +8,22 @@ include:
     file: "/helm-check.yml"
   - project: "tethys/kubernetes/gl-k8s-integration"
     ref: 1.6.1
-    file: "/kaniko-template.yml"
-  - project: "tethys/kubernetes/gl-k8s-integration"
-    ref: 1.6.1
     file: "/kaniko-build.yml"
 
+### Build ###
+"Check Helm":
+  stage: Build
+  variables:
+    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+
+"Update Helm":
+  stage: Build
+  variables:
+    HELM_REPO_USERNAME: aquaveo
+    HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+
 .kaniko_build:
+  extends: .kaniko_build
   before_script:
     - >
       echo "{\"auths\":{
