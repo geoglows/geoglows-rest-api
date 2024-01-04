@@ -15,9 +15,8 @@ stages:
     - helm lint $HELM_CHART
     - chmod +x ./check_helm_chart
     - ./check_helm_chart $HELM_CHART
-  except:
-   - tags
-   - master
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
 
 "Update Helm":
   stage: Build
@@ -74,8 +73,8 @@ stages:
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
     KANIKO_DESTINATIONS: $CI_REGISTRY_IMAGE/dev:$CI_COMMIT_SHORT_SHA
 
-  except:
-    - tags
+  only:
+    - master
 
 "Build Tag":
   extends: .kaniko_build
