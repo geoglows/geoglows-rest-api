@@ -73,8 +73,8 @@ stages:
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
     KANIKO_DESTINATIONS: $CI_REGISTRY_IMAGE/dev:$CI_COMMIT_SHORT_SHA
 
-  except:
-    - tags
+  only:
+    - master
 
 "Build Tag":
   extends: .kaniko_build
