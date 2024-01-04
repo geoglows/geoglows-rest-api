@@ -22,15 +22,6 @@ include:
     HELM_REPO_USERNAME: aquaveo
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
 
-.kaniko_build:
-  extends: .kaniko_build
-  before_script:
-    - >
-      echo "{\"auths\":{
-        \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
-        \"eccr.ecmwf.int/harbor\": {\"username\":\"$ECCR_USER\", \"password\":\"$ECCR_PASSWORD\"}
-      }}" > /kaniko/.docker/config.json
-
 "Build Tag":
   extends: .kaniko_build
   variables:
@@ -40,6 +31,12 @@ include:
     KANIKO_DESTINATIONS: >
       eccr.ecmwf.int/geoglows_api/geoglows_api:$CI_COMMIT_TAG
       eccr.ecmwf.int/geoglows_api/geoglows_api:latest
+  before_script:
+    - >
+      echo "{\"auths\":{
+        \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
+        \"eccr.ecmwf.int/harbor\": {\"username\":\"$ECCR_USER\", \"password\":\"$ECCR_PASSWORD\"}
+      }}" > /kaniko/.docker/config.json
   only:
     - tags
 
@@ -49,6 +46,12 @@ include:
     KANIKO_CONTEXT: $CI_PROJECT_DIR
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
     KANIKO_DESTINATIONS: eccr.ecmwf.int/geoglows_api/geoglows_api:stable
+  before_script:
+    - >
+      echo "{\"auths\":{
+        \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
+        \"eccr.ecmwf.int/harbor\": {\"username\":\"$ECCR_USER\", \"password\":\"$ECCR_PASSWORD\"}
+      }}" > /kaniko/.docker/config.json
   only:
     - /^stable$/
 
