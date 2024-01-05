@@ -16,7 +16,7 @@ include:
   variables:
     HELM_REPO_URL: https://eccr.ecmwf.int/chartrepo
     HELM_REPO_CHANNEL: geoglows_api
-    HELM_REPO_USERNAME: $(echo "$ECCR_USER" | sed 's/\$/\\$/g')
+    HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
 
@@ -25,7 +25,7 @@ include:
   variables:
     HELM_REPO_URL: https://eccr.ecmwf.int/chartrepo
     HELM_REPO_CHANNEL: geoglows_api
-    HELM_REPO_USERNAME: $(echo "$ECCR_USER" | sed 's/\$/\\$/g')
+    HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
 
