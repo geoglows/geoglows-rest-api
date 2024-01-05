@@ -21,7 +21,7 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   script:
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --channel $HELM_REPO_CHANNEL --password $HELM_REPO_PASSWORD --url $HELM_REPO_URL --username $HELM_REPO_USERNAME
+    - check_helm_chart "${HELM_CHART}" --channel "${HELM_REPO_CHANNEL}"" --password "${HELM_REPO_PASSWORD}"" --url "${HELM_REPO_URL}"" --username "${HELM_REPO_USERNAME}"
 
 "Update Helm":
   stage: Build
@@ -33,7 +33,7 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   script:
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --channel $HELM_REPO_CHANNEL --password $HELM_REPO_PASSWORD --url $HELM_REPO_URL --username $HELM_REPO_USERNAME --upload
+    - check_helm_chart "${HELM_CHART}" --channel "${HELM_REPO_CHANNEL}"" --password "${HELM_REPO_PASSWORD}"" --url "${HELM_REPO_URL}"" --username "${HELM_REPO_USERNAME}" --upload
 
 "Build Tag":
   extends: .kaniko_build
