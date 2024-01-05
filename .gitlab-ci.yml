@@ -19,9 +19,9 @@ include:
     HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-  script:
-    - helm lint $HELM_CHART
-    - check_helm_chart "${HELM_CHART}" --channel "${HELM_REPO_CHANNEL}" --password "${HELM_REPO_PASSWORD}" --url "${HELM_REPO_URL}" --username "${HELM_REPO_USERNAME}"
+  before_script:
+    - >
+      HELM_REPO_USERNAME=$(echo "$HELM_REPO_USERNAME" | sed 's/\$/\\$/g')
 
 "Update Helm":
   stage: Build
@@ -31,9 +31,9 @@ include:
     HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-  script:
-    - helm lint $HELM_CHART
-    - check_helm_chart "${HELM_CHART}" --channel "${HELM_REPO_CHANNEL}" --password "${HELM_REPO_PASSWORD}" --url "${HELM_REPO_URL}" --username "${HELM_REPO_USERNAME}" --upload
+  before_script:
+    - >
+      HELM_REPO_USERNAME=$(echo "$HELM_REPO_USERNAME" | sed 's/\$/\\$/g')
 
 "Build Tag":
   extends: .kaniko_build
