@@ -24,7 +24,7 @@ include:
       echo "User: ${ECCR_USER}";
       echo "URL: ${HELM_REPO_URL}";
       echo "Channel: ${HELM_REPO_CHANNEL}";
-      echo "Chart": ${HELM_CHART};"
+      echo "Chart: ${HELM_CHART}";
 
 "Update Helm":
   stage: Build
