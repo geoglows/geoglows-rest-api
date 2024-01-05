@@ -16,18 +16,11 @@ include:
   variables:
     HELM_REPO_URL: https://eccr.ecmwf.int/chartrepo
     HELM_REPO_CHANNEL: geoglows_api
-    HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-  before_script:
-    - >
-      echo "User: $ECCR_USER"
-    - >
-      echo "User2: $HELM_REPO_USERNAME"
-    - python3 -c "import os; print(os.environ.get('HELM_REPO_USERNAME'))"
   script:
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --username $HELM_REPO_USERNAME
+    - check_helm_chart $HELM_CHART --username robot\$geoglows_api+geoglows-ra
 
 
 "Update Helm":
@@ -35,12 +28,11 @@ include:
   variables:
     HELM_REPO_URL: https://eccr.ecmwf.int/chartrepo
     HELM_REPO_CHANNEL: geoglows_api
-    HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   script:
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --username $HELM_REPO_USERNAME --upload
+    - check_helm_chart $HELM_CHART --username robot\$geoglows_api+geoglows-ra --upload
 
 "Build Tag":
   extends: .kaniko_build
@@ -52,7 +44,6 @@ include:
       eccr.ecmwf.int/geoglows_api/geoglows_api:$CI_COMMIT_TAG
       eccr.ecmwf.int/geoglows_api/geoglows_api:latest
   before_script:
-    - ECCR_USER=$ECCR_USER
     - >
       echo "{\"auths\":{
         \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
@@ -68,7 +59,6 @@ include:
     KANIKO_DOCKERFILE: $CI_PROJECT_DIR/Dockerfile
     KANIKO_DESTINATIONS: eccr.ecmwf.int/geoglows_api/geoglows_api:stable
   before_script:
-    - ECCR_USER=$ECCR_USER
     - >
       echo "{\"auths\":{
         \"$CI_REGISTRY\": {\"username\":\"$CI_REGISTRY_USER\", \"password\":\"$CI_REGISTRY_PASSWORD\"},
