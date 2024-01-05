@@ -21,7 +21,7 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   before_script:
     - >
-      HELM_REPO_USERNAME=$(echo "$HELM_REPO_USERNAME" | sed 's/\$/\\$/g')
+      HELM_REPO_USERNAME=$(echo "$ECCR_USER" | sed 's/\$/\\$/g')
 
 "Update Helm":
   stage: Build
@@ -33,7 +33,7 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   before_script:
     - >
-      HELM_REPO_USERNAME=$(echo "$HELM_REPO_USERNAME" | sed 's/\$/\\$/g')
+      HELM_REPO_USERNAME=$(echo "$ECCR_USER" | sed 's/\$/\\$/g')
 
 "Build Tag":
   extends: .kaniko_build
