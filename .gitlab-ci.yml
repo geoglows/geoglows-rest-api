@@ -20,8 +20,7 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   script:
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --username robot\$geoglows_api+geoglows-ra
-
+    - check_helm_chart $HELM_CHART --username robot\$$geoglows_api+geoglows-ra
 
 "Update Helm":
   stage: Build
@@ -32,7 +31,7 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   script:
     - helm lint $HELM_CHART
-    - check_helm_chart $HELM_CHART --username robot\$geoglows_api+geoglows-ra --upload
+    - check_helm_chart $HELM_CHART --username robot\$$geoglows_api+geoglows-ra --upload
 
 "Build Tag":
   extends: .kaniko_build
