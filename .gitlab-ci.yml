@@ -21,10 +21,11 @@ include:
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
   before_script:
     - >
-      echo "User: ${ECCR_USER}";
-      echo "URL: ${HELM_REPO_URL}";
-      echo "Channel: ${HELM_REPO_CHANNEL}";
-      echo "Chart: ${HELM_CHART}";
+      echo -e
+        "User: ${ECCR_USER}\n
+        URL: ${HELM_REPO_URL}\n
+        Channel: ${HELM_REPO_CHANNEL}\n
+        Chart: ${HELM_CHART}"
 
 "Update Helm":
   stage: Build
