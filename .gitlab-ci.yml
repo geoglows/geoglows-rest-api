@@ -24,7 +24,15 @@ include:
       echo "User: $ECCR_USER"
     - >
       echo "User2: $HELM_REPO_USERNAME"
-    - python3 -c "import os; print(os.environ.get('HELM_REPO_USERNAME'))"
+    - >
+      python3 -c "import os;
+        print(
+          os.environ.get('HELM_REPO_USERNAME'),
+          os.environ.get('HELM_REPO_URL'),
+          os.environ.get('HELM_REPO_CHANNEL'),
+          os.environ.get('HELM_CHART')
+        )
+      "
 
 "Update Helm":
   stage: Build
