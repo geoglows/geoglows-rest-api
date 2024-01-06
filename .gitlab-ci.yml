@@ -19,13 +19,11 @@ include:
     HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
-  before_script:
-    - >
-      echo "User: $ECCR_USER"
-    - >
-      echo "User2: $HELM_REPO_USERNAME"
-    - >
-      python3 -c "import os; print(os.environ.get('HELM_REPO_USERNAME'), os.environ.get('HELM_REPO_URL'), os.environ.get('HELM_REPO_CHANNEL'), os.environ.get('HELM_CHART'))"
+  script:
+    # Ensure all required variables are set
+    - ": \"${HELM_CHART:?must be set}\""
+    - chmod +x ./check_helm_chart
+    - ./check_helm_chart $HELM_CHART
 
 "Update Helm":
   stage: Build
@@ -35,6 +33,13 @@ include:
     HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
     HELM_CHART: $CI_PROJECT_DIR/helm/gsprestapi
+  script:
+    # Ensure all required variables are set
+    - ": \"${HELM_CHART:?must be set}\""
+    - helm lint $HELM_CHART
+    - chmod +x ./check_helm_chart
+    - ./check_helm_chart $HELM_CHART
+
 
 "Build Tag":
   extends: .kaniko_build
