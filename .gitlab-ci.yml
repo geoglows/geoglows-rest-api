@@ -40,7 +40,6 @@ include:
     - chmod +x ./check_helm_chart
     - ./check_helm_chart $HELM_CHART --upload
 
-
 "Build Tag":
   extends: .kaniko_build
   variables:
