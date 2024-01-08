@@ -28,7 +28,6 @@ RESULT=$(curl ${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/charts/${LOCAL_PACKAGE} -so 
 if [ ${RESULT} -eq  404 ]; then
     echo "Chart not found on remote" >&2
     if [[ "$2" == "--upload" ]]; then
-        helm package ${CHARTDIR} --sign --key 'Aquaveo Chart Signing Key' --keyring ~/.gnupg/secring.gpg
         echo "Uploading chart..."
         curl -F "chart=@${LOCAL_PACKAGE}" -F "prov=@${LOCAL_PACKAGE}.prov" ${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/charts -u ${ECCR_USER}:${ECCR_PASSWORD}
         echo -e "\nDone."
