@@ -29,7 +29,7 @@ if [ ${RESULT} -eq  404 ]; then
     echo "Chart not found on remote" >&2
     if [[ "$2" == "--upload" ]]; then
         echo "Uploading chart..."
-        curl -F "chart=@${LOCAL_PACKAGE}" -F "prov=@${LOCAL_PACKAGE}.prov" ${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/charts -u ${ECCR_USER}:${ECCR_PASSWORD}
+        curl -F "chart=@${LOCAL_PACKAGE}" ${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/charts -u ${ECCR_USER}:${ECCR_PASSWORD}
         echo -e "\nDone."
     fi
     exit 0
