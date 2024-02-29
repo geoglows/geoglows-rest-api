@@ -4,6 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
+from .analytics import log_request
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
@@ -36,11 +37,11 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         reach_id,
     )
 
-    # log_request(version="v2",
-    #             product=product,
-    #             reach_id=request.args.get('reach_id', 0),
-    #             return_format=format,
-    #             source=request.args.get('source', 'other'), )
+    log_request(version="v2",
+                product=product,
+                reach_id=request.args.get('reach_id', 0),
+                return_format=format,
+                source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'forecast':
