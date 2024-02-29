@@ -4,7 +4,6 @@ import traceback
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
-from .analytics import log_request
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
@@ -66,7 +65,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return daily_averages(reach_id, units, format)
     elif product == 'monthlyaverages':
         return monthly_averages(reach_id, units, format)
-    elif product == 'yearlyaverages':
+    elif product == 'annualaverages':
         return yearly_averages(reach_id, units, format)
 
     # data availability
@@ -127,7 +126,7 @@ def handle_request(request, product, reach_id):
     data_units = ('cms', 'cfs',)
     return_formats = ('csv', 'json',)
 
-    product = str(product).lower()
+    product = str(product).lower().replace(' ', '').replace('_', '').replace('-', '')
     if product not in ALL_PRODUCTS:
         if product not in PRODUCT_SHORTCUTS.keys():
             raise ValueError(f'{product} not recognized. available products: {ALL_PRODUCTS}')
@@ -141,6 +140,7 @@ def handle_request(request, product, reach_id):
         reach_id, _ = latlon_to_reach(request.args.get('lat', None), request.args.get('lon', None))
     elif reach_id is not None:  # otherwise do a simple check that the reach_id might be valid
         try:
+            reach_id = str(reach_id).replace(' ', '').replace('_', '')
             reach_id = int(reach_id)
             assert reach_id > 110_000_000
         except Exception:

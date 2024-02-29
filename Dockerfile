@@ -5,11 +5,11 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/envs/gsp_api/bin:$PATH API_PREFI
 RUN mkdir /var/uwsgi
 RUN apt-get update -qq && apt-get install -yqq supervisor vim
 
-COPY ./environment.yml ./startup.sh ./
+COPY environment.yaml ./startup.sh ./
 
 RUN conda config --set channel_priority strict && \
     conda config --add channels conda-forge && \
-    conda env create -f environment.yml && \
+    conda env create -f environment.yaml && \
     echo "conda activate app-env" >> ~/.bashrc
 
 RUN mkdir -p /mnt/output/forecasts && \

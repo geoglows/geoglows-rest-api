@@ -1,39 +1,57 @@
 import datetime
 import json
 
-import geoglows
 import pandas as pd
+import s3fs
+import xarray as xr
 from flask import jsonify
 
-from .constants import M3_TO_FT3
+from .constants import M3_TO_FT3, ODP_S3_BUCKET_URI, ODP_S3_BUCKET_REGION
 from .data import get_return_periods_dataframe
 from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
 
 __all__ = ['retrospective', 'daily_averages', 'monthly_averages', 'yearly_averages', 'return_periods', ]
 
 
+def _get_retrospective_df(reach_id: int) -> pd.DataFrame:
+    s3 = s3fs.S3FileSystem(anon=True, client_kwargs=dict(region_name=ODP_S3_BUCKET_REGION))
+    s3store = s3fs.S3Map(root=f'{ODP_S3_BUCKET_URI}/retrospective.zarr', s3=s3, check=False)
+    return (
+        xr
+        .open_zarr(s3store)
+        .sel(rivid=reach_id)
+        .to_dataframe()
+        .reset_index()
+        .set_index('time')
+        .pivot(columns='rivid', values='Qout')
+    )
+
+
 def retrospective(reach_id: int, units: str, return_format: str, start_date: str = None,
                   end_date: str = None) -> pd.DataFrame:
-    """
+    """ 
     Controller for retrieving simulated historic data
     """
-    df = geoglows.data.retrospective(reach_id=reach_id)
+    df = _get_retrospective_df(reach_id)
+
     if units == 'cfs':
         df *= M3_TO_FT3
     if start_date is not None:
-        df = df.loc[datetime.datetime.strptime(start_date, '%Y%m%d'):]
+        df = df.loc[df.index >= datetime.datetime.strptime(start_date, '%Y%m%d')]
     if end_date is not None:
-        df = df.loc[:datetime.datetime.strptime(end_date, '%Y%m%d')]
+        df = df.loc[df.index <= datetime.datetime.strptime(end_date, '%Y%m%d')]
 
     if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'hindcast_{reach_id}_{units}')
+        return df_to_csv_flask_response(df, f'retrospective_{reach_id}_{units}')
     if return_format == 'json':
         return df_to_jsonify_response(df=df, reach_id=reach_id, units=units)
     return df
 
 
 def daily_averages(reach_id: int, units: str, return_format: str):
-    df = geoglows.data.daily_averages(reach_id=reach_id)
+    df = _get_retrospective_df(reach_id)
+    df = df.groupby(df.index.strftime('%m-%d')).mean()
+    df.index = pd.to_datetime(df.index, format='%m-%d')
 
     if units == 'cfs':
         df *= M3_TO_FT3
@@ -46,7 +64,8 @@ def daily_averages(reach_id: int, units: str, return_format: str):
 
 
 def monthly_averages(reach_id: int, units: str, return_format: str):
-    df = geoglows.data.monthly_averages(reach_id=reach_id)
+    df = _get_retrospective_df(reach_id)
+    df = df.groupby(df.index.strftime('%m')).mean()
 
     if units == 'cfs':
         df *= M3_TO_FT3
@@ -59,7 +78,8 @@ def monthly_averages(reach_id: int, units: str, return_format: str):
 
 
 def yearly_averages(reach_id, units, return_format):
-    df = geoglows.data.yearly_averages(reach_id=reach_id)
+    df = _get_retrospective_df(reach_id)
+    df = df.groupby(df.index.strftime('%Y')).mean()
 
     if units == 'cfs':
         df *= M3_TO_FT3

@@ -50,4 +50,4 @@ def errors_404(e):
     logger.debug(traceback.format_exc())
     if request.path.startswith(f'/api'):
         return jsonify({"error": f'API Endpoint not found: {request.path} -> Check spelling and the API docs'}), 404
-    return redirect(url_for('home')), 404, {'Refresh': f'1; url={url_for("home")}'}
+    return redirect(url_for('pages.home')), 404, {'Refresh': f'1; url={url_for("home")}'}
