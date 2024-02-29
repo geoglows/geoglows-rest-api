@@ -41,7 +41,9 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
 
 
 def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
-    df = geoglows.data.return_periods(reach_id=reach_id).drop(columns=['rivid'])
+    s3 = s3fs.S3FileSystem(anon=True, client_kwargs=dict(region_name=ODP_S3_BUCKET_REGION))
+    s3store = s3fs.S3Map(root=f'{ODP_S3_BUCKET_URI}/return-periods.zarr', s3=s3, check=False)
+    df = xr.open_zarr(s3store).sel(rivid=reach_id).to_dataframe()
     if units == 'cfs':
         for column in df:
             df[column] *= M3_TO_FT3

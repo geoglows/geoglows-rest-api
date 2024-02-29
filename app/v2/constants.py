@@ -1,6 +1,7 @@
 PATH_TO_FORECASTS = '/mnt/output/forecasts'
 PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
-PATH_TO_ERA_INTERIM = '/mnt/output/era-interim'
-PATH_TO_ERA_5 = '/mnt/output/era-5'
 M3_TO_FT3 = 35.3146667
-NUM_DECIMALS = 2
+NUM_DECIMALS = 1
+
+ODP_S3_BUCKET_URI = 's3://geoglows-v2'
+ODP_S3_BUCKET_REGION = 'us-west-2'
