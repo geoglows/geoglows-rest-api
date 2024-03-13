@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import time
 
@@ -18,10 +17,6 @@ client = boto3.client(
     aws_secret_access_key=SECRET_ACCESS_KEY,
     region_name=REGION
 )
-
-# Set up logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 
 def log_request(version: str, product: str, reach_id: int, return_format: str, source: str):
