@@ -1,4 +1,3 @@
-import logging
 import os
 
 from flask import Flask
@@ -19,14 +18,6 @@ app.debug = False
 cors = CORS(app)
 app.config['CORS_HEADERS'] = '*'
 
-# create logger
-logger = logging.getLogger("DEBUG")
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler('/app/api.log', 'a')
-formatter = logging.Formatter('%(asctime)s: %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HTML PAGES
 app.register_blueprint(blueprint_pages)
 
@@ -34,5 +25,6 @@ app.register_blueprint(blueprint_pages)
 app.register_blueprint(v2.V2BLUEPRINT)
 app.register_blueprint(v1.V1BLUEPRINT)
 
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> __main__
 if __name__ == '__main__':
     app.run()
