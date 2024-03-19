@@ -21,17 +21,17 @@
 <body>
 {% block navbar %}
   <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#292b47;">
-    <a class="navbar-brand" href="{{ url_for('home') }}">GEOGLOWS ECMWF Streamflow</a>
+    <a class="navbar-brand" href="{{ url_for('pages.home') }}">GEOGLOWS ECMWF Streamflow</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav nav-fill w-100">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('documentation') }}">Documentation</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('resources')}}">Resources</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('license') }}">License</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('publications') }}">Publications</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.about') }}">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.documentation') }}">Documentation</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.resources')}}">Resources</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.license') }}">License</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.publications') }}">Publications</a></li>
       </ul>
     </div>
   </nav>

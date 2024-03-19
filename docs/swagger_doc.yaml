@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  title: GEOGloWS ECMWF Streamflow Data Service
+  title: GEOGLOWS ECMWF Streamflow Data Service
   description: 'A REST Data Service to access high resolution streamflow forecasts from around the world'
   version: '2.0.0'
 host: geoglows.ecmwf.int

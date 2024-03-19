@@ -18,7 +18,7 @@ import sys
 import yaml
 
 TEMPLATE = """{% extends "base_template.html" %}
-{% block title %}GEOGloWS ECMWF Streamflow Service{% endblock %}
+{% block title %}GEOGLOWS ECMWF Streamflow Service{% endblock %}
 
 {% block body %}
   <div id="swagger-ui"></div>
