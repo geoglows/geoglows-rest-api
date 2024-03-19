@@ -75,6 +75,6 @@ def latlon_to_reach(lat: float, lon: float) -> list:
     Finds the reach ID nearest to a given lat/lon
     Uses the ModelMasterTable to find the locations
     """
-    df = pd.read_parquet('/mnt/configs/geoglows-v2-master-table.parquet', columns=['TDXHydroLinkNo', 'lat', 'lon'])
+    df = pd.read_parquet('/mnt/configs/geoglows-v2-geographic-properties-table.parquet', columns=['LINKNO', 'lat', 'lon'])
     df['distance'] = ((df['lat'] - lat) ** 2 + (df['lon'] - lon) ** 2) ** 0.5
     return df.sort_values('distance').reset_index(drop=True).iloc[0][['TDXHydroLinkNo', 'distance']].values.flatten()
