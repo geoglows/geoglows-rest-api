@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 
-from app.cloudlogs import log_request
+from .analytics import log_request
 from .v1_controllers_forecasts import (forecast_stats,
                                        forecast_ensembles,
                                        forecast_warnings,
