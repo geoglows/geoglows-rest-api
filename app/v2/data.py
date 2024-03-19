@@ -4,8 +4,9 @@ from glob import glob
 import natsort
 import pandas as pd
 import xarray as xr
+import s3fs
 
-from .constants import PATH_TO_FORECASTS, M3_TO_FT3
+from .constants import PATH_TO_FORECASTS, M3_TO_FT3, ODP_S3_BUCKET_REGION, ODP_S3_BUCKET_URI
 
 __all__ = [
     'get_forecast_dataset',
