@@ -4,7 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
-from app.cloudlogs import log_request
+from .analytics import log_request
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
