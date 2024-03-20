@@ -28,7 +28,7 @@ include:
 "Update Helm":
   stage: Build
   variables:
-    HELM_REPO_URL: https://eccr.ecmwf.int/chartrepo
+    HELM_REPO_URL: https://eccr.ecmwf.int/api/chartrepo  # The URL for uploading the chart is slightly different in Harbor 2.0
     HELM_REPO_CHANNEL: geoglows_api
     HELM_REPO_USERNAME: $ECCR_USER
     HELM_REPO_PASSWORD: $ECCR_PASSWORD
