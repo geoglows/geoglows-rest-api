@@ -27,7 +27,7 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
     if len(date) == 8:
         date = f"{date}00"
 
-    forecast_file = os.path.join(PATH_TO_FORECASTS, f'{date}.zarr')
+    forecast_file = os.path.join(PATH_TO_FORECASTS, f'Qout_{date}.zarr')
 
     if not os.path.exists(forecast_file):
         raise ValueError(f'Data not found for date {date}. Use YYYYMMDD format and the AvailableDates endpoint.')
