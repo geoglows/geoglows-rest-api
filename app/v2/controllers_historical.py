@@ -6,7 +6,7 @@ import s3fs
 import xarray as xr
 from flask import jsonify
 
-from .constants import M3_TO_FT3, ODP_S3_BUCKET_URI, ODP_S3_BUCKET_REGION
+from .constants import M3_TO_FT3, ODP_S3_BUCKET_RETROSPECTIVE, ODP_S3_BUCKET_REGION
 from .data import get_return_periods_dataframe
 from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
 
@@ -15,7 +15,7 @@ __all__ = ['retrospective', 'daily_averages', 'monthly_averages', 'yearly_averag
 
 def _get_retrospective_df(reach_id: int) -> pd.DataFrame:
     s3 = s3fs.S3FileSystem(anon=True, client_kwargs=dict(region_name=ODP_S3_BUCKET_REGION))
-    s3store = s3fs.S3Map(root=f'{ODP_S3_BUCKET_URI}/retrospective.zarr', s3=s3, check=False)
+    s3store = s3fs.S3Map(root=f'{ODP_S3_BUCKET_RETROSPECTIVE}/retrospective.zarr', s3=s3, check=False)
     return (
         xr
         .open_zarr(s3store)
