@@ -22,7 +22,7 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
     Opens the forecast dataset for a given date, selects the reach_id and Qout variable
     """
     if date == "latest":
-        date = find_available_dates()[-1]
+        date = find_available_dates()[0]
 
     if len(date) == 8:
         date = f"{date}00"
