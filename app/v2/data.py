@@ -6,7 +6,7 @@ import pandas as pd
 import xarray as xr
 import s3fs
 
-from .constants import PATH_TO_FORECASTS, M3_TO_FT3, ODP_S3_BUCKET_REGION, ODP_S3_BUCKET_URI
+from .constants import PATH_TO_FORECASTS, M3_TO_FT3, ODP_S3_BUCKET_REGION, ODP_RETROSPECTIVE_S3_BUCKET_URI
 
 __all__ = [
     'get_forecast_dataset',
@@ -46,7 +46,7 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
 
 def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
     s3 = s3fs.S3FileSystem(anon=True, client_kwargs=dict(region_name=ODP_S3_BUCKET_REGION))
-    s3store = s3fs.S3Map(root=f'{ODP_S3_BUCKET_URI}/return-periods.zarr', s3=s3, check=False)
+    s3store = s3fs.S3Map(root=f'{ODP_RETROSPECTIVE_S3_BUCKET_URI}/return-periods.zarr', s3=s3, check=False)
     df = xr.open_zarr(s3store).sel(rivid=reach_id).to_dataframe()
     if units == 'cfs':
         for column in df:
