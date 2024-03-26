@@ -1,5 +1,5 @@
-PATH_TO_FORECASTS = '/mnt/output/forecasts'
-PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records'
+PATH_TO_FORECASTS = '/mnt/output/forecasts/v2'
+PATH_TO_FORECAST_RECORDS = '/mnt/output/forecast-records/v2'
 M3_TO_FT3 = 35.3146667
 NUM_DECIMALS = 1
 
