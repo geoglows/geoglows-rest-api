@@ -6,7 +6,7 @@ import s3fs
 import xarray as xr
 from flask import jsonify
 
-from .constants import M3_TO_FT3, ODP_RETROSPECTIVE_S3_BUCKET_URI, ODP_S3_BUCKET_REGION
+from .constants import M3_TO_FT3, ODP_RETROSPECTIVE_S3_BUCKET_URI, ODP_S3_BUCKET_REGION, NUM_DECIMALS
 from .data import get_return_periods_dataframe
 from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
 
@@ -24,6 +24,9 @@ def _get_retrospective_df(reach_id: int) -> pd.DataFrame:
         .reset_index()
         .set_index('time')
         .pivot(columns='rivid', values='Qout')
+        .astype(float)
+        .round(NUM_DECIMALS)
+        .rename(columns=lambda x: str(x))
     )
 
 
