@@ -329,6 +329,17 @@ paths:
           enum:
             - csv
             - json
+        - name: start_date
+          in: query
+          description: A date in YYYYMMDD format of the earliest simulation date to retrieve. Simulated values on or after the specified date are returned. Earliest is 19400101.
+          type: string
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
+          default: 19400101
+        - name: end_date
+          in: query
+          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. Defaults to the most recent date.
+          type: string
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
         - text/csv
         - application/json
