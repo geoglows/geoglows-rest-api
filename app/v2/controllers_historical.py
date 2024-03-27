@@ -6,7 +6,7 @@ import s3fs
 import xarray as xr
 from flask import jsonify
 
-from .constants import M3_TO_FT3, ODP_RETROSPECTIVE_S3_BUCKET_URI, ODP_S3_BUCKET_REGION
+from .constants import M3_TO_FT3, ODP_RETROSPECTIVE_S3_BUCKET_URI, ODP_S3_BUCKET_REGION, NUM_DECIMALS
 from .data import get_return_periods_dataframe
 from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
 
@@ -24,6 +24,9 @@ def _get_retrospective_df(reach_id: int) -> pd.DataFrame:
         .reset_index()
         .set_index('time')
         .pivot(columns='rivid', values='Qout')
+        .astype(float)
+        .round(NUM_DECIMALS)
+        .rename(columns=lambda x: str(x))
     )
 
 
@@ -33,6 +36,11 @@ def retrospective(reach_id: int, units: str, return_format: str, start_date: str
     Controller for retrieving simulated historic data
     """
     df = _get_retrospective_df(reach_id)
+
+    if start_date is not None:
+        df = df.loc[df.index >= datetime.datetime.strptime(start_date, '%Y%m%d')]
+    if end_date is not None:
+        df = df.loc[df.index <= datetime.datetime.strptime(end_date, '%Y%m%d')]
 
     if units == 'cfs':
         df *= M3_TO_FT3

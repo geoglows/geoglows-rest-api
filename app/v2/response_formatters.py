@@ -15,13 +15,14 @@ def df_to_csv_flask_response(df: pd.DataFrame, csv_name: str, *, index: bool = T
 
 
 def df_to_jsonify_response(df: pd.DataFrame, reach_id: int, units: str):
+    # if the dataframe index type is datetime, convert it to a string
+    if isinstance(df.index, pd.DatetimeIndex):
+        df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
     json_template = new_json_template(reach_id, units, start_date=df.index[0], end_date=df.index[-1])
-
-    # add the columns from the dataframe
+    # add the columns from the dataframe to the json template
     json_template['datetime'] = df.index.tolist()
     json_template.update(df.replace(np.nan, '').to_dict(orient='list'))
     json_template['metadata']['series'] = ['datetime', ] + df.columns.tolist()
-
     return jsonify(json_template)
 
 
@@ -29,7 +30,7 @@ def new_json_template(reach_id, units, start_date, end_date):
     return {
         'metadata': {
             'reach_id': reach_id,
-            'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),
+            'gen_date': datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dY%X+00:00'),
             'start_date': start_date,
             'end_date': end_date,
             'series': [],
