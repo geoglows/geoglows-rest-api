@@ -59,7 +59,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     # hindcast data products
     elif product == 'retrospective':
-        return retrospective(reach_id, units, format)
+        return retrospective(reach_id, units, format, start_date=start_date, end_date=end_date)
     elif product == 'returnperiods':
         return return_periods(reach_id, units, format)
     elif product == 'dailyaverages':
