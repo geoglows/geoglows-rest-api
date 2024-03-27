@@ -37,6 +37,11 @@ def retrospective(reach_id: int, units: str, return_format: str, start_date: str
     """
     df = _get_retrospective_df(reach_id)
 
+    if start_date is not None:
+        df = df.loc[df.index >= datetime.datetime.strptime(start_date, '%Y%m%d')]
+    if end_date is not None:
+        df = df.loc[df.index <= datetime.datetime.strptime(end_date, '%Y%m%d')]
+
     if units == 'cfs':
         df *= M3_TO_FT3
     if start_date is not None:
