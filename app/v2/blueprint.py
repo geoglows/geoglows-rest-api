@@ -137,11 +137,14 @@ def handle_request(request, product, reach_id):
         # dates & warnings do not apply to a single ID
         # getreachid has a dedicated controller for returning the ID and distance errors in various formats
         reach_id = None
-    elif reach_id is None:  # all other products require an ID - try to find it from the lat/lon
-        reach_id, _ = latlon_to_reach(request.args.get('lat', None), request.args.get('lon', None))
+    elif reach_id is None: # all other products require an ID - try to find it from the lat/lon
+        if request.args.get('lat', None) and request.args.get('lon', None):
+            reach_id, _ = latlon_to_reach(request.args.get('lat', None), request.args.get('lon', None))
+        else:
+            raise ValueError('you must specify a river ID number for this dataset')
     elif reach_id is not None:  # otherwise do a simple check that the reach_id might be valid
         try:
-            reach_id = str(reach_id).replace(' ', '').replace('_', '')
+            reach_id = str(reach_id).replace(' ', '').replace('_', '').replace('-', '')
             reach_id = int(reach_id)
             assert reach_id > 110_000_000
         except Exception:
