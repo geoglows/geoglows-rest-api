@@ -30,7 +30,7 @@ def new_json_template(reach_id, units, start_date, end_date):
     return {
         'metadata': {
             'reach_id': reach_id,
-            'gen_date': datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dY%X+00:00'),
+            'gen_date': datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%X+00:00'),
             'start_date': start_date,
             'end_date': end_date,
             'series': [],
