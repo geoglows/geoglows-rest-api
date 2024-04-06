@@ -109,7 +109,7 @@ def return_periods(reach_id: int, units: str, return_format: str):
             'return_periods': json.loads(df.to_json(orient='records'))[0],
             'reach_id': reach_id,
             'simulation_forcing': 'ERA5',
-            'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dY%X+00:00'),
+            'gen_date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%X+00:00'),
             'units': {
                 'name': 'streamflow',
                 'short': f'{units}',
