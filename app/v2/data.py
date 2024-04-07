@@ -3,16 +3,16 @@ from glob import glob
 
 import natsort
 import pandas as pd
-import xarray as xr
 import s3fs
+import xarray as xr
 
-from .constants import PATH_TO_FORECASTS, M3_TO_FT3, ODP_S3_BUCKET_REGION, ODP_RETROSPECTIVE_S3_BUCKET_URI
+from .constants import PATH_TO_FORECASTS, PATH_TO_FORECAST_RECORDS, M3_TO_FT3, ODP_S3_BUCKET_REGION, \
+    ODP_RETROSPECTIVE_S3_BUCKET_URI
 
 __all__ = [
     'get_forecast_dataset',
     'get_return_periods_dataframe',
     'find_available_dates',
-    'get_forecast_warnings_dataframe',
     'latlon_to_reach',
 ]
 
@@ -44,14 +44,40 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
         raise ValueError(f'Unable to get data for reach_id {reach_id} in the forecast dataset')
 
 
-def get_return_periods_dataframe(reach_id: int, units: str) -> pd.DataFrame:
+def get_forecast_records_dataset(reach_id: int, start_date: str):
+    """
+    Opens the forecast records dataset for a given date, selects the reach_id and Qout variable
+    """
+    forecast_records_file = os.path.join(PATH_TO_FORECAST_RECORDS, f'forecastrecords_{vpu}_{start_date}.nc')
+
+    if not os.path.exists(forecast_records_file):
+        raise ValueError(f'Data not found for date {start_date}. Use YYYYMMDD format and the AvailableDates endpoint.')
+
+    try:
+        forecast_records_dataset = xr.open_dataset(forecast_records_file)
+    except Exception as e:
+        print(e)
+        raise ValueError('Error while reading data from the zarr files')
+    try:
+        return forecast_records_dataset.sel(rivid=reach_id).Qout
+    except Exception as e:
+        print(e)
+        raise ValueError(f'Unable to get data for reach_id {reach_id} in the forecast records dataset')
+
+
+def get_return_periods_dataframe(reach_id: int) -> pd.DataFrame:
+    # todo use pygeoglows
     s3 = s3fs.S3FileSystem(anon=True, client_kwargs=dict(region_name=ODP_S3_BUCKET_REGION))
     s3store = s3fs.S3Map(root=f'{ODP_RETROSPECTIVE_S3_BUCKET_URI}/return-periods.zarr', s3=s3, check=False)
-    df = xr.open_zarr(s3store).sel(rivid=reach_id).to_dataframe()
-    if units == 'cfs':
-        for column in df:
-            df[column] *= M3_TO_FT3
-    return df
+    return (
+        xr
+        .open_zarr(s3store)
+        .sel(rivid=reach_id)
+        ['return_period_flow']
+        .to_dataframe()
+        .reset_index()
+        .pivot(index='rivid', columns='return_period', values='return_period_flow')
+    )
 
 
 def find_available_dates() -> list:
@@ -61,27 +87,12 @@ def find_available_dates() -> list:
     return dates
 
 
-def get_forecast_warnings_dataframe(date) -> pd.DataFrame:
-    # todo
-    # if date == 'latest':
-    #     date = find_available_dates()[-1]
-
-    # find the warnings combined file using the date
-
-    # check that it exists and raise an error if not
-
-    # read and return the dataframe with pandas
-
-    # return
-
-    raise NotImplementedError("This function is not yet implemented")
-
-
 def latlon_to_reach(lat: float, lon: float) -> list:
     """
     Finds the reach ID nearest to a given lat/lon
     Uses the ModelMasterTable to find the locations
     """
+    # todo use pygeoglows
     df = pd.read_parquet('/mnt/configs/geoglows-v2-geographic-properties-table.parquet',
                          columns=['LINKNO', 'lat', 'lon'])
     df['distance'] = ((df['lat'] - lat) ** 2 + (df['lon'] - lon) ** 2) ** 0.5
