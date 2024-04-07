@@ -31,7 +31,7 @@ app = Blueprint('rest-endpoints-v2', __name__)
 @app.route(f'/api/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None):
-    product, reach_id, format, date, ensemble, start_date, end_date = handle_request(
+    product, reach_id, return_format, date, ensemble, start_date, end_date = handle_request(
         request,
         product,
         reach_id,
@@ -40,41 +40,41 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
     log_request(version="v2",
                 product=product,
                 reach_id=reach_id,
-                return_format=format,
+                return_format=return_format,
                 source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'forecast':
-        return forecast(reach_id, date, format)
+        return forecast(reach_id, date, return_format=return_format)
     elif product in 'forecaststats':
-        return forecast_stats(reach_id, date, format)
+        return forecast_stats(reach_id, date, return_format=return_format)
     elif product == 'forecastensembles':
-        return forecast_ensembles(reach_id, date, format, ensemble)
+        return forecast_ensembles(reach_id, date, return_format=return_format, ensemble=ensemble)
     elif product == 'forecastrecords':
-        return forecast_records(reach_id, start_date, end_date, format)
+        return forecast_records(reach_id, start_date, end_date, return_format=return_format)
     elif product == 'forecastwarnings':
-        return forecast_warnings(date, format)
+        return forecast_warnings(date, return_format=return_format)
     elif product == 'dates':
-        return forecast_dates(return_format=format)
+        return forecast_dates(return_format=return_format)
 
     # hindcast data products
     elif product == 'retrospective':
-        return retrospective(reach_id, format, start_date=start_date, end_date=end_date)
+        return retrospective(reach_id, return_format=return_format, start_date=start_date, end_date=end_date)
     elif product == 'returnperiods':
-        return return_periods(reach_id, format)
+        return return_periods(reach_id, return_format=return_format)
     elif product == 'dailyaverages':
-        return daily_averages(reach_id, format)
+        return daily_averages(reach_id, return_format=return_format)
     elif product == 'monthlyaverages':
-        return monthly_averages(reach_id, format)
+        return monthly_averages(reach_id, return_format=return_format)
     elif product == 'annualaverages':
-        return yearly_averages(reach_id, format)
+        return yearly_averages(reach_id, return_format=return_format)
 
     # data availability
     elif product == 'getreachid':
-        return get_reach_id(request, format=format)
+        return get_reach_id(request, )
 
     elif product == "hydroviewer":
-        return hydroviewer(reach_id, start_date, date, format)
+        return hydroviewer(reach_id, start_date, date, return_format=return_format)
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201
