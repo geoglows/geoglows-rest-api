@@ -31,7 +31,7 @@ app = Blueprint('rest-endpoints-v2', __name__)
 @app.route(f'/api/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, reach_id: int = None):
-    product, reach_id, format, units, date, ensemble, start_date, end_date = handle_request(
+    product, reach_id, format, date, ensemble, start_date, end_date = handle_request(
         request,
         product,
         reach_id,
@@ -45,13 +45,13 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     # forecast data products
     if product == 'forecast':
-        return forecast(reach_id, date, units, format)
+        return forecast(reach_id, date, format)
     elif product in 'forecaststats':
-        return forecast_stats(reach_id, date, units, format)
+        return forecast_stats(reach_id, date, format)
     elif product == 'forecastensembles':
-        return forecast_ensembles(reach_id, date, units, format, ensemble)
+        return forecast_ensembles(reach_id, date, format, ensemble)
     elif product == 'forecastrecords':
-        return forecast_records(reach_id, start_date, end_date, units, format)
+        return forecast_records(reach_id, start_date, end_date, format)
     elif product == 'forecastwarnings':
         return forecast_warnings(date, format)
     elif product == 'dates':
@@ -59,22 +59,22 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     # hindcast data products
     elif product == 'retrospective':
-        return retrospective(reach_id, units, format, start_date=start_date, end_date=end_date)
+        return retrospective(reach_id, format, start_date=start_date, end_date=end_date)
     elif product == 'returnperiods':
-        return return_periods(reach_id, units, format)
+        return return_periods(reach_id, format)
     elif product == 'dailyaverages':
-        return daily_averages(reach_id, units, format)
+        return daily_averages(reach_id, format)
     elif product == 'monthlyaverages':
-        return monthly_averages(reach_id, units, format)
+        return monthly_averages(reach_id, format)
     elif product == 'annualaverages':
-        return yearly_averages(reach_id, units, format)
+        return yearly_averages(reach_id, format)
 
     # data availability
     elif product == 'getreachid':
         return get_reach_id(request, format=format)
 
     elif product == "hydroviewer":
-        return hydroviewer(reach_id, start_date, date, units, format)
+        return hydroviewer(reach_id, start_date, date, format)
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201
@@ -154,10 +154,6 @@ def handle_request(request, product, reach_id):
     if return_format not in return_formats:
         raise ValueError('format not recognized. must be either "json" or "csv"')
 
-    units = request.args.get('units', 'cms')
-    if units not in data_units:
-        raise ValueError(f'units not recognized, choose from: {data_units}')
-
     date = request.args.get('date', 'latest')
     start_date = request.args.get('start_date', None)
     end_date = request.args.get('end_date', None)
@@ -168,7 +164,6 @@ def handle_request(request, product, reach_id):
         product,
         reach_id,
         return_format,
-        units,
         date,
         ensemble,
         start_date,

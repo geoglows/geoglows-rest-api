@@ -14,11 +14,11 @@ def df_to_csv_flask_response(df: pd.DataFrame, csv_name: str, *, index: bool = T
     return response
 
 
-def df_to_jsonify_response(df: pd.DataFrame, reach_id: int, units: str):
+def df_to_jsonify_response(df: pd.DataFrame, reach_id: int):
     # if the dataframe index type is datetime, convert it to a string
     if isinstance(df.index, pd.DatetimeIndex):
         df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
-    json_template = new_json_template(reach_id, units, start_date=df.index[0], end_date=df.index[-1])
+    json_template = new_json_template(reach_id, start_date=df.index[0], end_date=df.index[-1])
     # add the columns from the dataframe to the json template
     json_template['datetime'] = df.index.tolist()
     json_template.update(df.replace(np.nan, '').to_dict(orient='list'))
@@ -26,7 +26,7 @@ def df_to_jsonify_response(df: pd.DataFrame, reach_id: int, units: str):
     return jsonify(json_template)
 
 
-def new_json_template(reach_id, units, start_date, end_date):
+def new_json_template(reach_id, start_date, end_date):
     return {
         'metadata': {
             'reach_id': reach_id,
@@ -36,8 +36,8 @@ def new_json_template(reach_id, units, start_date, end_date):
             'series': [],
             'units': {
                 'name': 'streamflow',
-                'short': f'{units}',
-                'long': f'Cubic {"Meters" if units == "cms" else "Feet"} per Second',
+                'short': f'cms',
+                'long': f'cubic meters per second',
             },
         }
     }
