@@ -39,7 +39,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     log_request(version="v2",
                 product=product,
-                reach_id=request.args.get('reach_id', 0),
+                reach_id=reach_id,
                 return_format=format,
                 source=request.args.get('source', 'other'), )
 
