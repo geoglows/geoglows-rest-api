@@ -9,14 +9,15 @@ __all__ = [
 ]
 
 
-def get_reach_id(lat: float, lon: float, *, format: str = 'csv'):
+def get_reach_id(lat: float, lon: float, *, return_format: str = 'csv'):
     """
     Finds the reach ID nearest to a given lat/lon
     Uses the ModelMasterTable to find the locations
     """
+    # todo use pygeoglows
     reach_id, dist_error = latlon_to_reach(lat, lon)
-    if format == 'csv':
+    if return_format == 'csv':
         return df_to_csv_flask_response(pd.DataFrame(dict(reach_id=[reach_id, ], dist_error=[dist_error, ])),
                                         csv_name='reach_id', index=False)
-    elif format == 'json':
+    elif return_format == 'json':
         return jsonify(dict(reach_id=reach_id, dist_error=dist_error))
