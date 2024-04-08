@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
-  title: GEOGLOWS ECMWF Streamflow Data Service
-  description: 'A REST Data Service to access high resolution streamflow forecasts from around the world'
+  title: GEOGLOWS REST Data Service
+  description: 'A REST Data Service to access high resolution streamflow forecasts and retrospective simulations from the GEOGLOWS program'
   version: '2.0.0'
 host: geoglows.ecmwf.int
 basePath: /api/v2
@@ -9,48 +9,26 @@ schemes:
   - https
   - http
 paths:
-  /hydroviewer/{reach_id}:
+  /dates:
     get:
-      description: A shorthand for retrieving the forecast records and stats, and return periods, usually all plotted together.
-      summary: Returns forecast records, forecast stats, and return periods.
-      parameters:
-        - name: reach_id
-          in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
-          type: number
-          format: integer
-          required: True
-        - name: format
-          in: query
-          required: False
-          description: The file format of the response
-          type: string
-          default: csv
-          enum:
-            - csv
-            - json
-        - name: date
-          in: query
-          description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
-          type: string
-          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
+      description: This operation returns the available forecast dates in JSON format.
+      summary: Available dates
       produces:
-        - text/csv
         - application/json
       responses:
         '200':
-          description: The response body will contain a time series along with metadata about the stream reach of interest.
+          description: The response body will contain a list of available dates.
+        '204':
+          description: Succesful request but no regions found.
+          examples:
+            message: No dates available.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /forecast/{reach_id}:
     get:
-      description: This operation returns the average of the ensemble forecast.
+      description: This operation returns a simple summary of the ensemble forecast.
       summary: Returns average forecasted flow
       parameters:
         - name: reach_id
@@ -58,7 +36,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: format
           in: query
           required: False
@@ -80,13 +58,9 @@ paths:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /forecaststats/{reach_id}:
     get:
       description: This operation returns statistics calculated from 51 forecast ensemble members. A successful response will return a time series with date-value pairs.
@@ -97,7 +71,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: format
           in: query
           required: False
@@ -119,13 +93,9 @@ paths:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /forecastensembles/{reach_id}:
     get:
       description: This operation returns a timeseries for each of the 51 normal forecast ensemble members and the 52nd higher resolution forecast. A successful response will return a time series with date-value pairs.
@@ -136,7 +106,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: date
           in: query
           description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
@@ -168,13 +138,9 @@ paths:
         '200':
           description: The response body will contain a time series for each ensemble along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /forecastrecords/{reach_id}:
     get:
       description: |-
@@ -187,7 +153,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: start_date
           in: query
           description: A date in YYYYMMDD format when you would like to start retrieving data (if available). Defaults to Jan 1 of the current year.
@@ -205,65 +171,20 @@ paths:
         '200':
           description: The response body will contain a time series for the specified stream reach
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
-  /forecastanomalies/{reach_id}:
+            error: An unexpected error occurred.
+  /hydroviewer/{reach_id}:
     get:
-      description: Computes the deviations from the daily averages
-      summary: Calculates the differences between the daily average and the forecasted flow for each day
+      description: A shorthand for retrieving the forecast records and stats, and return periods, usually all plotted together.
+      summary: Returns forecast records, forecast stats, and return periods.
       parameters:
         - name: reach_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
-        - name: start_date
-          in: query
-          description: A date in YYYYMMDD format when you would like to start retrieving data (if available). Defaults to Jan 1 of the current year.
-          type: string
-          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
-        - name: end_date
-          in: query
-          description: A date in YYYYMMDD format when you would like to stop retrieving data (if available). Defaults to Dec 31 of the current year.
-          type: string
-          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
-      produces:
-        - text/csv
-        - application/json
-      responses:
-        '200':
-          description: The response body will contain a time series for the specified stream reach
-        '400':
-          description: Bad request. Check request and paramaters.
-          examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
-  /forecastwarnings/{return_format}:
-    get:
-      description: |-
-        This method returns a csv created to summarize the potential return period level flow events coming to the reaches in a specified region. The CSV contains a column for the reach_id, lat of the reach, lon of the reach, maximum forecasted flow in the next 15 day forecast, and a column for each of the return periods (2, 10, 20, 25, 50, 100) which will contain the date when the forecast is first expected to pass that threshold.
-      summary: Returns potential warnings for the forecast
-      parameters:
-        - name: region
-          in: path
-          description: the name of one of the regions that the streamflow forecasts are generated for. You can find this with the AvailableRegions method.
-          type: string
-          default: all
-          required: True
-        - name: forecast_date
-          in: query
-          description: If multiple forecast dates are available, provide the date in the format YYYYMMDD.HH of the forecast you would like to query. Use the AvailableDates method if you need to find out which dates are available. Defaults to the most recent available data.
-          type: string
-          format: string
+          required: true
         - name: format
           in: query
           required: False
@@ -273,41 +194,21 @@ paths:
           enum:
             - csv
             - json
+        - name: date
+          in: query
+          description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
+          type: string
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
       produces:
         - text/csv
         - application/json
       responses:
         '200':
-          description: The response body will contain a csv table with the information previous mentioned.
+          description: The response body will contain a time series along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region or both lat and lon are required as input
-  /dates:
-    get:
-      description: This operation returns the available forecast dates in JSON format.
-      summary: Available dates
-      produces:
-        - application/json
-      responses:
-        '200':
-          description: The response body will contain a list of available dates.
-        '204':
-          description: Succesful request but no regions found.
-          examples:
-            message: No dates available.
-        '400':
-          description: Bad request. Check request and paramaters.
-          examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /retrospective/{reach_id}:
     get:
       description: |-
@@ -319,7 +220,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: format
           in: query
           required: False
@@ -347,13 +248,9 @@ paths:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /dailyaverages/{reach_id}:
     get:
       description: This operation returns the average flow for each day of the year for the Historic Simulation
@@ -364,7 +261,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: format
           in: query
           required: False
@@ -381,13 +278,9 @@ paths:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /monthlyaverages/{reach_id}:
     get:
       description: This operation returns the average flow for each month of the year for the Historic Simulation
@@ -398,7 +291,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: format
           in: query
           required: False
@@ -415,13 +308,39 @@ paths:
         '200':
           description: The response body will contain a time series along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
+            error: An unexpected error occurred.
+  /annualaverages/{reach_id}:
+    get:
+      description: This operation returns the average flow for each year of the Historic Simulation
+      summary: Return historic simulation's annual averages
+      parameters:
+        - name: reach_id
+          in: path
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          type: number
+          format: integer
+          required: true
+        - name: format
+          in: query
+          required: False
+          description: The file format of the response
+          type: string
+          default: csv
+          enum:
+            - csv
+            - json
+      produces:
+        - text/csv
+        - application/json
+      responses:
+        '200':
+          description: The response body will contain a time series along with metadata about the stream reach of interest.
+        '400':
+          description: Bad request. Check request and parameters.
           examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /returnperiods/{reach_id}:
     get:
       description: |-
@@ -433,7 +352,7 @@ paths:
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
           format: integer
-          required: True
+          required: true
         - name: format
           in: query
           required: False
@@ -450,13 +369,9 @@ paths:
         '200':
           description: The response body will contain a key-value pairs for each return period along with metadata about the stream reach of interest.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
   /getReachID:
     get:
       description: Find the Reach ID nearest a point using latitude and longitude coordinates
@@ -464,13 +379,13 @@ paths:
       parameters:
         - name: lat
           in: query
-          required: True
+          required: true
           description: The latitude of a point to search
           type: number
           format: float
         - name: lon
           in: query
-          required: True
+          required: true
           description: The longitude of a point to search
           type: number
           format: float
@@ -478,12 +393,8 @@ paths:
         - application/json
       responses:
         '200':
-          description:
+          description: The response body will contain the reach ID of the nearest stream reach.
         '400':
-          description: Bad request. Check request and paramaters.
+          description: Bad request. Check request and parameters.
           examples:
-            error: An unexpected error occured.
-        '422':
-          description: Missing a required parameter.
-          examples:
-            error: region is required as input.
+            error: An unexpected error occurred.
