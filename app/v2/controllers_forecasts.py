@@ -1,14 +1,14 @@
 import datetime
 import json
 
+import geoglows
 import numpy as np
 import pandas as pd
 from flask import jsonify
 
-from .constants import NUM_DECIMALS
+from .constants import NUM_DECIMALS, PACKAGE_METADATA_TABLE_PATH
 from .data import (get_forecast_dataset,
                    get_forecast_records_dataset,
-                   get_return_periods_dataframe,
                    find_available_dates, )
 from .response_formatters import (df_to_jsonify_response,
                                   df_to_csv_flask_response,
@@ -16,6 +16,8 @@ from .response_formatters import (df_to_jsonify_response,
 
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records',
            'forecast_warnings', 'forecast_dates']
+
+geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
 
 
 def hydroviewer(reach_id: int, start_date: str, date: str, return_format: str) -> jsonify:
@@ -30,7 +32,7 @@ def hydroviewer(reach_id: int, start_date: str, date: str, return_format: str) -
         return df_to_csv_flask_response(pd.concat([records_df, stats_df], join='outer'), f'hydroviewer_data_{reach_id}')
     if return_format == 'json':
         records_df.columns = [f'{records_df.columns[0]}_rec', ]
-        rp_df = get_return_periods_dataframe(reach_id)
+        rp_df = geoglows.data.return_periods(reach_id)
 
         # add the columns from the dataframe
         json_template = new_json_template(reach_id, start_date=records_df.index[0],

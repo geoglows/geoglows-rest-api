@@ -1,10 +1,12 @@
 import logging
 import traceback
 
+import geoglows
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
 from .analytics import log_request
+from .constants import PACKAGE_METADATA_TABLE_PATH
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
@@ -18,15 +20,14 @@ from .controllers_historical import (retrospective,
                                      yearly_averages,
                                      return_periods)
 from .controllers_misc import get_reach_id
-from .data import latlon_to_reach
 
 logger = logging.getLogger("DEBUG")
 
 app = Blueprint('rest-endpoints-v2', __name__)
 
+geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
 
-@app.route(f'/api/latest/<product>/', methods=['GET'])
-@app.route(f'/api/latest/<product>/<reach_id>', methods=['GET'])
+
 @app.route(f'/api/v2/<product>/', methods=['GET'])
 @app.route(f'/api/v2/<product>/<reach_id>', methods=['GET'])
 @cross_origin()
@@ -37,11 +38,11 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         reach_id,
     )
 
-    log_request(version="v2",
-                product=product,
-                reach_id=reach_id,
-                return_format=return_format,
-                source=request.args.get('source', 'other'), )
+    # log_request(version="v2",
+    #             product=product,
+    #             reach_id=reach_id,
+    #             return_format=return_format,
+    #             source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'forecast':
@@ -71,7 +72,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
 
     # data availability
     elif product == 'getreachid':
-        return get_reach_id(request, )
+        return get_reach_id(request.args.get('lat'), request.args.get('lon'))
 
     elif product == "hydroviewer":
         return hydroviewer(reach_id, start_date, date, return_format=return_format)
@@ -123,8 +124,6 @@ def handle_request(request, product, reach_id):
         'yearavg': 'annualaverages',
         'yearlyaverages': 'annualaverages',
     }
-
-    data_units = ('cms', 'cfs',)
     return_formats = ('csv', 'json',)
 
     product = str(product).lower().replace(' ', '').replace('_', '').replace('-', '')
@@ -137,9 +136,9 @@ def handle_request(request, product, reach_id):
         # dates & warnings do not apply to a single ID
         # getreachid has a dedicated controller for returning the ID and distance errors in various formats
         reach_id = None
-    elif reach_id is None: # all other products require an ID - try to find it from the lat/lon
+    elif reach_id is None:  # all other products require an ID - try to find it from the lat/lon
         if request.args.get('lat', None) and request.args.get('lon', None):
-            reach_id, _ = latlon_to_reach(request.args.get('lat', None), request.args.get('lon', None))
+            reach_id = geoglows.streams.latlon_to_reach(float(request.args.get('lat')), float(request.args.get('lon')))
         else:
             raise ValueError('you must specify a river ID number for this dataset')
     elif reach_id is not None:  # otherwise do a simple check that the reach_id might be valid

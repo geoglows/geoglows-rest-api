@@ -2,7 +2,7 @@ name: app-env
 channels:
   - conda-forge
 dependencies:
-  - python>=3.7
+  - python>=3.12
   - boto3
   - flask
   - flask-cors
@@ -17,3 +17,5 @@ dependencies:
   - uwsgi
   - xarray
   - zarr
+  - pip:
+    - geoglows==1.0.0rc5

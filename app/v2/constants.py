@@ -1,7 +1,6 @@
+import os
+
 PATH_TO_FORECASTS = '/mnt/output/v2/forecasts'
 PATH_TO_FORECAST_RECORDS = '/mnt/output/v2/forecast-records'
 NUM_DECIMALS = 1
-
-ODP_CORE_S3_BUCKET_URI = 's3://geoglows-v2'
-ODP_RETROSPECTIVE_S3_BUCKET_URI = 's3://geoglows-v2-retrospective'
-ODP_S3_BUCKET_REGION = 'us-west-2'
+PACKAGE_METADATA_TABLE_PATH = os.getenv('PACKAGE_METADATA_TABLE_PATH', '/app/package-metadata-table.parquet')
