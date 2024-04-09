@@ -25,11 +25,6 @@ RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-t
 ENV PACKAGE_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-
-ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int
-ENV AWS_LOG_STREAM_NAME=rest_api_metrics
-ENV AWS_REGION=eu-central-1
-
 ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int
 ENV AWS_LOG_STREAM_NAME=rest_api_metrics
 ENV AWS_REGION=eu-central-1

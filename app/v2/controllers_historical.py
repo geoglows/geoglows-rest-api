@@ -27,6 +27,7 @@ def retrospective(reach_id: int, return_format: str, start_date: str = None,
     if end_date is not None:
         df = df.loc[df.index <= datetime.datetime.strptime(end_date, '%Y%m%d')]
 
+    if return_format == 'csv':
         return df_to_csv_flask_response(df, f'retrospective_{reach_id}')
     if return_format == 'json':
         return df_to_jsonify_response(df=df, reach_id=reach_id)
