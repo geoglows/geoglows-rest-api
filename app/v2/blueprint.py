@@ -44,7 +44,9 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
                 source=request.args.get('source', 'other'), )
 
     # forecast data products
-    if product == 'forecast':
+    if product == 'dates':
+        return forecast_dates(return_format=return_format)
+    elif product == 'forecast':
         return forecast(reach_id, date, return_format=return_format)
     elif product in 'forecaststats':
         return forecast_stats(reach_id, date, return_format=return_format)
@@ -52,8 +54,6 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return forecast_ensembles(reach_id, date, return_format=return_format, ensemble=ensemble)
     elif product == 'forecastrecords':
         return forecast_records(reach_id, start_date, end_date, return_format=return_format)
-    elif product == 'dates':
-        return forecast_dates(return_format=return_format)
 
     # hindcast data products
     elif product == 'retrospective':
@@ -72,7 +72,7 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return get_reach_id(request.args.get('lat'), request.args.get('lon'))
 
     elif product == "hydroviewer":
-        return hydroviewer(reach_id, start_date, date, return_format=return_format)
+        return hydroviewer(reach_id, start_date, date)
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201
@@ -128,9 +128,8 @@ def handle_request(request, product, reach_id):
             raise ValueError(f'{product} not recognized. available products: {ALL_PRODUCTS}')
         product = PRODUCT_SHORTCUTS[product]
 
-    if product in ('dates', 'forecastwarnings', 'getreachid'):
-        # dates & warnings do not apply to a single ID
-        # getreachid has a dedicated controller for returning the ID and distance errors in various formats
+    if product in ('dates', 'getreachid'):
+        # dates & getreachid do not apply to a single ID
         reach_id = None
     elif reach_id is None:  # all other products require an ID - try to find it from the lat/lon
         if request.args.get('lat', None) and request.args.get('lon', None):

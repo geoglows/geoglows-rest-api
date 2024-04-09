@@ -19,35 +19,28 @@ __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'f
 geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
 
 
-def hydroviewer(reach_id: int, start_date: str, date: str, return_format: str) -> jsonify:
-    # todo send forecast stats, records, and return periods
+def hydroviewer(reach_id: int, start_date: str, date: str) -> jsonify:
     if date == 'latest':
         date = find_available_dates()[-1]
-    stats_df = forecast_stats(reach_id, date, "df")
-    stats_df = stats_df.replace(np.nan, '')
-    records_df = forecast_records(reach_id, start_date, date, "df")
+    forecast_df = forecast(reach_id, date, "df")
+    records_df = forecast_records(reach_id, start_date=start_date, end_date=date[:8], return_format="df")
+    return_periods = geoglows.data.return_periods(reach_id)
 
-    if return_format == 'csv':
-        return df_to_csv_flask_response(pd.concat([records_df, stats_df], join='outer'), f'hydroviewer_data_{reach_id}')
-    if return_format == 'json':
-        records_df.columns = [f'{records_df.columns[0]}_rec', ]
-        rp_df = geoglows.data.return_periods(reach_id)
-
-        # add the columns from the dataframe
-        json_template = new_json_template(reach_id, start_date=records_df.index[0],
-                                          end_date=stats_df.index[-1])
-        json_template['datetime_stats'] = stats_df.index.tolist()
-        json_template['datetime_rec'] = records_df.index.tolist()
-        json_template.update(stats_df.to_dict(orient='list'))
-        json_template.update(records_df.to_dict(orient='list'))
-        json_template.update(json.loads(rp_df.to_json(orient='records'))[0])
-        json_template['metadata']['series'] = (
-                ['datetime_stats', 'datetime_rec', ] +
-                stats_df.columns.tolist() +
-                records_df.columns.tolist() +
-                list(rp_df.keys())
-        )
-        return jsonify(json_template), 200
+    # add the columns from the dataframe
+    json_template = new_json_template(
+        reach_id,
+        start_date=records_df.index[0],
+        end_date=forecast_df.index[-1]
+    )
+    json_template['metadata']['series'] = [
+        'datetime_records',
+        'datetime_forecast',
+        'return_periods',
+    ] + forecast_df.columns.tolist() + records_df.columns.tolist()
+    json_template.update(forecast_df.to_dict(orient='list'))
+    json_template.update(records_df.to_dict(orient='list'))
+    json_template['return_periods'] = return_periods.to_dict(orient='records')[0]
+    return jsonify(json_template), 200
 
 
 def forecast(reach_id: int, date: str, return_format: str) -> pd.DataFrame:
@@ -157,21 +150,32 @@ def forecast_ensembles(reach_id: int, date: str, return_format: str, ensemble: s
 
 
 def forecast_records(reach_id: int, start_date: str, end_date: str, return_format: str) -> pd.DataFrame:
-    if not start_date:
+    if start_date is None:
         start_date = datetime.datetime.now() - datetime.timedelta(days=14)
         start_date = start_date.strftime('%Y%m%d')
-    if not end_date:
-        end_date = f'{datetime.datetime.now().year}1231'
-    start_year = int(start_date[:4])
+    if end_date is None:
+        end_date = f'{datetime.datetime.now().year + 1}0101'
+    year = start_date[:4]
 
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    try:
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
+    except ValueError:
+        ValueError(f'Unrecognized date format for the start_date or end_date. Use YYYYMMDD format.')
+
     vpu = geoglows.streams.reach_to_vpu(reach_id)
-
-    ds = get_forecast_records_dataset(vpu=vpu, year=start_year)
+    ds = get_forecast_records_dataset(vpu=vpu, year=year)
 
     # create a dataframe and filter by date
-    df = ds.sel(rivid=reach_id).Qout.to_dataframe().loc[start_date:end_date]
+    df = (
+        ds
+        .sel(rivid=reach_id)
+        .Qout
+        .to_dataframe()
+        .loc[start_date:end_date]
+        .dropna()
+        .pivot(columns='rivid', values='Qout')
+    )
     df.columns = ['average_flow', ]
     df['average_flow'] = df['average_flow'].astype(float).round(NUM_DECIMALS)
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
