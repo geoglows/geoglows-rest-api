@@ -39,25 +39,20 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
         raise ValueError(f'Unable to get data for reach_id {reach_id} in the forecast dataset')
 
 
-def get_forecast_records_dataset(reach_id: int, vpu: str, start_date: str):
+def get_forecast_records_dataset(vpu: str, year: str):
     """
     Opens the forecast records dataset for a given date, selects the reach_id and Qout variable
     """
-    forecast_records_file = os.path.join(PATH_TO_FORECAST_RECORDS, f'forecastrecords_{vpu}_{start_date}.nc')
+    forecast_records_file = os.path.join(PATH_TO_FORECAST_RECORDS, f'forecastrecords_{vpu}_{year}.nc')
 
     if not os.path.exists(forecast_records_file):
-        raise ValueError(f'Data not found for date {start_date}. Use YYYYMMDD format and the AvailableDates endpoint.')
-
+        raise ValueError(f'Data not found for specified. Use YYYYMMDD format and the Dates endpoint to find valid dates.')
     try:
         forecast_records_dataset = xr.open_dataset(forecast_records_file)
     except Exception as e:
         print(e)
         raise ValueError('Error while reading data from the zarr files')
-    try:
-        return forecast_records_dataset.sel(rivid=reach_id).Qout
-    except Exception as e:
-        print(e)
-        raise ValueError(f'Unable to get data for reach_id {reach_id} in the forecast records dataset')
+    return forecast_records_dataset
 
 
 def find_available_dates() -> list:

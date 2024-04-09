@@ -11,7 +11,6 @@ from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
                                     forecast_records,
-                                    forecast_warnings,
                                     forecast_dates,
                                     hydroviewer, )
 from .controllers_historical import (retrospective,
@@ -53,8 +52,6 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         return forecast_ensembles(reach_id, date, return_format=return_format, ensemble=ensemble)
     elif product == 'forecastrecords':
         return forecast_records(reach_id, start_date, end_date, return_format=return_format)
-    elif product == 'forecastwarnings':
-        return forecast_warnings(date, return_format=return_format)
     elif product == 'dates':
         return forecast_dates(return_format=return_format)
 
@@ -90,7 +87,6 @@ def handle_request(request, product, reach_id):
         'forecaststats',
         'forecastensembles',
         'forecastrecords',
-        'forecastwarnings',
 
         'retrospective',
         'monthlyaverages',

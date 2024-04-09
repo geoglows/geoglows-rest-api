@@ -14,8 +14,7 @@ from .response_formatters import (df_to_jsonify_response,
                                   df_to_csv_flask_response,
                                   new_json_template, )
 
-__all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records',
-           'forecast_warnings', 'forecast_dates']
+__all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_dates']
 
 geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
 
@@ -159,19 +158,23 @@ def forecast_ensembles(reach_id: int, date: str, return_format: str, ensemble: s
 
 def forecast_records(reach_id: int, start_date: str, end_date: str, return_format: str) -> pd.DataFrame:
     if not start_date:
-        start_date = f'{datetime.datetime.now().year}0101'
+        start_date = datetime.datetime.now() - datetime.timedelta(days=14)
+        start_date = start_date.strftime('%Y%m%d')
+    if not end_date:
+        end_date = f'{datetime.datetime.now().year}1231'
     start_year = int(start_date[:4])
 
-    ds = get_forecast_records_dataset(reach_id, start_year)
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+    vpu = geoglows.streams.reach_to_vpu(reach_id)
+
+    ds = get_forecast_records_dataset(vpu=vpu, year=start_year)
 
     # create a dataframe and filter by date
-    df = times.to_frame().join(pd.Series(record_flows, name=f'flow_avg').round(NUM_DECIMALS))
-    df = df[df['datetime'].between(start_date, end_date)]
-    df = df.set_index('datetime')
-    df.index = df.index.strftime('%Y-%m-%dT%H:%M:%SZ')
-    df.index.name = 'datetime'
-    df.dropna(inplace=True)
-    df = df.astype(np.float64).round(NUM_DECIMALS)
+    df = ds.sel(rivid=reach_id).Qout.to_dataframe().loc[start_date:end_date]
+    df.columns = ['average_flow', ]
+    df['average_flow'] = df['average_flow'].astype(float).round(NUM_DECIMALS)
+    df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
 
     # create the http response
     if return_format == 'csv':
@@ -180,16 +183,6 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, return_forma
         return df_to_jsonify_response(df=df, reach_id=reach_id)
     if return_format == "df":
         return df
-
-
-def forecast_warnings(date: str, return_format: str):
-    # todo
-    warnings_df = get_forecast_warnings_dataframe(date)
-    if return_format == 'csv':
-        return df_to_csv_flask_response(warnings_df, f'forecast_warnings_{date}')
-    if return_format == 'json':
-        return jsonify(warnings_df.to_dict(orient='index'))
-    return warnings_df
 
 
 def forecast_dates(return_format: str):
