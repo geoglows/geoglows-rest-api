@@ -44,7 +44,6 @@ def get_forecast_records_dataset(vpu: str, year: str):
     Opens the forecast records dataset for a given date, selects the reach_id and Qout variable
     """
     forecast_records_file = os.path.join(PATH_TO_FORECAST_RECORDS, f'forecastrecord_{vpu}_{year}.nc')
-    forecast_records_file = '/Users/rchales/Downloads/forecastrecord_413_2024.nc'
 
     if not os.path.exists(forecast_records_file):
         raise ValueError(f'Data not found for specified. Use YYYYMMDD format and the Dates endpoint to find valid dates.')
