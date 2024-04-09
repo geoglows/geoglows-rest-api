@@ -11,8 +11,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8090:80
-    volumes:
+#    volumes:
 #      - MOUNT THE FLASK APP CODE
-      - ./app:/app
+#      - ./app:/app
 #      - MOUNT THE DATA
-      - ./sample_data:/mnt/output
+#      - ./sample_data:/mnt/output

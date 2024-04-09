@@ -2,18 +2,20 @@ name: app-env
 channels:
   - conda-forge
 dependencies:
-  - python>=3.7
+  - python>=3.12
   - boto3
   - flask
   - flask-cors
   - hydrostats
+  - geoglows>=1.0.2
   - natsort
   - netCDF4
   - pandas
   - requests
   - shapely
-  - s3fs
-  - xarray
+  - s3fs>=2024
+  - dask>=2024
+  - xarray>=2024
   - uwsgi
-  - xarray
+  - wget
   - zarr

@@ -33,6 +33,10 @@ def log_request(version: str, product: str, reach_id: int, return_format: str, s
         'source': source,
     }
 
+    if not ACCESS_KEY_ID or not SECRET_ACCESS_KEY:
+        logger.error('AWS credentials not available')
+        return
+
     # Send the log message to CloudWatch
     response = client.put_log_events(
         logGroupName=LOG_GROUP_NAME,
