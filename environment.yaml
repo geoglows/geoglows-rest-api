@@ -13,9 +13,9 @@ dependencies:
   - pandas
   - requests
   - shapely
-  - s3fs
-  - xarray
+  - s3fs>=2024
+  - dask>=2024
+  - xarray>=2024
   - uwsgi
   - wget
-  - xarray
   - zarr
