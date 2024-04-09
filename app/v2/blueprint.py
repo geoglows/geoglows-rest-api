@@ -37,11 +37,11 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         reach_id,
     )
 
-    log_request(version="v2",
-                product=product,
-                reach_id=reach_id,
-                return_format=return_format,
-                source=request.args.get('source', 'other'), )
+    # log_request(version="v2",
+    #             product=product,
+    #             reach_id=reach_id,
+    #             return_format=return_format,
+    #             source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'dates':

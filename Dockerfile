@@ -22,7 +22,7 @@ RUN micromamba create -n app-env --yes --file "environment.yaml" && micromamba c
 
 # download a copy of the package metadata table
 RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-table.parquet -O /app/package-metadata-table.parquet
-ENV PACKAGE_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
+ENV PYGEOGLOWS_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int
