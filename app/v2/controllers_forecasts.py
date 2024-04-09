@@ -1,12 +1,11 @@
 import datetime
-import json
 
 import geoglows
 import numpy as np
 import pandas as pd
 from flask import jsonify
 
-from .constants import NUM_DECIMALS, PACKAGE_METADATA_TABLE_PATH
+from .constants import NUM_DECIMALS
 from .data import (get_forecast_dataset,
                    get_forecast_records_dataset,
                    find_available_dates, )
@@ -15,8 +14,6 @@ from .response_formatters import (df_to_jsonify_response,
                                   new_json_template, )
 
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_dates']
-
-geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
 
 
 def hydroviewer(reach_id: int, start_date: str, date: str) -> jsonify:

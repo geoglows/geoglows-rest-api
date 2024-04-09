@@ -6,7 +6,6 @@ from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
 
 from .analytics import log_request
-from .constants import PACKAGE_METADATA_TABLE_PATH
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
                                     forecast_ensembles,
@@ -24,8 +23,6 @@ logger = logging.getLogger("DEBUG")
 
 app = Blueprint('rest-endpoints-v2', __name__)
 
-geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
-
 
 @app.route(f'/api/v2/<product>/', methods=['GET'])
 @app.route(f'/api/v2/<product>/<reach_id>', methods=['GET'])
@@ -37,11 +34,11 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
         reach_id,
     )
 
-    # log_request(version="v2",
-    #             product=product,
-    #             reach_id=reach_id,
-    #             return_format=return_format,
-    #             source=request.args.get('source', 'other'), )
+    log_request(version="v2",
+                product=product,
+                reach_id=reach_id,
+                return_format=return_format,
+                source=request.args.get('source', 'other'), )
 
     # forecast data products
     if product == 'dates':

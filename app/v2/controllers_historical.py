@@ -5,12 +5,9 @@ import geoglows
 import pandas as pd
 from flask import jsonify
 
-from .constants import PACKAGE_METADATA_TABLE_PATH
 from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
 
 __all__ = ['retrospective', 'daily_averages', 'monthly_averages', 'yearly_averages', 'return_periods', ]
-
-geoglows.METADATA_TABLE_PATH = PACKAGE_METADATA_TABLE_PATH
 
 
 def retrospective(reach_id: int, return_format: str, start_date: str = None,
