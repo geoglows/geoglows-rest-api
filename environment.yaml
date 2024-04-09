@@ -7,6 +7,7 @@ dependencies:
   - flask
   - flask-cors
   - hydrostats
+  - geoglows>=1.0.0
   - natsort
   - netCDF4
   - pandas
@@ -15,7 +16,6 @@ dependencies:
   - s3fs
   - xarray
   - uwsgi
+  - wget
   - xarray
   - zarr
-  - pip:
-    - geoglows==1.0.0rc6
