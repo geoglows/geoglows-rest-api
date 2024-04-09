@@ -7,7 +7,7 @@ dependencies:
   - flask
   - flask-cors
   - hydrostats
-  - geoglows>=1.0.0
+  - geoglows>=1.0.2
   - natsort
   - netCDF4
   - pandas
