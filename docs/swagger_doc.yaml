@@ -7,7 +7,6 @@ host: geoglows.ecmwf.int
 basePath: /api/v2
 schemes:
   - https
-  - http
 paths:
   /dates:
     get:
@@ -19,7 +18,7 @@ paths:
         '200':
           description: The response body will contain a list of available dates.
         '204':
-          description: Succesful request but no regions found.
+          description: Successful request but no regions found.
           examples:
             message: No dates available.
         '400':
@@ -145,7 +144,7 @@ paths:
     get:
       description: |-
         This retrieves the rolling record of the mean of the forecasted streamflow during the first 24 hours of each day's forecast. That is, each day day after the
-        streamflow forecasts are computed, the average of first 8 of the 3-hour timesteps are recorded to a csv. This retrives that rolling record
+        streamflow forecasts are computed, the average of first 8 of the 3-hour timesteps are recorded to a csv. This retrieves that rolling record
       summary: Return rolling record of average flows
       parameters:
         - name: reach_id
@@ -344,7 +343,7 @@ paths:
   /returnperiods/{reach_id}:
     get:
       description: |-
-        This operation returns the 2, 5, 10, 25, 50, and 100 year return period based on the 80-years simulated streamflow data and using the Gumbel Method. A successful response will return key-value pairs for earch return period along with metadata.
+        This operation returns the 2, 5, 10, 25, 50, and 100 year return period based on the 80-years simulated streamflow data and using the Gumbel Method. A successful response will return key-value pairs for each return period along with metadata.
       summary: Return historic simulation
       parameters:
         - name: reach_id
