@@ -12,9 +12,9 @@ __all__ = [
 ]
 
 
-def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
+def get_forecast_dataset(river_id: int, date: str) -> xr.Dataset:
     """
-    Opens the forecast dataset for a given date, selects the reach_id and Qout variable
+    Opens the forecast dataset for a given date, selects the river_id and Qout variable
     """
     if date == "latest":
         date = find_available_dates()[0]
@@ -33,15 +33,15 @@ def get_forecast_dataset(reach_id: int, date: str) -> xr.Dataset:
         print(e)
         raise ValueError('Error while reading data from the zarr files')
     try:
-        return forecast_dataset.sel(rivid=reach_id).Qout
+        return forecast_dataset.sel(rivid=river_id).Qout
     except Exception as e:
         print(e)
-        raise ValueError(f'Unable to get data for reach_id {reach_id} in the forecast dataset')
+        raise ValueError(f'Unable to get data for river_id {river_id} in the forecast dataset')
 
 
 def get_forecast_records_dataset(vpu: str, year: str):
     """
-    Opens the forecast records dataset for a given date, selects the reach_id and Qout variable
+    Opens the forecast records dataset for a given date, selects the river_id and Qout variable
     """
     forecast_records_file = os.path.join(PATH_TO_FORECAST_RECORDS, f'forecastrecord_{vpu}_{year}.nc')
 

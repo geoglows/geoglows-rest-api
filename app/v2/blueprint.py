@@ -17,7 +17,7 @@ from .controllers_historical import (retrospective,
                                      monthly_averages,
                                      yearly_averages,
                                      return_periods)
-from .controllers_misc import get_reach_id
+from .controllers_misc import get_river_id
 
 logger = logging.getLogger("DEBUG")
 
@@ -25,18 +25,18 @@ app = Blueprint('rest-endpoints-v2', __name__)
 
 
 @app.route(f'/api/v2/<product>/', methods=['GET'])
-@app.route(f'/api/v2/<product>/<reach_id>', methods=['GET'])
+@app.route(f'/api/v2/<product>/<river_id>', methods=['GET'])
 @cross_origin()
-def rest_endpoints_v2(product: str, reach_id: int = None):
-    product, reach_id, return_format, date, ensemble, start_date, end_date = handle_request(
+def rest_endpoints_v2(product: str, river_id: int = None):
+    product, river_id, return_format, date, ensemble, start_date, end_date = handle_request(
         request,
         product,
-        reach_id,
+        river_id,
     )
 
     log_request(version="v2",
                 product=product,
-                reach_id=reach_id,
+                river_id=river_id,
                 return_format=return_format,
                 source=request.args.get('source', 'other'), )
 
@@ -44,40 +44,40 @@ def rest_endpoints_v2(product: str, reach_id: int = None):
     if product == 'dates':
         return forecast_dates(return_format=return_format)
     elif product == 'forecast':
-        return forecast(reach_id, date, return_format=return_format)
+        return forecast(river_id, date, return_format=return_format)
     elif product in 'forecaststats':
-        return forecast_stats(reach_id, date, return_format=return_format)
+        return forecast_stats(river_id, date, return_format=return_format)
     elif product == 'forecastensembles':
-        return forecast_ensembles(reach_id, date, return_format=return_format, ensemble=ensemble)
+        return forecast_ensembles(river_id, date, return_format=return_format, ensemble=ensemble)
     elif product == 'forecastrecords':
-        return forecast_records(reach_id, start_date, end_date, return_format=return_format)
+        return forecast_records(river_id, start_date, end_date, return_format=return_format)
 
     # hindcast data products
     elif product == 'retrospective':
-        return retrospective(reach_id, return_format=return_format, start_date=start_date, end_date=end_date)
+        return retrospective(river_id, return_format=return_format, start_date=start_date, end_date=end_date)
     elif product == 'returnperiods':
-        return return_periods(reach_id, return_format=return_format)
+        return return_periods(river_id, return_format=return_format)
     elif product == 'dailyaverages':
-        return daily_averages(reach_id, return_format=return_format)
+        return daily_averages(river_id, return_format=return_format)
     elif product == 'monthlyaverages':
-        return monthly_averages(reach_id, return_format=return_format)
+        return monthly_averages(river_id, return_format=return_format)
     elif product == 'annualaverages':
-        return yearly_averages(reach_id, return_format=return_format)
+        return yearly_averages(river_id, return_format=return_format)
 
     # data availability
-    elif product == 'getreachid':
-        return get_reach_id(request.args.get('lat'), request.args.get('lon'))
+    elif product == 'getriverid':
+        return get_river_id(request.args.get('lat'), request.args.get('lon'))
 
     elif product == "hydroviewer":
-        return hydroviewer(reach_id, start_date, date)
+        return hydroviewer(river_id, start_date, date)
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201
 
 
-def handle_request(request, product, reach_id):
+def handle_request(request, product, river_id):
     ALL_PRODUCTS = {
-        'getreachid',
+        'getriverid',
 
         'dates',
         'forecast',
@@ -125,21 +125,26 @@ def handle_request(request, product, reach_id):
             raise ValueError(f'{product} not recognized. available products: {ALL_PRODUCTS}')
         product = PRODUCT_SHORTCUTS[product]
 
-    if product in ('dates', 'getreachid'):
-        # dates & getreachid do not apply to a single ID
-        reach_id = None
-    elif reach_id is None:  # all other products require an ID - try to find it from the lat/lon
+    if product in ('dates', 'getriverid'):
+        # dates & getriverid do not apply to a single ID
+        river_id = None
+    elif river_id is None:  # all other products require an ID - try to find it from the lat/lon
         if request.args.get('lat', None) and request.args.get('lon', None):
-            reach_id = geoglows.streams.latlon_to_reach(float(request.args.get('lat')), float(request.args.get('lon')))
+            try:
+                river_id = geoglows.streams.latlon_to_river(
+                    float(request.args.get('lat')), float(request.args.get('lon'))
+                )
+            except Exception:
+                raise ValueError('invalid lat/lon provided')
         else:
             raise ValueError('you must specify a river ID number for this dataset')
-    elif reach_id is not None:  # otherwise do a simple check that the reach_id might be valid
+    elif river_id is not None:  # otherwise do a simple check that the river_id might be valid
         try:
-            reach_id = str(reach_id).replace(' ', '').replace('_', '').replace('-', '')
-            reach_id = int(reach_id)
-            assert reach_id > 110_000_000
+            river_id = str(river_id).replace(' ', '').replace('_', '').replace('-', '')
+            river_id = int(river_id)
+            assert river_id > 110_000_000
         except Exception:
-            raise ValueError("reach_id must be a 9 digit integer of a valid river ID")
+            raise ValueError("river_id must be a 9 digit integer of a valid river ID")
 
     return_format = request.args.get('format', 'csv')
     if return_format not in return_formats:
@@ -153,7 +158,7 @@ def handle_request(request, product, reach_id):
 
     return (
         product,
-        reach_id,
+        river_id,
         return_format,
         date,
         ensemble,
