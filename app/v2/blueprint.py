@@ -28,7 +28,7 @@ app = Blueprint('rest-endpoints-v2', __name__)
 @app.route(f'/api/v2/<product>/<river_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, river_id: int = None):
-    product, river_id, return_format, date, ensemble, start_date, end_date = handle_request(
+    product, river_id, return_format, date, start_date, end_date = handle_request(
         request,
         product,
         river_id,
@@ -48,11 +48,11 @@ def rest_endpoints_v2(product: str, river_id: int = None):
     elif product in 'forecaststats':
         return forecast_stats(river_id, date, return_format=return_format)
     elif product == 'forecastensembles':
-        return forecast_ensembles(river_id, date, return_format=return_format, ensemble=ensemble)
+        return forecast_ensembles(river_id, date, return_format=return_format)
     elif product == 'forecastrecords':
         return forecast_records(river_id, start_date, end_date, return_format=return_format)
 
-    # hindcast data products
+    # retrospective data products
     elif product == 'retrospective':
         return retrospective(river_id, return_format=return_format, start_date=start_date, end_date=end_date)
     elif product == 'returnperiods':
@@ -73,6 +73,27 @@ def rest_endpoints_v2(product: str, river_id: int = None):
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201
+
+
+@app.route(f'/api/v2/log', methods=['POST', ])
+def python_package_log_endpoint():
+    try:
+        data = request.get_json()
+        river_id = data.get('river_id', None)
+        product = data.get('product', None)
+        return_format = data.get('format', 'dataframe')
+    except Exception:
+        return jsonify({'success': False, 'message': 'invalid parameters'}), 400
+    if river_id is None or product is None or return_format is None:
+        return jsonify({'success': False, 'message': 'invalid parameters'}), 400
+    log_request(
+        version="v2",
+        product=product,
+        river_id=river_id,
+        return_format=return_format,
+        source='aws-odp',
+    )
+    return jsonify({'success': True, 'message': 'request logged'}), 200
 
 
 def handle_request(request, product, river_id):
@@ -154,14 +175,11 @@ def handle_request(request, product, river_id):
     start_date = request.args.get('start_date', None)
     end_date = request.args.get('end_date', None)
 
-    ensemble = request.args.get('ensemble', 'all')
-
     return (
         product,
         river_id,
         return_format,
         date,
-        ensemble,
         start_date,
         end_date
     )

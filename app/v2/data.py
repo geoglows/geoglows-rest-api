@@ -46,7 +46,8 @@ def get_forecast_records_dataset(vpu: str, year: str):
     forecast_records_file = os.path.join(PATH_TO_FORECAST_RECORDS, f'forecastrecord_{vpu}_{year}.nc')
 
     if not os.path.exists(forecast_records_file):
-        raise ValueError(f'Data not found for specified. Use YYYYMMDD format and the Dates endpoint to find valid dates.')
+        raise ValueError(
+            f'Data not found for specified. Use YYYYMMDD format and the Dates endpoint to find valid dates.')
     try:
         forecast_records_dataset = xr.open_dataset(forecast_records_file)
     except Exception as e:

@@ -99,7 +99,7 @@ def forecast_stats(river_id: int, date: str, return_format: str) -> pd.DataFrame
         return df
 
 
-def forecast_ensembles(river_id: int, date: str, return_format: str, ensemble: str):
+def forecast_ensembles(river_id: int, date: str, return_format: str):
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame
@@ -114,25 +114,6 @@ def forecast_ensembles(river_id: int, date: str, return_format: str, ensemble: s
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
     df.index.name = 'datetime'
     df = df.astype(np.float64).round(NUM_DECIMALS)
-
-    # filtering which ensembles you want to get out of the dataframe of them all
-    if ensemble != 'all':
-        requested_ensembles = []
-        for ens in ensemble.split(','):
-            # if there was a range requested with a '-', generate a list of numbers between the 2
-            if '-' in ens:
-                start, end = ens.split('-')
-                for i in range(int(start), int(end) + 1):
-                    requested_ensembles.append(f'ensemble_{int(i):02}')
-            else:
-                requested_ensembles.append(f'ensemble_{int(ens):02}')
-        # make a list of columns to remove from the dataframe deleting the requested ens from all ens columns
-        for ens in requested_ensembles:
-            if ens in ensemble_column_names:
-                ensemble_column_names.remove(ens)
-        # delete the dataframe columns we aren't interested
-        for ens in ensemble_column_names:
-            del df[ens]
 
     if return_format == 'csv':
         return df_to_csv_flask_response(df, f'forecast_ensembles_{river_id}')
