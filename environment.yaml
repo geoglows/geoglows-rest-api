@@ -1,13 +1,14 @@
 name: app-env
 channels:
   - conda-forge
+  - cf-staging
 dependencies:
   - python>=3.12
   - boto3
   - flask
   - flask-cors
   - hydrostats
-  - geoglows>=1.0.2
+  - geoglows>=1.1.0
   - natsort
   - netCDF4
   - pandas

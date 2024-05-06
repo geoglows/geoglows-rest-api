@@ -16,19 +16,15 @@ from .response_formatters import (df_to_jsonify_response,
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_dates']
 
 
-def hydroviewer(reach_id: int, start_date: str, date: str) -> jsonify:
+def hydroviewer(river_id: int, start_date: str, date: str) -> jsonify:
     if date == 'latest':
         date = find_available_dates()[-1]
-    forecast_df = forecast(reach_id, date, "df")
-    records_df = forecast_records(reach_id, start_date=start_date, end_date=date[:8], return_format="df")
-    return_periods = geoglows.data.return_periods(reach_id)
+    forecast_df = forecast(river_id, date, "df")
+    records_df = forecast_records(river_id, start_date=start_date, end_date=date[:8], return_format="df")
+    return_periods = geoglows.data.return_periods(river_id)
 
     # add the columns from the dataframe
-    json_template = new_json_template(
-        reach_id,
-        start_date=records_df.index[0],
-        end_date=forecast_df.index[-1]
-    )
+    json_template = new_json_template(river_id, start_date=records_df.index[0], end_date=forecast_df.index[-1])
     json_template['metadata']['series'] = [
         'datetime_records',
         'datetime_forecast',
@@ -40,8 +36,8 @@ def hydroviewer(reach_id: int, start_date: str, date: str) -> jsonify:
     return jsonify(json_template), 200
 
 
-def forecast(reach_id: int, date: str, return_format: str) -> pd.DataFrame:
-    forecast_xarray_dataset = get_forecast_dataset(reach_id, date)
+def forecast(river_id: int, date: str, return_format: str) -> pd.DataFrame:
+    forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # get an array of all the ensembles, delete the high res before doing averages
     merged_array = forecast_xarray_dataset.data
@@ -65,14 +61,14 @@ def forecast(reach_id: int, date: str, return_format: str) -> pd.DataFrame:
     df.index.name = 'datetime'
 
     if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'forecast_{reach_id}')
+        return df_to_csv_flask_response(df, f'forecast_{river_id}')
     if return_format == 'json':
-        return df_to_jsonify_response(df=df, reach_id=reach_id)
+        return df_to_jsonify_response(df=df, river_id=river_id)
     return df
 
 
-def forecast_stats(reach_id: int, date: str, return_format: str) -> pd.DataFrame:
-    forecast_xarray_dataset = get_forecast_dataset(reach_id, date)
+def forecast_stats(river_id: int, date: str, return_format: str) -> pd.DataFrame:
+    forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # get an array of all the ensembles, delete the high res before doing averages
     merged_array = forecast_xarray_dataset.data
@@ -96,15 +92,15 @@ def forecast_stats(reach_id: int, date: str, return_format: str) -> pd.DataFrame
     df = df.astype(np.float64).round(NUM_DECIMALS)
 
     if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'forecast_stats_{reach_id}')
+        return df_to_csv_flask_response(df, f'forecast_stats_{river_id}')
     if return_format == 'json':
-        return df_to_jsonify_response(df=df, reach_id=reach_id)
+        return df_to_jsonify_response(df=df, river_id=river_id)
     if return_format == "df":
         return df
 
 
-def forecast_ensembles(reach_id: int, date: str, return_format: str, ensemble: str):
-    forecast_xarray_dataset = get_forecast_dataset(reach_id, date)
+def forecast_ensembles(river_id: int, date: str, return_format: str, ensemble: str):
+    forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame
     ensemble_column_names = []
@@ -139,14 +135,14 @@ def forecast_ensembles(reach_id: int, date: str, return_format: str, ensemble: s
             del df[ens]
 
     if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'forecast_ensembles_{reach_id}')
+        return df_to_csv_flask_response(df, f'forecast_ensembles_{river_id}')
     if return_format == 'json':
-        return df_to_jsonify_response(df=df, reach_id=reach_id)
+        return df_to_jsonify_response(df=df, river_id=river_id)
     if return_format == "df":
         return df
 
 
-def forecast_records(reach_id: int, start_date: str, end_date: str, return_format: str) -> pd.DataFrame:
+def forecast_records(river_id: int, start_date: str, end_date: str, return_format: str) -> pd.DataFrame:
     if start_date is None:
         start_date = datetime.datetime.now() - datetime.timedelta(days=14)
         start_date = start_date.strftime('%Y%m%d')
@@ -160,13 +156,13 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, return_forma
     except ValueError:
         ValueError(f'Unrecognized date format for the start_date or end_date. Use YYYYMMDD format.')
 
-    vpu = geoglows.streams.reach_to_vpu(reach_id)
+    vpu = geoglows.streams.river_to_vpu(river_id)
     ds = get_forecast_records_dataset(vpu=vpu, year=year)
 
     # create a dataframe and filter by date
     df = (
         ds
-        .sel(rivid=reach_id)
+        .sel(rivid=river_id)
         .Qout
         .to_dataframe()
         .loc[start_date:end_date]
@@ -176,12 +172,13 @@ def forecast_records(reach_id: int, start_date: str, end_date: str, return_forma
     df.columns = ['average_flow', ]
     df['average_flow'] = df['average_flow'].astype(float).round(NUM_DECIMALS)
     df.index = df.index.strftime('%Y-%m-%dT%X+00:00')
+    df.index.name = 'datetime'
 
     # create the http response
     if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'forecast_records_{reach_id}')
+        return df_to_csv_flask_response(df, f'forecast_records_{river_id}')
     if return_format == 'json':
-        return df_to_jsonify_response(df=df, reach_id=reach_id)
+        return df_to_jsonify_response(df=df, river_id=river_id)
     if return_format == "df":
         return df
 

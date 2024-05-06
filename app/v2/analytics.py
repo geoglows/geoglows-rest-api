@@ -24,11 +24,11 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def log_request(version: str, product: str, reach_id: int, return_format: str, source: str):
+def log_request(version: str, product: str, river_id: int, return_format: str, source: str):
     log_message = {
         'version': version,
         'product': product.lower().replace(" ", ""),
-        'reach_id': reach_id,
+        'reach_id': river_id,
         'return_format': return_format,
         'source': source,
     }
