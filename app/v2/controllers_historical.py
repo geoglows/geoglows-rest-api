@@ -15,7 +15,7 @@ def retrospective(river_id: int, return_format: str, start_date: str = None,
     """ 
     Controller for retrieving simulated historic data
     """
-    df = geoglows.data.retrospective(river_id)
+    df = geoglows.data.retrospective(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -32,7 +32,7 @@ def retrospective(river_id: int, return_format: str, start_date: str = None,
 
 
 def daily_averages(river_id: int, return_format: str):
-    df = geoglows.data.daily_averages(river_id)
+    df = geoglows.data.daily_averages(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
 
     if return_format == 'csv':
@@ -43,7 +43,7 @@ def daily_averages(river_id: int, return_format: str):
 
 
 def monthly_averages(river_id: int, return_format: str):
-    df = geoglows.data.monthly_averages(river_id)
+    df = geoglows.data.monthly_averages(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -55,7 +55,7 @@ def monthly_averages(river_id: int, return_format: str):
 
 
 def yearly_averages(river_id, return_format):
-    df = geoglows.data.annual_averages(river_id)
+    df = geoglows.data.annual_averages(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -67,7 +67,7 @@ def yearly_averages(river_id, return_format):
 
 
 def return_periods(river_id: int, return_format: str):
-    df = geoglows.data.return_periods(river_id)
+    df = geoglows.data.return_periods(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
