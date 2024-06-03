@@ -5,14 +5,29 @@ import geoglows
 import pandas as pd
 from flask import jsonify
 
-from .response_formatters import df_to_csv_flask_response, df_to_jsonify_response
+import xarray as xr
 
-__all__ = ['retrospective', 'daily_averages', 'monthly_averages', 'yearly_averages', 'return_periods', ]
+from .response_formatters import (
+    df_to_csv_flask_response,
+    df_to_jsonify_response,
+)
+
+__all__ = [
+    "retrospective",
+    "daily_averages",
+    "monthly_averages",
+    "yearly_averages",
+    "return_periods",
+]
 
 
-def retrospective(river_id: int, return_format: str, start_date: str = None,
-                  end_date: str = None) -> pd.DataFrame:
-    """ 
+def retrospective(
+    river_id: int,
+    return_format: str,
+    start_date: str = None,
+    end_date: str = None,
+) -> pd.DataFrame:
+    """
     Controller for retrieving simulated historic data
     """
     df = geoglows.data.retrospective(river_id, skip_log=True)
@@ -20,13 +35,15 @@ def retrospective(river_id: int, return_format: str, start_date: str = None,
     df = df.astype(float).round(2)
 
     if start_date is not None:
-        df = df.loc[df.index >= datetime.datetime.strptime(start_date, '%Y%m%d')]
+        df = df.loc[
+            df.index >= datetime.datetime.strptime(start_date, "%Y%m%d")
+        ]
     if end_date is not None:
-        df = df.loc[df.index <= datetime.datetime.strptime(end_date, '%Y%m%d')]
+        df = df.loc[df.index <= datetime.datetime.strptime(end_date, "%Y%m%d")]
 
-    if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'retrospective_{river_id}')
-    if return_format == 'json':
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"retrospective_{river_id}")
+    if return_format == "json":
         return df_to_jsonify_response(df=df, river_id=river_id)
     return df
 
@@ -35,9 +52,9 @@ def daily_averages(river_id: int, return_format: str):
     df = geoglows.data.daily_averages(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
 
-    if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'daily_averages_{river_id}')
-    if return_format == 'json':
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"daily_averages_{river_id}")
+    if return_format == "json":
         return df_to_jsonify_response(df=df, river_id=river_id)
     return df
 
@@ -47,9 +64,9 @@ def monthly_averages(river_id: int, return_format: str):
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
-    if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'monthly_averages_{river_id}')
-    if return_format == 'json':
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"monthly_averages_{river_id}")
+    if return_format == "json":
         return df_to_jsonify_response(df=df, river_id=river_id)
     return df
 
@@ -59,28 +76,45 @@ def yearly_averages(river_id, return_format):
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
-    if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'yearly_averages_{river_id}')
-    if return_format == 'json':
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"yearly_averages_{river_id}")
+    if return_format == "json":
         return df_to_jsonify_response(df=df, river_id=river_id)
     return df
 
 
 def return_periods(river_id: int, return_format: str):
-    df = geoglows.data.return_periods(river_id, skip_log=True)
+    # df = geoglows.data.return_periods(river_id, skip_log=True)
+    df = (
+        xr
+        .open_zarr("/app/return-periods.zarr")
+        .sel(rivid=river_id)
+        ["gumbel1_return_period"]
+        .to_dataframe()
+        .reset_index()
+        .pivot(
+            index="rivid",
+            columns="return_period",
+            values="gumbel1_return_period",
+        )
+    )
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
-    if return_format == 'csv':
-        return df_to_csv_flask_response(df, f'return_periods_{river_id}')
-    if return_format == 'json':
-        return jsonify({
-            'return_periods': json.loads(df.to_json(orient='records'))[0],
-            'river_id': river_id,
-            'gen_date': datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%X+00:00'),
-            'units': {
-                'name': 'streamflow',
-                'short': 'cms',
-                'long': f'cubic meters per second',
-            },
-        })
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"return_periods_{river_id}")
+    if return_format == "json":
+        return jsonify(
+            {
+                "return_periods": json.loads(df.to_json(orient="records"))[0],
+                "river_id": river_id,
+                "gen_date": datetime.datetime.now(datetime.UTC).strftime(
+                    "%Y-%m-%dT%X+00:00"
+                ),
+                "units": {
+                    "name": "streamflow",
+                    "short": "cms",
+                    "long": "cubic meters per second",
+                },
+            }
+        )

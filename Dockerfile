@@ -14,7 +14,7 @@ COPY app /app
 WORKDIR /
 
 RUN mkdir -p /var/log/uwsgi
-RUN apt-get update && apt-get install -y --no-install-recommends curl vim && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl vim awscli && rm -rf /var/lib/apt/lists/*
 
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
@@ -23,6 +23,9 @@ RUN micromamba create -n app-env --yes --file "environment.yaml" && micromamba c
 # download a copy of the package metadata table
 RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-table.parquet -O /app/package-metadata-table.parquet
 ENV PYGEOGLOWS_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
+
+# download the return periods zarr to avoid network errors
+RUN aws s3 cp s3://geoglows-v2-retrospective/return-periods.zarr /app/return-periods.zarr --recursive --no-sign-request
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int
