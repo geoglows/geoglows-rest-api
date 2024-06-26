@@ -24,6 +24,8 @@ logger = logging.getLogger("DEBUG")
 app = Blueprint('rest-endpoints-v2', __name__)
 
 
+@app.route(f'/api/<product>/', methods=['GET'])
+@app.route(f'/api/<product>/<river_id>', methods=['GET'])
 @app.route(f'/api/v2/<product>/', methods=['GET'])
 @app.route(f'/api/v2/<product>/<river_id>', methods=['GET'])
 @cross_origin()

@@ -38,33 +38,33 @@
   {% block flash_message %}
     <div id="flashMessage" class="alert alert-warning alert-dismissible" role="alert" style="display:none;margin:1rem;">
       <h4 class="alert-heading" style="text-align:center;">
-        Upcoming Updates to the GEOGLOWS ECMWF Streamflow Service (GEOGLOWS 2.0)
+        Welcome to Version 2 of the GEOGLOWS Streamflow Service! Here is what's new:
       </h4>
       <hr>
       <div class="container" style="min-width:90%">
         <div class="row">
           <div class="col">
-            <h6>TDXHydro Streams</h6>
+            <h6>GEOGLOWS Stream Network</h6>
             <ul class="list-group">
-              <li>New streams that align with TanDEM-X.</li>
-              <li>5 to 6 million stream reaches.</li>
-              <li>Divides world into ~125 regions (previously 13).</li>
+              <li>New streams based on TDX Hydro.</li>
+              <li>~7 million stream reaches.</li>
+              <li>125 Vector Processing Units (VPUs).</li>
               <li>Better estimates for routing parameters and travel times.</li>
             </ul>
           </div>
           <div class="col">
             <h6>Longer Retrospective Simulation</h6>
             <ul class="list-group">
-              <li>1940 start (previously 1979).</li>
-              <li>Default span Jan 1st, 1990 to present.</li>
-              <li>Computed with less than a month lag.</li>
+              <li>Eighty (80) years of retrospective data.</li>
+              <li>Parameters to specify start and end dates.</li>
+              <li>Computed and updated with less than a month lag.</li>
             </ul>
           </div>
           <div class="col">
             <h6>Modeling Workflow Improvements</h6>
             <ul class="list-group">
               <li>Faster simulations.</li>
-              <li>Finer temporal and spatial resoulutions.</li>
+              <li>Finer temporal and spatial resolutions.</li>
               <li>Changes to file formats used for improved retrieval speed (NetCDF to Zarr).</li>
             </ul>
           </div>
@@ -72,7 +72,6 @@
             <h6>REST API Service Improvements</h6>
             <ul class="list-group">
               <li>REST API versioning.</li>
-              <li>OGC API Standard integration.</li>
               <li>Updates to read result's new Zarr format.</li>
               <li>New REST API endpoints to facilitate data retrieval.</li>
             </ul>
@@ -81,7 +80,7 @@
       </div>
       <hr>
       <p class="mb-0" style="text-align:center;">
-        These updates are expected to be available in April, 2024. For more information join our Google Group and Mailing List <a href=" https://groups.google.com/g/geoglows-streamflow" target="_blank">Here</a>.
+        Version 1 results will continue to be available until December, 2024. For more information join our Google Group and Mailing List <a href=" https://groups.google.com/g/geoglows-streamflow" target="_blank">Here</a>.
       </p>
       <button id="closeFlashMessage" type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
