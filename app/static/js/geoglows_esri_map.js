@@ -72,7 +72,7 @@ function updateStatusIcons(type) {
         statusObj.html(' (Getting Stream ID)');
         statusObj.css('color', 'orange');
     } else if (type === 'load') {
-        statusObj.html(' (Loading ID ' + reach_id + ')');
+        statusObj.html(' (Loading ID ' + river_id + ')');
         statusObj.css('color', 'orange');
     } else if (type === 'ready') {
         statusObj.html(' (Ready)');
@@ -90,7 +90,7 @@ function updateDownloadLinks(type) {
     if (type === 'clear') {
         $("#download-forecast-btn").attr('href', '');
     } else if (type === 'set') {
-        $("#download-forecast-btn").attr('href', endpoint + 'ForecastStats/?reach_id=' + reach_id);
+        $("#download-forecast-btn").attr('href', endpoint + 'forecast/' + river_id);
     }
 }
 
@@ -99,52 +99,31 @@ function plotForecastStats(id) {
     $.ajax({
         type: 'GET',
         async: true,
-        url: endpoint + 'ForecastStats/?return_format=json&reach_id=' + id,
+        url: endpoint + 'forecast/' + id + '/?format=json',
         success: function (data) {
             fc.html('');
-            let ts = data['time_series']
-            let dt_rv = ts['datetime'].concat(ts['datetime'].slice().reverse());
+            let dt_rv = data['datetime'].concat(data['datetime'].slice().reverse());
             let traces = [
                 {
-                    name: 'Max/Min Flow (m^3/s)',
+                    name: 'Uncertainty Bounds',
                     x: dt_rv,
-                    y: ts['flow_max_m^3/s'].concat(ts['flow_min_m^3/s'].slice().reverse()),
+                    y: data['flow_uncertainty_upper'].concat(data['flow_uncertainty_lower'].slice().reverse()),
                     mode: 'lines',
                     type: 'scatter',
                     fill: 'toself',
-                    fillcolor: 'lightblue',
-                    line: {color: 'darkblue', dash: 'dash'},
+                    line: {color: 'lightblue', dash: 'none'},
                 },
                 {
-                    name: '25-75% Flow (m^3/s)',
-                    x: dt_rv,
-                    y: ts['flow_75%_m^3/s'].concat(ts['flow_25%_m^3/s'].slice().reverse()),
-                    mode: 'lines',
-                    type: 'scatter',
-                    fill: 'toself',
-                    fillcolor: 'lightgreen',
-                    line: {color: 'darkgreen', dash: 'dash'},
-                },
-                {
-                    name: 'Average Flow (m^3/s)',
-                    x: ts['datetime'],
-                    y: ts['flow_avg_m^3/s'],
-                    mode: 'lines',
-                    type: 'scatter',
-                    fill: 'none',
-                    line: {color: 'blue'},
-                },
-                {
-                    name: 'High Res Flow (m^3/s)',
-                    x: ts['datetime_high_res'],
-                    y: ts['high_res'],
+                    name: 'Median Flow',
+                    x: data['datetime'],
+                    y: data['flow_median'],
                     mode: 'lines',
                     type: 'scatter',
                     fill: 'none',
                     line: {color: 'black'},
                 },
             ]
-            Plotly.newPlot('forecast-chart', traces, {title: 'Forecasted Flow<br>Reach ID: ' + reach_id});
+            Plotly.newPlot('forecast-chart', traces, {title: 'Forecasted Flow<br>River ID: ' + river_id});
             forecastsLoaded = true;
             updateStatusIcons('ready');
             updateDownloadLinks('set');
@@ -158,8 +137,8 @@ function plotForecastStats(id) {
 }
 
 function mapClickEvent(event) {
-    if (map.getZoom() <= 9.5) {
-        map.flyTo(event.latlng, 10);
+    if (map.getZoom() < 16) {
+        map.flyTo(event.latlng, 16);
         return
     } else {
         map.flyTo(event.latlng)
@@ -171,25 +150,26 @@ function mapClickEvent(event) {
     $("#chart_modal").modal('show');
     updateStatusIcons('identify');
     L.esri.identifyFeatures({
-        url: 'https://livefeeds2.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
+        url: 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
     })
         .on(map)
         .at([event.latlng['lat'], event.latlng['lng']])
         .tolerance(10)  // map pixels to buffer search point
-        .precision(3)  // decimals in the returned coordinate pairs
+        .precision(6)  // decimals in the returned coordinate pairs
         .run(function (error, featureCollection) {
             if (error) {
                 updateStatusIcons('fail');
-                alert('Error finding the reach_id');
+                alert('Error finding the river_id');
                 return
             }
             SelectedSegment.clearLayers();
             SelectedSegment.addData(featureCollection.features[0].geometry)
-            reach_id = featureCollection.features[0].properties["COMID (Stream Identifier)"];
+            console.log(featureCollection.features[0].properties);
+            river_id = featureCollection.features[0].properties["TDX Hydro Link Number"];
             clearChartDivs();
             updateStatusIcons('load');
             updateDownloadLinks('clear');
-            plotForecastStats(reach_id);
+            plotForecastStats(river_id);
         })
 }
 ////////////////////////////////////////////////////////////////////////  MAKE THE MAP
@@ -202,7 +182,7 @@ const map = L.map('map', {
 });
 const basemap = L.esri.basemapLayer('Topographic').addTo(map);
 const globalLayer = L.esri.dynamicMapLayer({
-    url: 'https://livefeeds2.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer',
+    url: 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer',
     useCors: false,
     layers: [0],
     from: startDateTime,
@@ -211,13 +191,13 @@ const globalLayer = L.esri.dynamicMapLayer({
 
 let marker = null;
 let SelectedSegment = L.geoJSON(false, {weight: 5, color: '#00008b'}).addTo(map);
-const endpoint = "https://geoglows.ecmwf.int/api/"
+const endpoint = "https://geoglows.ecmwf.int/api/v2/"
 const fc = $("#forecast-chart");
 const hc = $("#historical-chart");
 const ftl = $("#forecast_tab_link");
 const htl = $("#historical_tab_link");
 let forecastsLoaded, historicalLoaded = false;
-let reach_id;
+let river_id;
 const modal_toggles = L.control({position: 'bottomright'});
 modal_toggles.onAdd = function () {
     let div = L.DomUtil.create('div');

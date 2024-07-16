@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - cf-staging
 dependencies:
-  - python>=3.12
+  - python=3.12.3
   - boto3
   - flask
   - flask-cors
