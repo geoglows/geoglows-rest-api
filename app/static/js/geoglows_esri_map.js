@@ -137,8 +137,8 @@ function plotForecastStats(id) {
 }
 
 function mapClickEvent(event) {
-    if (map.getZoom() <= 11.5) {
-        map.flyTo(event.latlng, 12);
+    if (map.getZoom() < 16) {
+        map.flyTo(event.latlng, 16);
         return
     } else {
         map.flyTo(event.latlng)
