@@ -2,14 +2,16 @@ swagger: '2.0'
 info:
   title: GEOGLOWS Data Service
   description: 'A Data Service to access high resolution streamflow forecasts and retrospective simulations from the GEOGLOWS program'
-  version: '2.1.0'
+  version: '2.1.1'
 host: geoglows.ecmwf.int
 basePath: /api
 schemes:
   - https
 paths:
-  /dates:
+  /v2/dates:
     get:
+      tags:
+          - 'Version 2'
       description: This operation returns the available forecast dates in JSON format.
       summary: Available dates
       produces:
@@ -25,8 +27,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /forecast/{reach_id}:
+  /v2/forecast/{reach_id}:
     get:
+      tags:
+            - 'Version 2'
       description: This operation returns a simple summary of the ensemble forecast.
       summary: Returns average forecasted flow
       parameters:
@@ -60,8 +64,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /forecaststats/{reach_id}:
+  /v2/forecaststats/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: This operation returns statistics calculated from 51 forecast ensemble members. A successful response will return a time series with date-value pairs.
       summary: Return basic forecast statistics
       parameters:
@@ -95,8 +101,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /forecastensembles/{reach_id}:
+  /v2/forecastensembles/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: This operation returns a timeseries for each of the 51 normal forecast ensemble members and the 52nd higher resolution forecast. A successful response will return a time series with date-value pairs.
       summary: Return forecast ensembles
       parameters:
@@ -130,8 +138,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /forecastrecords/{reach_id}:
+  /v2/forecastrecords/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: |-
         This retrieves the rolling record of the mean of the forecasted streamflow during the first 24 hours of each day's forecast. That is, each day day after the
         streamflow forecasts are computed, the average of first 8 of the 3-hour timesteps are recorded to a csv. This retrieves that rolling record
@@ -163,8 +173,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /hydroviewer/{reach_id}:
+  /v2/hydroviewer/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: A shorthand for retrieving the forecast records and stats, and return periods, usually all plotted together.
       summary: Returns forecast records, forecast stats, and return periods.
       parameters:
@@ -198,8 +210,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /retrospective/{reach_id}:
+  /v2/retrospective/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: |-
         This operation returns simulated streamflow data based on the ERA-5 dataset. A successful response will return a time series with date-value pairs.
       summary: Return historic simulation
@@ -240,8 +254,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /dailyaverages/{reach_id}:
+  /v2/dailyaverages/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: This operation returns the average flow for each day of the year for the Historic Simulation
       summary: Return historic simulation's daily averages
       parameters:
@@ -270,8 +286,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /monthlyaverages/{reach_id}:
+  /v2/monthlyaverages/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: This operation returns the average flow for each month of the year for the Historic Simulation
       summary: Return historic simulation's monthly averages
       parameters:
@@ -300,8 +318,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /annualaverages/{reach_id}:
+  /v2/annualaverages/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: This operation returns the average flow for each year of the Historic Simulation
       summary: Return historic simulation's annual averages
       parameters:
@@ -330,8 +350,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /returnperiods/{reach_id}:
+  /v2/returnperiods/{reach_id}:
     get:
+      tags:
+        - 'Version 2'
       description: |-
         This operation returns the 2, 5, 10, 25, 50, and 100 year return period based on the 80-years simulated streamflow data and using the Gumbel Method. A successful response will return key-value pairs for each return period along with metadata.
       summary: Return historic simulation
@@ -361,8 +383,10 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /getReachID:
+  /v2/getReachID:
     get:
+      tags:
+        - 'Version 2'
       description: Find the Reach ID nearest a point using latitude and longitude coordinates
       summary: Find the Reach ID nearest a point using latitude and longitude coordinates
       parameters:
@@ -390,7 +414,7 @@ paths:
   /v1/ForecastStats/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: This operation returns statistics calculated from 51 forecast ensemble members. A successful response will return a time series with date-value pairs.
       summary: Return basic forecast statistics
       parameters:
@@ -439,7 +463,7 @@ paths:
   /v1/ForecastEnsembles/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: This operation returns a timeseries for each of the 51 normal forecast ensemble members and the 52nd higher resolution forecast. A successful response will return a time series with date-value pairs.
       summary: Return forecast ensembles
       parameters:
@@ -497,7 +521,7 @@ paths:
   /v1/ForecastWarnings/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This method returns a csv created to summarize the potential return period level flow events coming to the reaches in a specified region. The CSV contains a column for the reach_id, lat of the reach, lon of the reach, maximum forecasted flow in the next 15 day forecast, and a column for each of the return periods (2, 10, 20, 25, 50, 100) which will contain the date when the forecast is first expected to pass that threshold.
       summary: Returns potential warnings for the forecast
@@ -536,7 +560,7 @@ paths:
   /v1/ForecastRecords/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This retrieves the rolling record of the mean of the forecasted streamflow during the first 24 hours of each day's forecast. That is, each day day after the
         streamflow forecasts are computed, the average of first 8 of the 3-hour timesteps are recorded to a csv. This retrives that rolling record
@@ -583,7 +607,7 @@ paths:
   /v1/HistoricSimulation/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This operation returns simulated streamflow data based on the ERA-5 dataset. A successful response will return a time series with date-value pairs.
       summary: Return historic simulation
@@ -628,7 +652,7 @@ paths:
   /v1/DailyAverages/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: This operation returns the average flow for each day of the year for the Historic Simulation
       summary: Return historic simulation's daily averages
       parameters:
@@ -672,7 +696,7 @@ paths:
   /v1/MonthlyAverages/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: This operation returns the average flow for each month of the year for the Historic Simulation
       summary: Return historic simulation's monthly averages
       parameters:
@@ -716,7 +740,7 @@ paths:
   /v1/ReturnPeriods/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This operation returns the 2, 5, 10, 25, 50, and 100 year return period based on the 40-years simulated streamflow data and using the Gumbel Method. A successful response will return key-value pairs for earch return period along with metadata.
       summary: Return historic simulation
@@ -761,7 +785,7 @@ paths:
   /v1/AvailableData/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This method returns the regions available and their corresponding available dates. See also AvailableRegions and AvailableDates
       summary: Available forecasted streamflow data
@@ -773,7 +797,7 @@ paths:
   /v1/AvailableRegions/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This operation returns the available regions.
         A successful response will return a list of available regions in JSON format.
@@ -794,7 +818,7 @@ paths:
   /v1/AvailableDates/:
     get:
       tags:
-        - 'Version 1 (Available until December 2024)'
+        - 'Version 1 (Available until April 2025)'
       description: |-
         This operation returns the available forecast dates.
         A successful response will return a list of available dates in JSON format.
