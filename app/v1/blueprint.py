@@ -17,6 +17,7 @@ from .v1_utilities import (get_available_data_handler,
 app = Blueprint('rest-endpoints-v1', __name__)
 
 
+@app.route(f'/api/<product>', methods=['GET'])
 @app.route(f'/api/v1/<product>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v1(product: str):

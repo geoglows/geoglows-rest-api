@@ -180,6 +180,7 @@ const map = L.map('map', {
     maxBounds: L.latLngBounds(L.latLng(-100, -225), L.latLng(100, 225)),
     center: [20, 0],
 });
+
 const basemap = L.esri.basemapLayer('Topographic').addTo(map);
 const globalLayer = L.esri.dynamicMapLayer({
     url: 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer',
