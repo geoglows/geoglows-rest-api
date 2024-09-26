@@ -19,12 +19,15 @@ service:
 
 ingress:
   enabled: false
-  annotations: {}
+  annotations:
+    cert-manager.io/cluster-issuer: ov-issuer
   hosts:
     - host: chart-example.local
       paths: []
-
-  tls: []
+  tls:
+    - hosts:
+      - geoglows.ecmwf.int
+      secretName: geoglows-tls
 
 resources:
   requests:
