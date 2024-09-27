@@ -4,8 +4,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
-  annotations:
-    kubernetes.io/ingress.class: nginx
   labels:
 {{ include "gsprestapi.labels" . | indent 4 }}
   {{- with .Values.ingress.annotations }}
