@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: GEOGLOWS Data Service
   description: 'A Data Service to access high resolution streamflow forecasts and retrospective simulations from the GEOGLOWS program'
-  version: '2.1.1'
+  version: '2.1.2'
 host: geoglows.ecmwf.int
 basePath: /api
 schemes:
@@ -27,14 +27,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/forecast/{reach_id}:
+  /v2/forecast/{river_id}:
     get:
       tags:
             - 'Version 2'
       description: This operation returns a simple summary of the ensemble forecast.
       summary: Returns average forecasted flow
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -64,14 +64,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/forecaststats/{reach_id}:
+  /v2/forecaststats/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: This operation returns statistics calculated from 51 forecast ensemble members. A successful response will return a time series with date-value pairs.
       summary: Return basic forecast statistics
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -101,14 +101,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/forecastensembles/{reach_id}:
+  /v2/forecastensembles/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: This operation returns a timeseries for each of the 51 normal forecast ensemble members and the 52nd higher resolution forecast. A successful response will return a time series with date-value pairs.
       summary: Return forecast ensembles
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -138,7 +138,7 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/forecastrecords/{reach_id}:
+  /v2/forecastrecords/{river_id}:
     get:
       tags:
         - 'Version 2'
@@ -147,7 +147,7 @@ paths:
         streamflow forecasts are computed, the average of first 8 of the 3-hour timesteps are recorded to a csv. This retrieves that rolling record
       summary: Return rolling record of average flows
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -173,14 +173,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/hydroviewer/{reach_id}:
+  /v2/hydroviewer/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: A shorthand for retrieving the forecast records and stats, and return periods, usually all plotted together.
       summary: Returns forecast records, forecast stats, and return periods.
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -210,7 +210,7 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/retrospective/{reach_id}:
+  /v2/retrospective/{river_id}:
     get:
       tags:
         - 'Version 2'
@@ -218,7 +218,7 @@ paths:
         This operation returns simulated streamflow data based on the ERA-5 dataset. A successful response will return a time series with date-value pairs.
       summary: Return historic simulation
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -254,14 +254,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/dailyaverages/{reach_id}:
+  /v2/dailyaverages/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: This operation returns the average flow for each day of the year for the Historic Simulation
       summary: Return historic simulation's daily averages
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -286,14 +286,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/monthlyaverages/{reach_id}:
+  /v2/monthlyaverages/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: This operation returns the average flow for each month of the year for the Historic Simulation
       summary: Return historic simulation's monthly averages
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -318,14 +318,14 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/annualaverages/{reach_id}:
+  /v2/annualaverages/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: This operation returns the average flow for each year of the Historic Simulation
       summary: Return historic simulation's annual averages
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -350,7 +350,7 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/returnperiods/{reach_id}:
+  /v2/returnperiods/{river_id}:
     get:
       tags:
         - 'Version 2'
@@ -358,7 +358,7 @@ paths:
         This operation returns the 2, 5, 10, 25, 50, and 100 year return period based on the 80-years simulated streamflow data and using the Gumbel Method. A successful response will return key-value pairs for each return period along with metadata.
       summary: Return historic simulation
       parameters:
-        - name: reach_id
+        - name: river_id
           in: path
           description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
           type: number
@@ -383,7 +383,7 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/getReachID:
+  /v2/getriverid:
     get:
       tags:
         - 'Version 2'
@@ -846,3 +846,31 @@ paths:
           description: Missing a required parameter.
           examples:
             error: region is required as input.
+  /v1/getReachID:
+    get:
+      tags:
+        - 'Version 1 (Available until April 2025)'
+      description: Find the Reach ID nearest a point using latitude and longitude coordinates
+      summary: Find the Reach ID nearest a point using latitude and longitude coordinates
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: The latitude of a point to search
+          type: number
+          format: float
+        - name: lon
+          in: query
+          required: true
+          description: The longitude of a point to search
+          type: number
+          format: float
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The response body will contain the reach ID of the nearest stream reach.
+        '400':
+          description: Bad request. Check request and parameters.
+          examples:
+            error: An unexpected error occurred.

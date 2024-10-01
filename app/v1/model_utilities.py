@@ -57,7 +57,7 @@ def latlon_to_reach(lat: float, lon: float) -> tuple:
     point = Point(float(lat), float(lon))
 
     # open the region csv
-    df = pd.read_pickle(f'/app/GSP_API/geometry/{region}-comid_lat_lon_z.pickle')
+    df = pd.read_pickle(f'/app/geometry/{region}-comid_lat_lon_z.pickle')
     points_df = df.loc[:, "Lat":"Lon"].apply(Point, axis=1)
 
     # determine which point is closest
@@ -78,7 +78,7 @@ def latlon_to_region(lat, lon):
     point = Point(float(lon), float(lat))
 
     # read the boundaries pickle
-    bounds_pickle = '/app/GSP_API/geometry/boundaries.pickle'
+    bounds_pickle = '/app/geometry/boundaries.pickle'
     with open(bounds_pickle, 'rb') as f:
         region_bounds = json.loads(pickle.load(f))
     for region in region_bounds:
