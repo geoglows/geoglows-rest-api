@@ -36,7 +36,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -73,7 +73,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -110,7 +110,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -149,7 +149,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -182,26 +182,21 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
-        - name: format
-          in: query
-          required: False
-          description: The file format of the response
-          type: string
-          default: csv
-          enum:
-            - csv
-            - json
         - name: date
           in: query
           description: The given date for the forecast of interest given as YYYYMMDD (e.g. 20201020). If left blank it defaults to the most recent date. This API provides access to data within the last 30 days.
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
+        - name: start_date
+          in: query
+          description: A date in YYYYMMDD format when you would like to start retrieving forecast record data. Defaults to 14 days before the forecast "date" parameter.
+          type: string
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
-        - text/csv
         - application/json
       responses:
         '200':
@@ -220,7 +215,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -263,7 +258,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -295,7 +290,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -327,7 +322,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
@@ -360,7 +355,7 @@ paths:
       parameters:
         - name: river_id
           in: path
-          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getReachID method.
+          description: The stream reach's unique ID also referred to as common identifier (COMID). If the ID is not known, use the getriverid method.
           type: number
           format: integer
           required: true
