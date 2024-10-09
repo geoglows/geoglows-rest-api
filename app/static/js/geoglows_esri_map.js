@@ -5,17 +5,12 @@ require([
     "esri/TimeExtent",
     "esri/widgets/TimeSlider",
     "esri/layers/GraphicsLayer",
-    "esri/Graphic",
-    "esri/widgets/Expand"
-], function(Map, MapView, MapImageLayer, TimeExtent, TimeSlider, GraphicsLayer, Graphic, Expand) {
+    "esri/Graphic"
+], function(Map, MapView, MapImageLayer, TimeExtent, TimeSlider, GraphicsLayer, Graphic) {
 
     ////////////////////////////////////////////////////////////////////////  ESRI LAYER ANIMATION CONTROLS
     let layerAnimationTime = new Date();
-    layerAnimationTime = new Date(layerAnimationTime.toISOString())
-    layerAnimationTime.setUTCHours(0);
-    layerAnimationTime.setUTCMinutes(0);
-    layerAnimationTime.setUTCSeconds(0);
-    layerAnimationTime.setUTCMilliseconds(0);  // TODO simplify the code
+    layerAnimationTime.setUTCHours(0, 0, 0, 0);
     const currentDate = $("#current-map-date");
     const startDateTime = new Date(layerAnimationTime);
     const endDateTime = new Date(layerAnimationTime.setUTCHours(5 * 24));
@@ -23,8 +18,9 @@ require([
     currentDate.html(layerAnimationTime);
 
     ////////////////////////////////////////////////////////////////////////  MAKE THE MAP
+    const geoglowsURL = "https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer";
     const globalLayer = new MapImageLayer({
-        url: 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer',
+        url: geoglowsURL,
         sublayers: [
             {
                 id: 0,
@@ -36,18 +32,19 @@ require([
             }
         ],
     });
-
-    const selectedSegment = new GraphicsLayer();
-
+    const selectedSegmentLayer = new GraphicsLayer();
+    const markerLayer = new GraphicsLayer();
+    
     const map = new Map({
         basemap: "topo-vector",
-        layers: [globalLayer, selectedSegment]
+        layers: [globalLayer, selectedSegmentLayer, markerLayer]
     });
     
     const view = new MapView({
         container: "map",
         map: map,
-        zoom: 2, // TODO set the center and the boundbox
+        center: [0, 20],
+        zoom: 2
     });
 
     ////////////////////////////////////////////////////////////////////////  ESRI LAYER ANIMATION CONTROLS
@@ -65,6 +62,18 @@ require([
             interval: globalLayer.timeInfo.interval
         };
     });
+
+    ////////////////////////////////////////////////////////////////////////  MAKE THE MAP
+
+    let river_id;
+    let forecastsLoaded = false;
+
+    const endpoint = "https://geoglows.ecmwf.int/api/v2/"
+    const fc = $("#forecast-chart");
+    const hc = $("#historical-chart");
+    
+    view.ui.add(document.getElementById('show-modal-btn'), "bottom-right");
+    view.on("click", mapClickEvent);
 
     //////////////////////////////////////////////////////////////////////////  FUNCTIONS FOR MAP INTERACTION
     function clearChartDivs() {
@@ -143,71 +152,69 @@ require([
     }
 
     function mapClickEvent(event) {
-        if (map.getZoom() < 16) {
-            map.flyTo(event.latlng, 16);
+        if (view.zoom < 16) {
+            view.goTo({target: event.mapPoint, zoom: 16});
             return
         } else {
-            map.flyTo(event.latlng)
+            view.goTo({target: event.mapPoint});
         }
-        if (marker) {
-            map.removeLayer(marker)
-        }
-        marker = L.marker(event.latlng).addTo(map);  // TODO switch to ArcGIS API
+        markerLayer.removeAll();
+        let markPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z";
+        let marker = new Graphic({
+            geometry: event.mapPoint,
+            symbol: {
+                type: "simple-marker",
+                color: "#007bff",
+                size: "40px",
+                yoffset: 15,
+                outline: {
+                    color: "white",
+                    width: 1
+                },
+                path: markPath,
+            }
+        })
+        markerLayer.add(marker);
         $("#chart_modal").modal('show');
         updateStatusIcons('identify');
-        L.esri.identifyFeatures({ 
-            url: 'https://livefeeds3.arcgis.com/arcgis/rest/services/GEOGLOWS/GlobalWaterModel_Medium/MapServer'
-        })
-            .on(map)
-            .at([event.latlng['lat'], event.latlng['lng']])
-            .tolerance(10)  // map pixels to buffer search point
-            .precision(6)  // decimals in the returned coordinate pairs
-            .run(function (error, featureCollection) {
-                if (error) {
+
+        globalLayer
+            .findSublayerById(0)
+            .queryFeatures({
+                geometry: event.mapPoint,
+                distance: 125,
+                units: "meters",
+                spatialRelationship: "intersects",
+                outFields: ["*"],
+                returnGeometry: true,
+            })
+            .then(response => {
+                if (!response.features.length) {
+                    alert("Error finding the rivier!");
                     updateStatusIcons('fail');
-                    alert('Error finding the river_id');
-                    return
+                    return;
                 }
-                selectedSegment.clearLayers();
-                selectedSegment.addData(featureCollection.features[0].geometry)
-                console.log(featureCollection.features[0].properties);
-                river_id = featureCollection.features[0].properties["TDX Hydro Link Number"];
+                river_id = response.features[0].attributes.comid
+                if (river_id === "Null" || !river_id) {
+                    alert("Error finding the rivier!");
+                    updateStatusIcons('fail');
+                    return;
+                }
+                selectedSegmentLayer.removeAll();
+                let segment = new Graphic({
+                    geometry: response.features[0].geometry,
+                    symbol: {
+                        type: "simple-line",
+                        color: "#00008b",
+                        width: 3
+                    }
+                });
+                selectedSegmentLayer.add(segment);
+
                 clearChartDivs();
                 updateStatusIcons('load');
                 updateDownloadLinks('clear');
                 plotForecastStats(river_id);
             })
     }
-
-////////////////////////////////////////////////////////////////////////  MAKE THE MAP
-
-    let marker = null;
-    const segmentSymbol = {
-        type: "simple-line",
-        color: "#00008b",
-        weight: 5
-    };
-
-    const endpoint = "https://geoglows.ecmwf.int/api/v2/"
-    const fc = $("#forecast-chart");
-    const hc = $("#historical-chart");
-    const ftl = $("#forecast_tab_link");
-    const htl = $("#historical_tab_link");
-    let forecastsLoaded, historicalLoaded = false;
-    let river_id;
-    let show_modal_btn = document.getElementById('show_modal_btn');
-    view.ui.add(show_modal_btn, "bottom-right");
-
-    const mt = $("#modal_toggles");  // TODO what is this?
-    mt.mouseover(function () {
-        map.off('click')
-    })
-    mt.mouseout(function () {
-        map.on("click", function (event) {
-            mapClickEvent(event)
-        })
-    });
-    map.on("click", function (event) {
-        mapClickEvent(event)
-    });
 });
