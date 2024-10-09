@@ -138,7 +138,11 @@ require([
                         line: {color: 'black'},
                     },
                 ]
-                Plotly.newPlot('forecast-chart', traces, {title: 'Forecasted Flow<br>River ID: ' + river_id});
+                Plotly.newPlot('forecast-chart', traces, {
+                    title: 'Forecasted Flow<br>River ID: ' + river_id,
+                    xaxis: {title: 'Date (UTC +00:00)'},
+                    yaxis: {title: 'Discharge (m³/s)'}
+                });
                 forecastsLoaded = true;
                 updateStatusIcons('ready');
                 updateDownloadLinks('set');
