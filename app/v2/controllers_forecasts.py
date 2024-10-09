@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 
 import geoglows
 import numpy as np
@@ -16,22 +16,34 @@ from .response_formatters import (df_to_jsonify_response,
 __all__ = ['hydroviewer', 'forecast', 'forecast_stats', 'forecast_ensembles', 'forecast_records', 'forecast_dates']
 
 
-def hydroviewer(river_id: int, start_date: str, date: str) -> jsonify:
+def hydroviewer(river_id: int, date: str, records_start: str) -> jsonify:
     if date == 'latest':
         date = find_available_dates()[-1]
     forecast_df = forecast(river_id, date, "df")
-    records_df = forecast_records(river_id, start_date=start_date, end_date=date[:8], return_format="df")
+    if not records_start:
+        # get the previous two weeks of records
+        records_start = (datetime.strptime(date[:8], '%Y%m%d') - timedelta(days=14)).strftime('%Y%m%d')
+    records_df = forecast_records(river_id, start_date=records_start, end_date=date[:8], return_format="df")
+    try:
+        records_df.rename(columns={"average_flow": "forecast_records_avg_flow"}, inplace=True)
+    except Exception as e:
+        Exception(f"Forecast records error: {e}.")
+        
     return_periods = geoglows.data.return_periods(river_id)
-
+    vpu = geoglows.streams.river_to_vpu(river_id)
+    
     # add the columns from the dataframe
     json_template = new_json_template(river_id, start_date=records_df.index[0], end_date=forecast_df.index[-1])
+    json_template['metadata']['vpu'] = int(vpu)
     json_template['metadata']['series'] = [
         'datetime_records',
         'datetime_forecast',
         'return_periods',
     ] + forecast_df.columns.tolist() + records_df.columns.tolist()
     json_template.update(forecast_df.to_dict(orient='list'))
+    json_template.update({"datetime_forecast": forecast_df.index.tolist()})
     json_template.update(records_df.to_dict(orient='list'))
+    json_template.update({"datetime_records": records_df.index.tolist()})
     json_template['return_periods'] = return_periods.to_dict(orient='records')[0]
     return jsonify(json_template), 200
 
@@ -125,10 +137,10 @@ def forecast_ensembles(river_id: int, date: str, return_format: str):
 
 def forecast_records(river_id: int, start_date: str, end_date: str, return_format: str) -> pd.DataFrame:
     if start_date is None:
-        start_date = datetime.datetime.now() - datetime.timedelta(days=14)
+        start_date = datetime.now() - timedelta(days=14)
         start_date = start_date.strftime('%Y%m%d')
     if end_date is None:
-        end_date = f'{datetime.datetime.now().year + 1}0101'
+        end_date = f'{datetime.now().year + 1}0101'
     year = start_date[:4]
 
     try:
