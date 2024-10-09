@@ -188,3 +188,4 @@ dmypy.json
 ## Misc
 sample_data/**
 /aws_config.json
+/app/package-metadata-table.parquet
