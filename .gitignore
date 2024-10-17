@@ -188,4 +188,5 @@ dmypy.json
 ## Misc
 sample_data/**
 /aws_config.json
+/app/return-periods.zarr
 /app/package-metadata-table.parquet
