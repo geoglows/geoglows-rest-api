@@ -53,13 +53,17 @@ require([
         mode: "cumulative-from-start",
         view: view,
         timeVisible: true,
-        loop: true
+        loop: true,
+        playRate: 3000  // miliseconds
     })
 
     view.whenLayerView(globalLayer).then((lv) => {
         slider.fullTimeExtent = globalLayer.timeInfo.fullTimeExtent.expandTo("hours");
         slider.stops = {
-            interval: globalLayer.timeInfo.interval
+            interval: {
+                unit: "hours",
+                value: 12
+            }  // globalLayer.timeInfo.interval
         };
     });
 
