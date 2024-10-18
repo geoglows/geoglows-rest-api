@@ -12,6 +12,7 @@ from .response_formatters import (
     df_to_jsonify_response,
 )
 
+from .constants import PATH_TO_RETURN_PERIODS
 __all__ = [
     "retrospective",
     "daily_averages",
@@ -84,12 +85,12 @@ def yearly_averages(river_id, return_format):
 
 
 def return_periods(river_id: int, return_format: str):
-    # df = geoglows.data.return_periods(river_id, skip_log=True)
+    ds = xr.open_zarr(PATH_TO_RETURN_PERIODS).sel(rivid=river_id)
+    if return_format == "xarray":
+        return ds
+
     df = (
-        xr
-        .open_zarr("/app/return-periods.zarr")
-        .sel(rivid=river_id)
-        ["gumbel1_return_period"]
+        ds["gumbel1_return_period"]
         .to_dataframe()
         .reset_index()
         .pivot(
@@ -101,6 +102,8 @@ def return_periods(river_id: int, return_format: str):
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
+    if return_format == "df":
+        return df
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"return_periods_{river_id}")
     if return_format == "json":
