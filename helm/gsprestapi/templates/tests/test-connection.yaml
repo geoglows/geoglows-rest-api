@@ -8,8 +8,8 @@ metadata:
     "helm.sh/hook": test-success
 spec:
   containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args:  ['{{ include "gsprestapi.fullname" . }}:{{ .Values.service.port }}']
+  - name: wget
+    image: busybox
+    command: ['wget']
+    args:  ['{{ include "gsprestapi.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never

@@ -9,7 +9,7 @@ image:
   pullPolicy: Always
 
 imagePullSecrets:
-  - name: gitlab-registry
+- name: eccr-ecmwf-int
 nameOverride: ""
 fullnameOverride: ""
 
@@ -18,17 +18,23 @@ service:
   port: 80
 
 ingress:
-  enabled: false
+  enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: ov-issuer
+    nginx.org/proxy-connect-timeout: 300s
+    nginx.org/proxy-read-timeout: 300s
+    nginx.org/proxy-send-timeout: 300s
   hosts:
-    - host: chart-example.local
-      paths: []
+  - host: geoglows.ecmwf.int
+    paths:
+    - path: /
+      pathType: Prefix
+      portName: http
   tls:
-    - hosts:
-      - geoglows.ecmwf.int
-      secretName: geoglows-tls
+  - hosts:
+    - geoglows.ecmwf.int
+    secretName: geoglows-tls
 
 resources:
   requests:
