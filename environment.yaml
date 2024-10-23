@@ -4,6 +4,7 @@ channels:
   - cf-staging
 dependencies:
   - python=3.12.3
+  - numpy=1.26.4
   - boto3
   - flask
   - flask-cors
