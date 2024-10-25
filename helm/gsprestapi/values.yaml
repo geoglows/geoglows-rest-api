@@ -28,7 +28,7 @@ ingress:
   hosts:
   - host: geoglows.ecmwf.int
     paths:
-    - path: /geoglows
+    - path: /
       pathType: Prefix
       portName: http
   tls:
