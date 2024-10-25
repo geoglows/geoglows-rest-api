@@ -5,27 +5,29 @@ USER root
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH=/opt/conda/envs/app-env/bin:$PATH
 ENV API_PREFIX=/api
-ENV PYTHONPATH=$PYTHONPATH:/app
+ENV PYTHONPATH=$PYTHONPATH:/geoglows/app
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yaml /environment.yaml
-COPY startup.sh /startup.sh
-COPY app /app
-
-WORKDIR /
+RUN mkdir /geoglows
+RUN chown -R nobody:nogroup /geoglows
+WORKDIR /geoglows
 
 RUN mkdir -p /var/log/uwsgi
 RUN apt-get update && apt-get install -y --no-install-recommends curl vim awscli && rm -rf /var/lib/apt/lists/*
 
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yaml /geoglows/environment.yaml
+COPY --chown=nobody:nogroup startup.sh /geoglows/startup.sh
+COPY --chown=nobody:nogroup app /geoglows/app
+
 # startup.sh is a helper script
-RUN chmod +x /startup.sh
+RUN chmod +x /geoglows/startup.sh
 RUN micromamba create -n app-env --yes --file "environment.yaml" && micromamba clean --all --yes
 
 # download a copy of the package metadata table
-RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-table.parquet -O /app/package-metadata-table.parquet
-ENV PYGEOGLOWS_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
+RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-table.parquet -O /geoglows/app/package-metadata-table.parquet
+ENV PYGEOGLOWS_METADATA_TABLE_PATH=/geoglows/app/package-metadata-table.parquet
 
 # download the return periods zarr to avoid network errors
-RUN aws s3 cp s3://geoglows-v2-retrospective/return-periods.zarr /app/return-periods.zarr --recursive --no-sign-request
+RUN aws s3 cp s3://geoglows-v2-retrospective/return-periods.zarr /geoglows/app/return-periods.zarr --recursive --no-sign-request
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int
@@ -38,4 +40,8 @@ EXPOSE 80
 HEALTHCHECK --interval=1m --timeout=3s --start-period=20s \
   CMD curl -f http://localhost/ || exit 1
 
-ENTRYPOINT [ "/startup.sh" ]
+
+# Switch to the nobody user
+USER nobody
+
+ENTRYPOINT [ "/geoglows/startup.sh" ]
