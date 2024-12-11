@@ -31,53 +31,43 @@ def hydroviewer(river_id: int, date: str, records_start: str) -> jsonify:
     if date == "latest":
         date = find_available_dates()[-1]
     forecast_df = forecast(river_id, date, "df")
-    if not records_start:
-        # get the previous two weeks of records
-        records_start = (
-            datetime.strptime(date[:8], "%Y%m%d") - timedelta(days=14)
-        ).strftime("%Y%m%d")
-    records_df = forecast_records(
-        river_id,
-        start_date=records_start,
-        end_date=date[:8],
-        return_format="df",
-    )
-    try:
-        records_df.rename(
-            columns={"average_flow": "forecast_records_avg_flow"}, inplace=True
-        )
-    except Exception as e:
-        Exception(f"Forecast records error: {e}.")
 
     rperiods = return_periods(river_id, return_format="df")
-    metadata_table = pd.read_parquet(
-        PACKAGE_METADATA_TABLE_PATH, columns=["LINKNO", "VPUCode"]
-    )
-    vpu = metadata_table.loc[
-        lambda x: x["LINKNO"] == river_id, "VPUCode"
-    ].values[0]
 
     # add the columns from the dataframe
     json_template = new_json_template(
         river_id,
-        start_date=records_df.index[0],
+        start_date=forecast_df.index[0],
         end_date=forecast_df.index[-1],
     )
-    json_template["metadata"]["vpu"] = int(vpu)
     json_template["metadata"]["series"] = (
-        [
-            "datetime_records",
-            "datetime_forecast",
-            "return_periods",
-        ]
-        + forecast_df.columns.tolist()
-        + records_df.columns.tolist()
+        ["datetime_forecast", "return_periods"] + forecast_df.columns.tolist()
     )
+    
     json_template.update(forecast_df.to_dict(orient="list"))
     json_template.update({"datetime_forecast": forecast_df.index.tolist()})
-    json_template.update(records_df.to_dict(orient="list"))
-    json_template.update({"datetime_records": records_df.index.tolist()})
     json_template["return_periods"] = rperiods.to_dict(orient="records")[0]
+    
+    if records_start:
+        records_df = forecast_records(
+            river_id,
+            start_date=records_start,
+            end_date=date[:8],
+            return_format="df",
+        )
+
+        try:
+            records_df.rename(
+                columns={"average_flow": "forecast_records_avg_flow"}, inplace=True
+            )
+        except Exception as e:
+            Exception(f"Forecast records error: {e}.")
+
+        json_template["metadata"]["series"] += records_df.columns.tolist()
+        json_template["metadata"]["series"] += ["datetime_records"]
+        json_template.update(records_df.to_dict(orient="list"))
+        json_template.update({"datetime_records": records_df.index.tolist()})
+            
     return jsonify(json_template), 200
 
 
