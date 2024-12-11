@@ -193,7 +193,7 @@ paths:
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(.(00|12)|)$'
         - name: start_date
           in: query
-          description: A date in YYYYMMDD format when you would like to start retrieving forecast record data. Defaults to 14 days before the forecast "date" parameter.
+          description: A date in YYYYMMDD format when you would like to start retrieving forecast record data. Defaults to None so no records would be retrieved if this parameter is not specified.
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
