@@ -13,6 +13,7 @@ metadata:
   {{- end }}
 {{ include "gsprestapi.annotations" . | indent 4 }}
 spec:
+  ingressClassName: nginx
 {{- if .Values.ingress.tls }}
   tls:
   {{- range .Values.ingress.tls }}
