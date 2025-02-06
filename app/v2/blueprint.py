@@ -54,9 +54,9 @@ def rest_endpoints_v2(product: str, river_id: int = None):
 
     # retrospective data products
     elif product == 'retrospective':
-        return retrospective(river_id, return_format=return_format, start_date=start_date, end_date=end_date)
+        return retrospective(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
     elif product == 'returnperiods':
-        return return_periods(river_id, return_format=return_format)
+        return return_periods(river_id, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'dailyaverages':
         return daily_averages(river_id, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'monthlyaverages':
@@ -75,7 +75,7 @@ def rest_endpoints_v2(product: str, river_id: int = None):
         return jsonify({'error': f'data product "{product}" not available'}), 201
 
 
-@app.route(f'/api/v2/log', methods=['POST', ])
+# @app.route(f'/api/v2/log', methods=['POST', ])
 def python_package_log_endpoint():
     try:
         data = request.get_json()

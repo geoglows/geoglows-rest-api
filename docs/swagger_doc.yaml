@@ -239,6 +239,12 @@ paths:
           description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. Defaults to the most recent date.
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
+        - name: bias_corrected
+          in: query
+          required: False
+          description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
+          type: boolean
+          default: true
       produces:
         - text/csv
         - application/json
@@ -386,6 +392,12 @@ paths:
           enum:
             - csv
             - json
+        - name: bias_corrected
+          in: query
+          required: False
+          description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
+          type: boolean
+          default: true
       produces:
         - text/csv
         - application/json

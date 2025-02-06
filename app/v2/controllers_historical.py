@@ -42,11 +42,15 @@ def retrospective(
     return_format: str,
     start_date: str = None,
     end_date: str = None,
+    bias_corrected: str = 'true',
 ) -> pd.DataFrame:
     """
     Controller for retrieving simulated historic data
     """
-    df = geoglows.data.retrospective(river_id, skip_log=True)
+    if bias_corrected=='true':
+        df = geoglows.bias.sfdc_bias_correction(river_id)
+    else:
+        df = geoglows.data.retrospective(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -64,13 +68,14 @@ def retrospective(
     return df
 
 
-def daily_averages(river_id: int, return_format: str, bias_corrected: bool = True):
-    if bias_corrected:
-        df = geoglows.bias.sfdc_bias_correction(river_id)
+def daily_averages(river_id: int, return_format: str, bias_corrected='true'):
+    if bias_corrected=='true':
+        data = geoglows.bias.sfdc_bias_correction(river_id)
+        df = data.groupby([data.index.month, data.index.day]).mean()
+        df.index = df.index.map(lambda x: f"{x[0]:02d}-{x[1]:02d}")
     else:
         df = geoglows.data.daily_averages(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
-
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"daily_averages_{river_id}")
     if return_format == "json":
@@ -78,9 +83,10 @@ def daily_averages(river_id: int, return_format: str, bias_corrected: bool = Tru
     return df
 
 
-def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = True):
-    if bias_corrected:
-        df = geoglows.bias.sfdc_bias_correction(621054471).resample("MS").mean()
+def monthly_averages(river_id: int, return_format: str, bias_corrected='true'):
+    if bias_corrected == 'true':
+        data = geoglows.bias.sfdc_bias_correction(river_id)
+        df = data.groupby(data.index.month).mean()
     else:
         df = geoglows.data.monthly_averages(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
@@ -93,8 +99,8 @@ def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = T
     return df
 
 
-def yearly_averages(river_id, return_format, bias_corrected: bool=True):
-    if bias_corrected:
+def yearly_averages(river_id, return_format, bias_corrected='true'):
+    if bias_corrected == 'true':
         df = geoglows.bias.sfdc_bias_correction(river_id).resample("YS").mean()
     else:
         df = geoglows.data.annual_averages(river_id, skip_log=True)
@@ -108,20 +114,22 @@ def yearly_averages(river_id, return_format, bias_corrected: bool=True):
     return df
 
 
-def return_periods(river_id: int, return_format: str, bias_corrected: bool = True):
-    if bias_corrected:
+def return_periods(river_id: int, return_format: str, bias_corrected = 'true'):
+    if bias_corrected == 'true':
         df = geoglows.bias.sfdc_bias_correction(river_id)
-        annual_max_flow_list = df.groupby(df.index.strftime('%Y')).max().values
-        xbar = np.mean(annual_max_flow_list)
-        std = np.std(annual_max_flow_list)
+        rps = [2, 5, 10, 25, 50, 100]
+        results = []
+        for column in ["Simulated", "Bias Corrected Simulation"]:
+            annual_max_flow_list = df.groupby(df.index.strftime('%Y'))[column].max().values.flatten()
+            xbar = np.mean(annual_max_flow_list)
+            std = np.std(annual_max_flow_list)
 
-        if type(rps) is int:
-            rps = (rps,)
-
-        ret_pers = {
-            'max_simulated': round(np.max(annual_max_flow_list), 2)
-        }
-        ret_pers.update({f'return_period_{rp}': round(gumbel1(rp, xbar, std), 2) for rp in rps})
+            # Compute return periods
+            ret_pers = {'Data Type': column, 'max_simulated': round(np.max(annual_max_flow_list), 2)}
+            ret_pers.update({f'return_period_{rp}': round(gumbel1(rp, xbar, std), 2) for rp in rps})
+            
+            results.append(ret_pers)
+        df = pd.DataFrame(results).set_index("Data Type")
     else:
         ds = xr.open_zarr(PATH_TO_RETURN_PERIODS).sel(rivid=river_id)
         if return_format == "xarray":
@@ -139,7 +147,6 @@ def return_periods(river_id: int, return_format: str, bias_corrected: bool = Tru
         )
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
-
     if return_format == "df":
         return df
     if return_format == "csv":
