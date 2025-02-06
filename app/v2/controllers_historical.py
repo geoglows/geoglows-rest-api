@@ -42,12 +42,12 @@ def retrospective(
     return_format: str,
     start_date: str = None,
     end_date: str = None,
-    bias_corrected: str = 'true',
+    bias_corrected: bool = False,
 ) -> pd.DataFrame:
     """
     Controller for retrieving simulated historic data
     """
-    if bias_corrected=='true':
+    if bias_corrected:
         df = geoglows.bias.sfdc_bias_correction(river_id)
     else:
         df = geoglows.data.retrospective(river_id, skip_log=True)
@@ -55,11 +55,12 @@ def retrospective(
     df = df.astype(float).round(2)
 
     if start_date is not None:
-        df = df.loc[
-            df.index >= datetime.datetime.strptime(start_date, "%Y%m%d")
-        ]
+        start_dt = datetime.datetime.strptime(start_date, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+        df = df.loc[df.index >= start_dt]
+
     if end_date is not None:
-        df = df.loc[df.index <= datetime.datetime.strptime(end_date, "%Y%m%d")]
+        end_dt = datetime.datetime.strptime(end_date, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+        df = df.loc[df.index <= end_dt]
 
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"retrospective_{river_id}")
@@ -68,8 +69,8 @@ def retrospective(
     return df
 
 
-def daily_averages(river_id: int, return_format: str, bias_corrected='true'):
-    if bias_corrected=='true':
+def daily_averages(river_id: int, return_format: str, bias_corrected: bool = False):
+    if bias_corrected:
         data = geoglows.bias.sfdc_bias_correction(river_id)
         df = data.groupby([data.index.month, data.index.day]).mean()
         df.index = df.index.map(lambda x: f"{x[0]:02d}-{x[1]:02d}")
@@ -83,8 +84,8 @@ def daily_averages(river_id: int, return_format: str, bias_corrected='true'):
     return df
 
 
-def monthly_averages(river_id: int, return_format: str, bias_corrected='true'):
-    if bias_corrected == 'true':
+def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = False):
+    if bias_corrected:
         data = geoglows.bias.sfdc_bias_correction(river_id)
         df = data.groupby(data.index.month).mean()
     else:
@@ -99,8 +100,8 @@ def monthly_averages(river_id: int, return_format: str, bias_corrected='true'):
     return df
 
 
-def yearly_averages(river_id, return_format, bias_corrected='true'):
-    if bias_corrected == 'true':
+def yearly_averages(river_id, return_format, bias_corrected: bool = False):
+    if bias_corrected:
         df = geoglows.bias.sfdc_bias_correction(river_id).resample("YS").mean()
     else:
         df = geoglows.data.annual_averages(river_id, skip_log=True)
@@ -114,8 +115,8 @@ def yearly_averages(river_id, return_format, bias_corrected='true'):
     return df
 
 
-def return_periods(river_id: int, return_format: str, bias_corrected = 'true'):
-    if bias_corrected == 'true':
+def return_periods(river_id: int, return_format: str, bias_corrected: bool = False):
+    if bias_corrected:
         df = geoglows.bias.sfdc_bias_correction(river_id)
         rps = [2, 5, 10, 25, 50, 100]
         results = []

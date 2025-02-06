@@ -75,7 +75,7 @@ def rest_endpoints_v2(product: str, river_id: int = None):
         return jsonify({'error': f'data product "{product}" not available'}), 201
 
 
-# @app.route(f'/api/v2/log', methods=['POST', ])
+@app.route(f'/api/v2/log', methods=['POST', ])
 def python_package_log_endpoint():
     try:
         data = request.get_json()
@@ -174,7 +174,7 @@ def handle_request(request, product, river_id):
     date = request.args.get('date', 'latest')
     start_date = request.args.get('start_date', None)
     end_date = request.args.get('end_date', None)
-    bias_corrected = request.args.get('bias_corrected', True)
+    bias_corrected = request.args.get('bias_corrected', 'false').lower() in ['true']
 
     return (
         product,

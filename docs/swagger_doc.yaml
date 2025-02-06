@@ -244,7 +244,7 @@ paths:
           required: False
           description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
           type: boolean
-          default: true
+          default: False
       produces:
         - text/csv
         - application/json
@@ -282,7 +282,7 @@ paths:
           required: False
           description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
           type: boolean
-          default: true
+          default: False
       produces:
         - text/csv
         - application/json
@@ -320,7 +320,7 @@ paths:
           required: False
           description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
           type: boolean
-          default: true
+          default: False
       produces:
         - text/csv
         - application/json
@@ -358,7 +358,7 @@ paths:
           required: False
           description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
           type: boolean
-          default: true
+          default: False
       produces:
         - text/csv
         - application/json
@@ -397,7 +397,7 @@ paths:
           required: False
           description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
           type: boolean
-          default: true
+          default: False
       produces:
         - text/csv
         - application/json
