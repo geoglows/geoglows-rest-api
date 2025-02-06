@@ -271,6 +271,12 @@ paths:
           enum:
             - csv
             - json
+        - name: bias_corrected
+          in: query
+          required: False
+          description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
+          type: boolean
+          default: true
       produces:
         - text/csv
         - application/json
@@ -303,6 +309,12 @@ paths:
           enum:
             - csv
             - json
+        - name: bias_corrected
+          in: query
+          required: False
+          description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
+          type: boolean
+          default: true
       produces:
         - text/csv
         - application/json
@@ -335,6 +347,12 @@ paths:
           enum:
             - csv
             - json
+        - name: bias_corrected
+          in: query
+          required: False
+          description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
+          type: boolean
+          default: true
       produces:
         - text/csv
         - application/json

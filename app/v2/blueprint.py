@@ -28,7 +28,7 @@ app = Blueprint('rest-endpoints-v2', __name__)
 @app.route(f'/api/v2/<product>/<river_id>', methods=['GET'])
 @cross_origin()
 def rest_endpoints_v2(product: str, river_id: int = None):
-    product, river_id, return_format, date, start_date, end_date = handle_request(
+    product, river_id, return_format, date, start_date, end_date, bias_corrected = handle_request(
         request,
         product,
         river_id,
@@ -58,11 +58,11 @@ def rest_endpoints_v2(product: str, river_id: int = None):
     elif product == 'returnperiods':
         return return_periods(river_id, return_format=return_format)
     elif product == 'dailyaverages':
-        return daily_averages(river_id, return_format=return_format)
+        return daily_averages(river_id, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'monthlyaverages':
-        return monthly_averages(river_id, return_format=return_format)
+        return monthly_averages(river_id, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'annualaverages':
-        return yearly_averages(river_id, return_format=return_format)
+        return yearly_averages(river_id, return_format=return_format, bias_corrected=bias_corrected)
 
     # data availability
     elif product == 'getriverid':
@@ -174,6 +174,7 @@ def handle_request(request, product, river_id):
     date = request.args.get('date', 'latest')
     start_date = request.args.get('start_date', None)
     end_date = request.args.get('end_date', None)
+    bias_corrected = request.args.get('bias_corrected', True)
 
     return (
         product,
@@ -181,7 +182,8 @@ def handle_request(request, product, river_id):
         return_format,
         date,
         start_date,
-        end_date
+        end_date,
+        bias_corrected
     )
 
 
