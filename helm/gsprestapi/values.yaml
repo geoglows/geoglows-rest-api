@@ -39,9 +39,9 @@ ingress:
 resources:
   requests:
     cpu: 1
-    memory: 1Gi
-  limits:
     memory: 2Gi
+  limits:
+    memory: 4Gi
 
 nodeSelector: {}
 tolerations: []
