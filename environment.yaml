@@ -3,14 +3,14 @@ channels:
   - conda-forge
   - cf-staging
 dependencies:
-  - python==3.12.8
+  - python>=3.12
   - boto3
   - flask
   - flask-cors
   - hydrostats
-  - geoglows>=1.8.1
+  - geoglows>=1.8.3
   - natsort
-  - netCDF4
+  - netCDF4./buil
   - pandas
   - requests
   - shapely

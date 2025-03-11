@@ -37,7 +37,7 @@ def gumbel1(rp: int, xbar: float, std: float) -> float:
     """
     return round(-math.log(-math.log(1 - (1 / rp))) * std * .7797 + xbar - (.45 * std), 2)
 
-def retrospective(
+def retrospective_daily(
     river_id: int,
     return_format: str,
     start_date: str = None,
@@ -48,9 +48,73 @@ def retrospective(
     Controller for retrieving simulated historic data
     """
     if bias_corrected:
-        df = geoglows.bias.sfdc_bias_correction(river_id)
+        sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
+        data = geoglows.bias.sfdc_bias_correction(sim_data, river_id)
+        data = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        data['Simulated'] = sim_data[river_id]
     else:
-        df = geoglows.data.retrospective(river_id, skip_log=True)
+        df = geoglows.data.retro_daily(river_id, skip_log=True)
+    df.columns = df.columns.astype(str)
+    df = df.astype(float).round(2)
+
+    if start_date is not None:
+        start_dt = datetime.datetime.strptime(start_date, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+        df = df.loc[df.index >= start_dt]
+
+    if end_date is not None:
+        end_dt = datetime.datetime.strptime(end_date, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+        df = df.loc[df.index <= end_dt]
+
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"retrospective_{river_id}")
+    if return_format == "json":
+        return df_to_jsonify_response(df=df, river_id=river_id)
+    return df
+
+def retrospective_hourly(
+    river_id: int,
+    return_format: str,
+    start_date: str = None,
+    end_date: str = None,
+) -> pd.DataFrame:
+    """
+    Controller for retrieving simulated historic data
+    """
+    df = geoglows.data.retro_hourly(river_id, skip_log=True)
+    df.columns = df.columns.astype(str)
+    df = df.astype(float).round(2)
+
+    if start_date is not None:
+        start_dt = datetime.datetime.strptime(start_date, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+        df = df.loc[df.index >= start_dt]
+
+    if end_date is not None:
+        end_dt = datetime.datetime.strptime(end_date, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+        df = df.loc[df.index <= end_dt]
+
+    if return_format == "csv":
+        return df_to_csv_flask_response(df, f"retrospective_{river_id}")
+    if return_format == "json":
+        return df_to_jsonify_response(df=df, river_id=river_id)
+    return df
+
+def retrospective_monthly(
+    river_id: int,
+    return_format: str,
+    start_date: str = None,
+    end_date: str = None,
+    bias_corrected: bool = False,
+) -> pd.DataFrame:
+    """
+    Controller for retrieving simulated historic data
+    """
+    if bias_corrected:
+        sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
+        data = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
+        df = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        df['Simulated'] = sim_data[river_id]
+    else:
+        df = geoglows.data.retro_monthly(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -71,11 +135,14 @@ def retrospective(
 
 def daily_averages(river_id: int, return_format: str, bias_corrected: bool = False):
     if bias_corrected:
-        data = geoglows.bias.sfdc_bias_correction(river_id)
-        df = data.groupby([data.index.month, data.index.day]).mean()
-        df.index = df.index.map(lambda x: f"{x[0]:02d}-{x[1]:02d}")
+        sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
+        data = geoglows.bias.sfdc_bias_correction(sim_data, river_id)
+        data = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        data['Simulated'] = sim_data[river_id]
     else:
-        df = geoglows.data.daily_averages(river_id, skip_log=True)
+        data = geoglows.data.retro_daily(river_id)
+    df = data.groupby([data.index.month, data.index.day]).mean()
+    df.index = df.index.map(lambda x: f"{x[0]:02d}-{x[1]:02d}")
     df.columns = df.columns.astype(str)
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"daily_averages_{river_id}")
@@ -86,10 +153,13 @@ def daily_averages(river_id: int, return_format: str, bias_corrected: bool = Fal
 
 def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = False):
     if bias_corrected:
-        data = geoglows.bias.sfdc_bias_correction(river_id)
-        df = data.groupby(data.index.month).mean()
+        sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
+        data = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
+        data = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        data['Simulated'] = sim_data[river_id]
     else:
-        df = geoglows.data.monthly_averages(river_id, skip_log=True)
+        data = geoglows.data.retro_monthly(river_id)
+    df = data.groupby(data.index.month).mean()
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -102,9 +172,12 @@ def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = F
 
 def yearly_averages(river_id, return_format, bias_corrected: bool = False):
     if bias_corrected:
-        df = geoglows.bias.sfdc_bias_correction(river_id).resample("YS").mean()
+        sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
+        df = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("YS").mean()
+        df = df.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        df['Simulated'] = sim_data[river_id]
     else:
-        df = geoglows.data.annual_averages(river_id, skip_log=True)
+        df = geoglows.data.retro_yearly(river_id)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
 
@@ -117,9 +190,12 @@ def yearly_averages(river_id, return_format, bias_corrected: bool = False):
 
 def return_periods(river_id: int, return_format: str, bias_corrected: bool = False):
     if bias_corrected:
-        df = geoglows.bias.sfdc_bias_correction(river_id)
+        sim_data = geoglows.data.retro_daily(river_id)
+        df = geoglows.bias.sfdc_bias_correction(sim_data = sim_data, river_id=river_id)
         rps = [2, 5, 10, 25, 50, 100]
         results = []
+        df = df.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        df['Simulated'] = sim_data[river_id]
         for column in ["Simulated", "Bias Corrected Simulation"]:
             annual_max_flow_list = df.groupby(df.index.strftime('%Y'))[column].max().values.flatten()
             xbar = np.mean(annual_max_flow_list)
@@ -132,30 +208,15 @@ def return_periods(river_id: int, return_format: str, bias_corrected: bool = Fal
             results.append(ret_pers)
         df = pd.DataFrame(results).set_index("Data Type")
     else:
-        ds = xr.open_zarr(PATH_TO_RETURN_PERIODS).sel(rivid=river_id)
-        if return_format == "xarray":
-            return ds
-
-        df = (
-            ds["gumbel1_return_period"]
-            .to_dataframe()
-            .reset_index()
-            .pivot(
-                index="rivid",
-                columns="return_period",
-                values="gumbel1_return_period",
-            )
-        )
+        df =  geoglows.data.return_periods(river_id)
     df.columns = df.columns.astype(str)
     df = df.astype(float).round(2)
-    if return_format == "df":
-        return df
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"return_periods_{river_id}")
     if return_format == "json":
         return jsonify(
             {
-                "return_periods": json.loads(df.to_json(orient="records"))[0],
+                "return_periods": df['760635062'].to_dict(),
                 "river_id": river_id,
                 "gen_date": datetime.datetime.now(datetime.UTC).strftime(
                     "%Y-%m-%dT%X+00:00"

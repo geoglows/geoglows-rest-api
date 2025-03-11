@@ -21,7 +21,7 @@ __all__ = [
     "hydroviewer",
     "forecast",
     "forecast_stats",
-    "forecast_ensembles",
+    "forecast_ensemble",
     "forecast_records",
     "forecast_dates",
 ]
@@ -154,7 +154,7 @@ def forecast_stats(
         return df
 
 
-def forecast_ensembles(river_id: int, date: str, return_format: str):
+def forecast_ensemble(river_id: int, date: str, return_format: str):
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame
@@ -173,7 +173,7 @@ def forecast_ensembles(river_id: int, date: str, return_format: str):
     df = df.astype(np.float64).round(NUM_DECIMALS)
 
     if return_format == "csv":
-        return df_to_csv_flask_response(df, f"forecast_ensembles_{river_id}")
+        return df_to_csv_flask_response(df, f"forecast_ensemble_{river_id}")
     if return_format == "json":
         return df_to_jsonify_response(df=df, river_id=river_id)
     if return_format == "df":
