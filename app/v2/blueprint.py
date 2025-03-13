@@ -55,11 +55,11 @@ def rest_endpoints_v2(product: str, river_id: int = None):
         return forecast_records(river_id, start_date, end_date, return_format=return_format)
 
     # retrospective data products
-    elif product == 'retrospective-daily':
+    elif product == 'retrospectivedaily':
         return retrospective_daily(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
-    elif product == 'retrospective-hourly':
+    elif product == 'retrospectivehourly':
         return retrospective_hourly(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
-    elif product == 'retrospective-monthly':
+    elif product == 'retrospectivemonthly':
         return retrospective_monthly(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
     elif product == 'returnperiods':
         return return_periods(river_id, return_format=return_format, bias_corrected=bias_corrected)
@@ -112,9 +112,9 @@ def handle_request(request, product, river_id):
         'forecastensemble',
         'forecastrecords',
 
-        'retrospective-hourly',
-        'retrospective-daily',
-        'retrospective-monthly',
+        'retrospectivehourly',
+        'retrospectivedaily',
+        'retrospectivemonthly',
         'monthlyaverages',
         'dailyaverages',
         'annualaverages',

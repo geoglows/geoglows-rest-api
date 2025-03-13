@@ -49,9 +49,9 @@ def retrospective_daily(
     """
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
-        data = geoglows.bias.sfdc_bias_correction(sim_data, river_id)
-        data = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        data['Simulated'] = sim_data[river_id]
+        df = geoglows.bias.sfdc_bias_correction(sim_data, river_id)
+        df = df.rename(columns={str(river_id): 'Bias Corrected Simulation'})
+        df['Simulated'] = sim_data[river_id]
     else:
         df = geoglows.data.retro_daily(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
@@ -216,7 +216,7 @@ def return_periods(river_id: int, return_format: str, bias_corrected: bool = Fal
     if return_format == "json":
         return jsonify(
             {
-                "return_periods": df['760635062'].to_dict(),
+                "return_periods": df.to_dict(),
                 "river_id": river_id,
                 "gen_date": datetime.datetime.now(datetime.UTC).strftime(
                     "%Y-%m-%dT%X+00:00"
