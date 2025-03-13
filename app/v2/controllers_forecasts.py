@@ -154,7 +154,7 @@ def forecast_stats(
         return df
 
 
-def forecast_ensemble(river_id: int, date: str, return_format: str):
+def forecast_ensemble(river_id: int, date: str, return_format: str, bias_corrected: bool):
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame
