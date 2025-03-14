@@ -136,11 +136,11 @@ def handle_request(request, product, river_id):
         'forecastensembles': 'forecastensemble',
 
         # aliases for retrospective
-        'historical': 'retrospective-daily',
-        'historicalsimulation': 'retrospective-daily',
-        'hindcast': 'retrospective-daily',
-        'historicsimulation': 'retrospective-daily',
-        'retrospective': 'retrospective-daily',
+        'historical': 'retrospectivedaily',
+        'historicalsimulation': 'retrospectivedaily',
+        'hindcast': 'retrospectivedaily',
+        'historicsimulation': 'retrospectivedaily',
+        'retrospective': 'retrospectivedaily',
 
         # aliases for derived historical products
         'monavg': 'monthlyaverages',

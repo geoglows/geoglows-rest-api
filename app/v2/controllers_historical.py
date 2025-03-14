@@ -50,8 +50,7 @@ def retrospective_daily(
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         df = geoglows.bias.sfdc_bias_correction(sim_data, river_id)
-        df = df.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        df['Simulated'] = sim_data[river_id]
+        df[f"{river_id}_original"] = sim_data[river_id]
     else:
         df = geoglows.data.retro_daily(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
@@ -110,9 +109,8 @@ def retrospective_monthly(
     """
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
-        data = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
-        df = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        df['Simulated'] = sim_data[river_id]
+        df = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
+        df[f"{river_id}_original"] = sim_data[river_id]
     else:
         df = geoglows.data.retro_monthly(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
@@ -137,8 +135,7 @@ def daily_averages(river_id: int, return_format: str, bias_corrected: bool = Fal
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         data = geoglows.bias.sfdc_bias_correction(sim_data, river_id)
-        data = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        data['Simulated'] = sim_data[river_id]
+        data[f"{river_id}_original"] = sim_data[river_id]
     else:
         data = geoglows.data.retro_daily(river_id)
     df = data.groupby([data.index.month, data.index.day]).mean()
@@ -155,8 +152,7 @@ def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = F
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         data = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
-        data = data.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        data['Simulated'] = sim_data[river_id]
+        data[f"{river_id}_original"] = sim_data[river_id]
     else:
         data = geoglows.data.retro_monthly(river_id)
     df = data.groupby(data.index.month).mean()
@@ -174,8 +170,7 @@ def yearly_averages(river_id, return_format, bias_corrected: bool = False):
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         df = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("YS").mean()
-        df = df.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        df['Simulated'] = sim_data[river_id]
+        df[f"{river_id}_original"] = sim_data[river_id]
     else:
         df = geoglows.data.retro_yearly(river_id)
     df.columns = df.columns.astype(str)
@@ -194,37 +189,55 @@ def return_periods(river_id: int, return_format: str, bias_corrected: bool = Fal
         df = geoglows.bias.sfdc_bias_correction(sim_data = sim_data, river_id=river_id)
         rps = [2, 5, 10, 25, 50, 100]
         results = []
-        df = df.rename(columns={str(river_id): 'Bias Corrected Simulation'})
-        df['Simulated'] = sim_data[river_id]
-        for column in ["Simulated", "Bias Corrected Simulation"]:
+        df = df.rename(columns={str(river_id): 'return_periods'})
+        df['return_periods_original'] = sim_data[river_id]
+        for column in ["return_periods_original", "return_periods"]:
             annual_max_flow_list = df.groupby(df.index.strftime('%Y'))[column].max().values.flatten()
             xbar = np.mean(annual_max_flow_list)
             std = np.std(annual_max_flow_list)
 
             # Compute return periods
             ret_pers = {'Data Type': column, 'max_simulated': round(np.max(annual_max_flow_list), 2)}
-            ret_pers.update({f'return_period_{rp}': round(gumbel1(rp, xbar, std), 2) for rp in rps})
+            ret_pers.update({f'{rp}': round(gumbel1(rp, xbar, std), 2) for rp in rps})
             
             results.append(ret_pers)
-        df = pd.DataFrame(results).set_index("Data Type")
+        df = (pd.DataFrame(results).set_index("Data Type")).transpose()
+        df.columns = df.columns.astype(str)
+        df = df.astype(float).round(2)
+        if return_format == "json":
+            return jsonify(
+                {
+                    "return_periods_original": df["return_periods_original"].to_dict(),
+                    "return_periods": df["return_periods"].to_dict(),
+                    "river_id": river_id,
+                    "gen_date": datetime.datetime.now(datetime.UTC).strftime(
+                        "%Y-%m-%dT%X+00:00"
+                    ),
+                    "units": {
+                        "name": "streamflow",
+                        "short": "cms",
+                        "long": "cubic meters per second",
+                    },
+                }
+            )
     else:
         df =  geoglows.data.return_periods(river_id)
-    df.columns = df.columns.astype(str)
-    df = df.astype(float).round(2)
+        df.columns = df.columns.astype(str)
+        df = df.astype(float).round(2)
+        if return_format == "json":
+            return jsonify(
+                {
+                    "return_periods": df.squeeze().to_dict(),
+                    "river_id": river_id,
+                    "gen_date": datetime.datetime.now(datetime.UTC).strftime(
+                        "%Y-%m-%dT%X+00:00"
+                    ),
+                    "units": {
+                        "name": "streamflow",
+                        "short": "cms",
+                        "long": "cubic meters per second",
+                    },
+                }
+            )
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"return_periods_{river_id}")
-    if return_format == "json":
-        return jsonify(
-            {
-                "return_periods": df.to_dict(),
-                "river_id": river_id,
-                "gen_date": datetime.datetime.now(datetime.UTC).strftime(
-                    "%Y-%m-%dT%X+00:00"
-                ),
-                "units": {
-                    "name": "streamflow",
-                    "short": "cms",
-                    "long": "cubic meters per second",
-                },
-            }
-        )
