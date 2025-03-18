@@ -71,7 +71,7 @@ def hydroviewer(river_id: int, date: str, records_start: str) -> jsonify:
     return jsonify(json_template), 200
 
 
-def forecast(river_id: int, date: str, return_format: str) -> pd.DataFrame:
+def forecast(river_id: int, date: str, return_format: str, bias_corrected: bool = False) -> pd.DataFrame:
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # get an array of all the ensembles, delete the high res before doing averages
@@ -114,7 +114,7 @@ def forecast(river_id: int, date: str, return_format: str) -> pd.DataFrame:
 
 
 def forecast_stats(
-    river_id: int, date: str, return_format: str
+    river_id: int, date: str, return_format: str, bias_corrected: bool = False,
 ) -> pd.DataFrame:
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
@@ -154,7 +154,7 @@ def forecast_stats(
         return df
 
 
-def forecast_ensemble(river_id: int, date: str, return_format: str, bias_corrected: bool):
+def forecast_ensemble(river_id: int, date: str, return_format: str, bias_corrected: bool = False):
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
 
     # make a list column names (with zero padded numbers) for the pandas DataFrame

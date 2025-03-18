@@ -46,11 +46,11 @@ def rest_endpoints_v2(product: str, river_id: int = None):
     if product == 'dates':
         return forecast_dates(return_format=return_format)
     elif product == 'forecast':
-        return forecast(river_id, date, return_format=return_format)
+        return forecast(river_id, date, return_format=return_format, bias_corrected=bias_corrected)
     elif product in 'forecaststats':
-        return forecast_stats(river_id, date, return_format=return_format)
+        return forecast_stats(river_id, date, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'forecastensemble':
-        return forecast_ensemble(river_id, date, return_format=return_format)
+        return forecast_ensemble(river_id, date, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'forecastrecords':
         return forecast_records(river_id, start_date, end_date, return_format=return_format)
 
