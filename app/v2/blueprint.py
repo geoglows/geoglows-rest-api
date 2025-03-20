@@ -75,7 +75,7 @@ def rest_endpoints_v2(product: str, river_id: int = None):
         return get_river_id(request.args.get('lat'), request.args.get('lon'))
 
     elif product == "hydroviewer":
-        return hydroviewer(river_id, date, start_date)
+        return hydroviewer(river_id, date, start_date, bias_corrected=bias_corrected)
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201

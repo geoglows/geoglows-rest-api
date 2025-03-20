@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from flask import jsonify
+import geoglows
 
 from .constants import NUM_DECIMALS, PACKAGE_METADATA_TABLE_PATH
 from .data import (
@@ -27,10 +28,11 @@ __all__ = [
 ]
 
 
-def hydroviewer(river_id: int, date: str, records_start: str) -> jsonify:
+def hydroviewer(river_id: int, date: str, records_start: str, bias_corrected: bool = False) -> jsonify:
     if date == "latest":
         date = find_available_dates()[-1]
     forecast_df = forecast(river_id, date, "df")
+    print(forecast_df)
 
     rperiods = return_periods(river_id, return_format="df")
 
@@ -73,7 +75,6 @@ def hydroviewer(river_id: int, date: str, records_start: str) -> jsonify:
 
 def forecast(river_id: int, date: str, return_format: str, bias_corrected: bool = False) -> pd.DataFrame:
     forecast_xarray_dataset = get_forecast_dataset(river_id, date)
-
     # get an array of all the ensembles, delete the high res before doing averages
     merged_array = forecast_xarray_dataset.data
     merged_array = np.delete(
@@ -105,7 +106,17 @@ def forecast(river_id: int, date: str, return_format: str, bias_corrected: bool 
     )
     df.index = df.index.strftime("%Y-%m-%dT%X+00:00")
     df.index.name = "datetime"
+    if bias_corrected:
+        df.index = pd.to_datetime(df.index)
+        data = geoglows.bias.sfdc_bias_correction(df, river_id).round(NUM_DECIMALS)
+        data = data.merge(df.add_suffix("_original"), left_index=True, right_index=True, how="left")
 
+        if return_format == "csv":
+            return df_to_csv_flask_response(data, f"forecast_{river_id}")
+        if return_format == "json":
+            return df_to_jsonify_response(df=data, river_id=river_id)
+        return data
+    
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"forecast_{river_id}")
     if return_format == "json":
@@ -145,6 +156,18 @@ def forecast_stats(
     df.index = df.index.strftime("%Y-%m-%dT%X+00:00")
     df.index.name = "datetime"
     df = df.astype(np.float64).round(NUM_DECIMALS)
+    if bias_corrected:
+        print("IN BIAS CORRECTED")
+        df.index = pd.to_datetime(df.index)
+        df = df.drop(columns=["high_res"])
+        data = geoglows.bias.sfdc_bias_correction(df, river_id).round(NUM_DECIMALS)
+        data = data.merge(df.add_suffix("_original"), left_index=True, right_index=True, how="left")
+
+        if return_format == "csv":
+            return df_to_csv_flask_response(data, f"forecast_stats_{river_id}")
+        if return_format == "json":
+            return df_to_jsonify_response(df=data, river_id=river_id)
+        return data
 
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"forecast_stats_{river_id}")
@@ -171,6 +194,17 @@ def forecast_ensemble(river_id: int, date: str, return_format: str, bias_correct
     df.index = df.index.strftime("%Y-%m-%dT%X+00:00")
     df.index.name = "datetime"
     df = df.astype(np.float64).round(NUM_DECIMALS)
+    if bias_corrected:
+        df.index = pd.to_datetime(df.index)
+        df = df.drop(columns=["ensemble_52"])
+        data = geoglows.bias.sfdc_bias_correction(df, river_id).round(NUM_DECIMALS)
+        data = data.merge(df.add_suffix("_original"), left_index=True, right_index=True, how="left")
+
+        if return_format == "csv":
+            return df_to_csv_flask_response(data, f"forecast_ensemble_{river_id}")
+        if return_format == "json":
+            return df_to_jsonify_response(df=data, river_id=river_id)
+        return data
 
     if return_format == "csv":
         return df_to_csv_flask_response(df, f"forecast_ensemble_{river_id}")
