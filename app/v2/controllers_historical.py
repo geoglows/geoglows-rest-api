@@ -239,5 +239,7 @@ def return_periods(river_id: int, return_format: str, bias_corrected: bool = Fal
                     },
                 }
             )
-    if return_format == "csv":
+    if return_format == "df":
+        return df
+    elif return_format == "csv":
         return df_to_csv_flask_response(df, f"return_periods_{river_id}")

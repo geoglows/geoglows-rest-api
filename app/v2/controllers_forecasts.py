@@ -31,10 +31,8 @@ __all__ = [
 def hydroviewer(river_id: int, date: str, records_start: str, bias_corrected: bool = False) -> jsonify:
     if date == "latest":
         date = find_available_dates()[-1]
-    forecast_df = forecast(river_id, date, "df")
-    print(forecast_df)
-
-    rperiods = return_periods(river_id, return_format="df")
+    forecast_df = forecast(river_id, date, "df", bias_corrected=bias_corrected)
+    rperiods = return_periods(river_id, return_format="df", bias_corrected=bias_corrected)
 
     # add the columns from the dataframe
     json_template = new_json_template(
@@ -42,13 +40,21 @@ def hydroviewer(river_id: int, date: str, records_start: str, bias_corrected: bo
         start_date=forecast_df.index[0],
         end_date=forecast_df.index[-1],
     )
-    json_template["metadata"]["series"] = (
-        ["datetime_forecast", "return_periods"] + forecast_df.columns.tolist()
-    )
     
-    json_template.update(forecast_df.to_dict(orient="list"))
-    json_template.update({"datetime_forecast": forecast_df.index.tolist()})
-    json_template["return_periods"] = rperiods.to_dict(orient="records")[0]
+    if bias_corrected:
+        json_template["metadata"]["series"] = (["datetime_forecast", "return_periods", "return_periods_original"] + forecast_df.columns.tolist())
+        json_template.update(forecast_df.to_dict(orient="list"))
+        json_template.update({"datetime_forecast": forecast_df.index.tolist()})
+        json_template["return_periods_original"] = rperiods['return_periods_original'].to_dict()
+        json_template["return_periods"] = rperiods['return_periods'].to_dict()
+    else:
+        rperiods.reset_index(inplace=True) # Make sure the return_period is a column
+        rperiods.columns = ['return_period', river_id]  # Rename columns for clarity
+        rperiods.set_index('return_period', inplace=True)
+        json_template["metadata"]["series"] = (["datetime_forecast", "return_periods"] + forecast_df.columns.tolist())
+        json_template.update(forecast_df.to_dict(orient="list"))
+        json_template.update({"datetime_forecast": forecast_df.index.tolist()})
+        json_template["return_periods"] = rperiods.to_dict(orient='dict')[river_id]
     
     if records_start:
         records_df = forecast_records(
