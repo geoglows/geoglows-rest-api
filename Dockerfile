@@ -21,7 +21,7 @@ RUN chmod +x /startup.sh
 RUN micromamba create -n app-env --yes --file "environment.yaml" && micromamba clean --all --yes
 
 # download a copy of the package metadata table
-RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-table.parquet -O /app/package-metadata-table.parquet
+RUN wget http://rfs-v2.s3-us-west-2.amazonaws.com/tables/model-metadata-table.parquet -O /app/package-metadata-table.parquet
 ENV PYGEOGLOWS_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
 
 # download the transformer table
@@ -29,7 +29,7 @@ RUN wget http://rfs-v2.s3-us-west-2.amazonaws.com/transformers/transformer_table
 ENV PYGEOGLOWS_TRANSFORMER_TABLE_URI=/app/transformer_table.parquet
 
 # download the return periods zarr to avoid network errors
-RUN aws s3 cp s3://geoglows-v2-retrospective/return-periods.zarr /app/return-periods.zarr --recursive --no-sign-request
+RUN aws s3 cp s3://rfs-v2/retrospective/return-periods.zarr /app/return-periods.zarr --recursive --no-sign-request
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int

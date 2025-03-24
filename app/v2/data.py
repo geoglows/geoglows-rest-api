@@ -22,11 +22,11 @@ def get_forecast_dataset(river_id: int, date: str) -> xr.Dataset:
     if len(date) == 8:
         date = f"{date}00"
 
-    forecast_file = os.path.join(PATH_TO_FORECASTS, f'Qout_{date}.zarr')
-
+    #forecast_file = os.path.join(PATH_TO_FORECASTS, f'Qout_{date}.zarr')
+    forecast_file = os.path.join(PATH_TO_FORECASTS, f'{date}.zarr')
+    
     if not os.path.exists(forecast_file):
         raise ValueError(f'Data not found for date {date}. Use YYYYMMDD format and the AvailableDates endpoint.')
-
     try:
         forecast_dataset = xr.open_zarr(forecast_file)
     except Exception as e:
@@ -57,7 +57,9 @@ def get_forecast_records_dataset(vpu: str, year: str):
 
 
 def find_available_dates() -> list:
-    forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, "Qout*.zarr"))
+    # forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, "Qout*.zarr"))
+    forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, "*.zarr"))
     forecast_zarrs = natsort.natsorted(forecast_zarrs, reverse=True)
-    dates = [os.path.basename(d).replace('.zarr', '').split('_')[1] for d in forecast_zarrs]
+    #dates = [os.path.basename(d).replace('.zarr', '').split('_')[1] for d in forecast_zarrs]
+    dates = [os.path.basename(d).replace('.zarr', '') for d in forecast_zarrs]
     return dates
