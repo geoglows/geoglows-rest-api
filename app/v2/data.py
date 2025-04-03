@@ -59,7 +59,6 @@ def get_forecast_records_dataset(vpu: str, year: str):
 def find_available_dates() -> list:
     forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, "Qout*.zarr"))
     # forecast_zarrs = glob(os.path.join(PATH_TO_FORECASTS, "*.zarr"))
-    print(forecast_zarrs)
     forecast_zarrs = natsort.natsorted(forecast_zarrs, reverse=True)
     dates = [os.path.basename(d).replace('.zarr', '').split('_')[1] for d in forecast_zarrs]
     # dates = [os.path.basename(d).replace('.zarr', '') for d in forecast_zarrs]
