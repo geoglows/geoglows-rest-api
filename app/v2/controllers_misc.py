@@ -13,5 +13,5 @@ def get_river_id(lat: float, lon: float):
     """
     if not lat or not lon:
         raise ValueError('Provide both lat and lon arguments')
-    river_id = geoglows.streams.latlon_to_river(lat=float(lat), lon=float(lon))
+    river_id = geoglows.data.latlon_to_river(lat=float(lat), lon=float(lon))
     return jsonify(dict(river_id=int(river_id)))

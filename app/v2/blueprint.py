@@ -58,7 +58,7 @@ def rest_endpoints_v2(product: str, river_id: int = None):
     elif product == 'retrospectivedaily':
         return retrospective_daily(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
     elif product == 'retrospectivehourly':
-        return retrospective_hourly(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
+        return retrospective_hourly(river_id, return_format=return_format, start_date=start_date, end_date=end_date)
     elif product == 'retrospectivemonthly':
         return retrospective_monthly(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
     elif product == 'returnperiods':

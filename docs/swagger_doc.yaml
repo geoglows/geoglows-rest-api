@@ -113,12 +113,12 @@ paths:
           description: Bad request. Check request and parameters.
           examples:
             error: An unexpected error occurred.
-  /v2/forecastensembles/{river_id}:
+  /v2/forecastensemble/{river_id}:
     get:
       tags:
         - 'Version 2'
       description: This operation returns a timeseries for each of the 51 normal forecast ensemble members and the 52nd higher resolution forecast. A successful response will return a time series with date-value pairs.
-      summary: Return forecast ensembles
+      summary: Return forecast ensemble
       parameters:
         - name: river_id
           in: path
@@ -173,7 +173,7 @@ paths:
           required: true
         - name: start_date
           in: query
-          description: A date in YYYYMMDD format when you would like to start retrieving data (if available). Defaults to Jan 1 of the current year.
+          description: A date in YYYYMMDD format when you would like to start retrieving data (if available). Defaults to 14 days prior to most recent available date.
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
         - name: end_date
@@ -363,12 +363,6 @@ paths:
           description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. Defaults to the most recent date.
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
-        - name: bias_corrected
-          in: query
-          required: False
-          description: If true, the return data will show improvements based on global bias correction techniques. If false, the data will not be bias corrected.
-          type: boolean
-          default: False
       produces:
         - text/csv
         - application/json
