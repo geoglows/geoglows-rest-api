@@ -24,6 +24,10 @@ RUN micromamba create -n app-env --yes --file "environment.yaml" && micromamba c
 RUN wget http://rfs-v2.s3-us-west-2.amazonaws.com/tables/model-metadata-table.parquet -O /app/package-metadata-table.parquet
 ENV PYGEOGLOWS_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
 
+# download a copy of the package metadata table with extra attributes
+RUN wget http://rfs-v2.s3-us-west-2.amazonaws.com/tables/tdxhydro-extra-attributes.parquet -O /app/extra-metadata-table.parquet
+ENV PYGEOGLOWS_EXTRA_METADATA_TABLE_PATH=/app/extra-metadata-table.parquet
+
 # download the transformer table
 RUN wget http://rfs-v2.s3-us-west-2.amazonaws.com/transformers/transformer_table.parquet -O /app/transformer_table.parquet
 ENV PYGEOGLOWS_TRANSFORMER_TABLE_URI=/app/transformer_table.parquet
