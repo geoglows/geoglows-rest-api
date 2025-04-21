@@ -13,6 +13,7 @@ on:
       - "*"
 
 env:
+  HELM_REPO_URL: https://eccr.ecmwf.int
   HELM_CHART: ${{ github.workspace }}/helm/gsprestapi
   HELM_REPO_USERNAME: ${{ secrets.HELM_REPO_USERNAME }}
   HELM_KEY_PASSPHRASE: ${{ secrets.HELM_KEY_PASSPHRASE }}
@@ -31,9 +32,6 @@ jobs:
   check-helm: 
       name: Check Helm
       runs-on: ubuntu-latest
-      if: github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/')
-      container:
-        image: docker.aquaveo.com/tethys/kubernetes/helm-docker:0.7.1
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
@@ -57,14 +55,14 @@ jobs:
 
   update-helm: 
     runs-on: ubuntu-latest
-    container: docker.aquaveo.com/tethys/kubernetes/helm-docker:0.7.1s
+    needs: check-helm
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           submodules: false
 
-      - name: Ensure Required Variabvles Are Set
+      - name: Ensure Required Variables Are Set
         run: |
           : "${HELM_CHART:?must be set}"
           : "${HELM_KEY_PASSPHRASE:?must be set}"
@@ -73,67 +71,87 @@ jobs:
       - name: Run Helm Lint
         run: helm lint $HELM_CHART
 
-      - name: Run CHeck Helm Script and Upload
+      - name: Run Check Helm Script and Upload
         run: |
           chmod +x ./check_helm_chart
           ./check_helm_chart $HELM_CHART --upload
 
   kaniko-build:
     runs-on: ubuntu-latest
-    container: gcr.io/kaniko-project/executor:debug-v0.23.0
-
+    container:
+      image: gcr.io/kaniko-project/executor:debug
+      options: --entrypoint ""
     strategy:
       matrix:
-        build_type: [commit, tag, stable]
+        build_type: [tag, stable]
       
     steps:
+      - name: Check Build Type
+        run: |
+          echo "Ref: $GITHUB_REF | Build Type: ${{ matrix.build_type }}"
+          if [[ "${{ matrix.build_type }}" == "tag" && !"${GITHUB_REF}" =~ ^refs/tags/ ]]; then
+            echo "Not a tag build, skipping..."
+            exit 0
+          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" != "stable" ]]; then
+            echo "Not a stable build, skipping..."
+            exit 0
+          fi
+          echo "Build type is valid, proceeding..."
+
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with: 
+        with:
           submodules: true
           fetch-depth: 0
-
-      - name: Setup Docker Config File
+      
+      - name: Set Docker Config
         run: |
-          echo '{
-            "auths": {
-              "'$CI_REGISTRY'": {"username":"'$CI_REGISTRY_USER'", "password":"'$CI_REGISTRY_PASSWORD'"},
-              "eccr.ecmwf.int/harbor": {"username":"'$ECCR_USER'", "password":"'$ECCR_PASSWORD'"}
+          echo "{\"auths\":{
+            \"$CI_REGISTRY\": {
+              \"username\":\"$CI_REGISTRY_USER\", 
+              \"password\":\"$CI_REGISTRY_PASSWORD\"
+            },
+            \"eccr.ecmwf.int/harbor\": {
+              \"username\":\"$ECCR_USER\", 
+              \"password\":\"$ECCR_PASSWORD\"
             }
-          }' > /kaniko/.docker/config.json
+          }}" > /kaniko/.docker/config.json
 
-      - name: Set Build Variables Based on Matrix
+      - name: Set Kaniko Build Variables
         run: |
-          case "${{ matrix.build_type }}" in
-            commit)
-              echo "KANIKO_DEST=$$CI_REGISTRY_IMAGE/dev:$CI_COMMIT_SHORT_SHA" >> $GITHUB_ENV
-              ;;
-            tag)
-              echo "KANIKO_DEST=eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }}" >> $GITHUB_ENV
-              echo "KANIKO_DEST=eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
-              ;;
-            stable)
-              echo "KANIKO_DEST=eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
-              ;;
-          esac
-
-      - name: Ensure Required Variables Are Set
-        run: |
-          : "${KANIKO_DOCKERFILE:?must be set}"
-          : "${KANIKO_CONTEXT:?must be set}"
-          : "${KANIKO_DESTINATIONS:?must be set}"
+          SHORT_SHA=${GITHUB_SHA::7}
+          if [[ "${{ matrix.build_type }}" == "tag" ]]; then
+            echo "KANIKO_DESTINATIONS='eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }} eccr.ecmwf.int/geoglows_api/geoglows_api:latest'" >> $GITHUB_ENV
+          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "stable" ]]; then
+            echo "KANIKO_DESTINATIONS='eccr.ecmwf.int/geoglows_api/geoglows_api:stable'" >> $GITHUB_ENV
+          else
+            echo "No valid build type" >&2
+            exit 1
+          fi
 
       - name: Run Kaniko Build & Push
         run: |
-          /kaniko/executor \
-            --context ${{ github.workspace }} \
-            --dockerfile ${{ github.workspace }}/Dockerfile \
-            --destination $KANIKO_DEST \
-            --cache=true \
-            --cache-repo $CI_REGISTRY_IMAGE/cache \
-            --force
+          # Ensure required vars are set
+          [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
+          [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
+          [[ -z "${KANIKO_DESTINATIONS}" ]] && echo "KANIKO_DESTINATIONS must be set" && exit 1
+
+          # Build the Kaniko command
+          KANIKO_CMD="/kaniko/executor --context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE}"
+
+          for DEST in $KANIKO_DESTINATIONS; do
+            KANIKO_CMD="$KANIKO_CMD --destination $DEST"
+          done
+
+          KANIKO_CMD="$KANIKO_CMD --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+
+          echo "$KANIKO_CMD"
+          eval $KANIKO_CMD
+        env:
+          KANIKO_DOCKERFILE: ${{ env.KANIKO_DOCKERFILE }}
+          KANIKO_CONTEXT: ${{ env.KANIKO_CONTEXT }}
+          KANIKO_DESTINATIONS: ${{ env.KANIKO_DESTINATIONS }}
+          CI_REGISTRY_IMAGE: ${{ env.CI_REGISTRY_IMAGE }}
             
-        
-              
-        
-        
+      
+
