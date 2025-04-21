@@ -86,25 +86,15 @@ jobs:
         build_type: [tag, stable]
       
     steps:
-      - name: Check Build Type
-        run: |
-          echo "Ref: $GITHUB_REF | Build Type: ${{ matrix.build_type }}"
-          if [[ "${{ matrix.build_type }}" == "tag" && ! "${GITHUB_REF}" =~ ^refs/tags/ ]]; then
-            echo "Not a tag build, skipping..."
-            exit 0
-          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" != "stable" ]]; then
-            echo "Not a stable build, skipping..."
-            exit 0
-          fi
-          echo "Build type is valid, proceeding..."
-
       - name: Checkout Repository
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'stable'
         uses: actions/checkout@v4
         with:
           submodules: true
           fetch-depth: 0
       
       - name: Set Docker Config
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'stable'
         run: |
           echo "{\"auths\":{
             \"$CI_REGISTRY\": {
@@ -118,6 +108,7 @@ jobs:
           }}" > /kaniko/.docker/config.json
 
       - name: Set Kaniko Build Variables
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'stable'
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           if [[ "${{ matrix.build_type }}" == "tag" ]]; then
@@ -130,6 +121,7 @@ jobs:
           fi
 
       - name: Run Kaniko Build & Push
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'stable'
         run: |
           # Ensure required vars are set
           [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
