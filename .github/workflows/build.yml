@@ -89,7 +89,7 @@ jobs:
       - name: Check Build Type
         run: |
           echo "Ref: $GITHUB_REF | Build Type: ${{ matrix.build_type }}"
-          if [[ "${{ matrix.build_type }}" == "tag" && !"${GITHUB_REF}" =~ ^refs/tags/ ]]; then
+          if [[ "${{ matrix.build_type }}" == "tag" && ! "${GITHUB_REF}" =~ ^refs/tags/ ]]; then
             echo "Not a tag build, skipping..."
             exit 0
           elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" != "stable" ]]; then
