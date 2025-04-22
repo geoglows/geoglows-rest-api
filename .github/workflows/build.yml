@@ -104,7 +104,6 @@ jobs:
       - name: Set Docker Config
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
         run: |
-          mkdir -p /kaniko/.docker
           echo "{\"auths\":{
             \"$CI_REGISTRY\": {
               \"username\":\"$CI_REGISTRY_USER\", 
@@ -114,7 +113,7 @@ jobs:
               \"username\":\"$ECCR_USER\", 
               \"password\":\"$ECCR_PASSWORD\"
             }
-          }}" > /kaniko/.docker/config.json
+          }}" > docker-config.json
 
       - name: Set Kaniko Build Variables
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
