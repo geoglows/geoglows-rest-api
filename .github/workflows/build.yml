@@ -104,6 +104,7 @@ jobs:
       - name: Set Docker Config
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
         run: |
+          mkdir -p /kaniko/.docker
           echo "{\"auths\":{
             \"$CI_REGISTRY\": {
               \"username\":\"$CI_REGISTRY_USER\", 
