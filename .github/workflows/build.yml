@@ -84,8 +84,14 @@ jobs:
     strategy:
       matrix:
         build_type: [tag, stable]
-      
+    
+    
+    
     steps:
+      - name: Install git and rsync
+        run: |
+          apk add --no-cache git rsync
+          
       - name: Manually Clone Repository
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
         run: |

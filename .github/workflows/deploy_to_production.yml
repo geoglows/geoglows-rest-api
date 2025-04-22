@@ -18,4 +18,4 @@ jobs:
       - name: Deploy to Production
         run: |
           echo ${{ github.ref_name }}
-          curl -X POST -H "Authorization: Bearer $ECCR_GEOGLOWS_TOKEN" -d "bamboo.COMMIT_TAG=${{ gtihub.ref_name }}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES1
+          curl -X POST -H "Authorization: Bearer $ECCR_GEOGLOWS_TOKEN" -d "bamboo.COMMIT_TAG=${{ github.ref_name }}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES1
