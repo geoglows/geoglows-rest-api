@@ -123,6 +123,7 @@ jobs:
           }}" > /kaniko/.docker/config.json
 
       - name: Set Kaniko Build Variables
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           if [[ "${{ matrix.build_type }}" == "tag" ]]; then
