@@ -25,8 +25,8 @@ env:
   ECCR_USER: ${{ secrets.ECCR_USER }}
   ECCR_PASSWORD: ${{ secrets.ECCR_PASSWORD }}
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
-  KANIKO_DOCKERFILE: ${{ github.workspace }}/Dockerfile
-  KANIKO_CONTEXT: ${{ github.workspace }}
+  KANIKO_DOCKERFILE: /workspace/Dockerfile
+  KANIKO_CONTEXT: /workspace
 
 
 jobs:
