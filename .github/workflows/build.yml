@@ -131,30 +131,26 @@ jobs:
       - name: Run Kaniko Build & Push
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
         run: |
+          [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
+          [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
+          [[ -z "${KANIKO_DESTINATIONS}" ]] && echo "KANIKO_DESTINATIONS must be set" && exit 1
+
+          # Build command args
+          KANIKO_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE}"
+          for DEST in $KANIKO_DESTINATIONS; do
+            KANIKO_ARGS="$KANIKO_ARGS --destination $DEST"
+          done
+          KANIKO_ARGS="$KANIKO_ARGS --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+
+          echo "Running Kaniko with:"
+          echo "$KANIKO_ARGS"
+
           docker run --rm \
             -v "${{ needs.prep_kaniko_build.outputs.workspace-path }}:/workspace" \
             -v "$(pwd)/docker-config.json:/kaniko/.docker/config.json" \
-            --env KANIKO_DOCKERFILE \
-            --env KANIKO_CONTEXT \
-            --env KANIKO_DESTINATIONS \
-            --env CI_REGISTRY_IMAGE \
             ${{ env.KANIKO_IMAGE }} \
-            sh -c '
-              [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
-              [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
-              [[ -z "${KANIKO_DESTINATIONS}" ]] && echo "KANIKO_DESTINATIONS must be set" && exit 1
-
-              KANIKO_CMD="/kaniko/executor --context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE}"
-
-              for DEST in $KANIKO_DESTINATIONS; do
-                KANIKO_CMD="$KANIKO_CMD --destination $DEST"
-              done
-
-              KANIKO_CMD="$KANIKO_CMD --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
-
-              echo "$KANIKO_CMD"
-              eval $KANIKO_CMD
-            '
+            $KANIKO_ARGS
+            
       # - name: Run Kaniko Build & Push
       #   if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'main'
       #   run: |
