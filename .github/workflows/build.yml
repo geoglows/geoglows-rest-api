@@ -134,7 +134,7 @@ jobs:
         run: |
           [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
           [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
-          [[ -z "${KANIKO_DESTINATIONS}" ]] && echo "KANIKO_DESTINATIONS must be set" && exit 1
+          [[ -z "${KANIKO_ARGS}" ]] && echo "KANIKO_ARGS must be set" && exit 1
 
           # Combine final args
           FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
