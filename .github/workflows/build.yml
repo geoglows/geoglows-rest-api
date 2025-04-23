@@ -120,9 +120,10 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           if [[ "${{ matrix.build_type }}" == "tag" ]]; then
-            echo "KANIKO_DESTINATIONS=eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }} eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
+            echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "KANIKO_ARGS+= --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
           elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "main" ]]; then
-            echo "KANIKO_DESTINATIONS=eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
+            echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
           else
             echo "No valid build type" >&2
             exit 1
@@ -135,20 +136,22 @@ jobs:
           [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
           [[ -z "${KANIKO_DESTINATIONS}" ]] && echo "KANIKO_DESTINATIONS must be set" && exit 1
 
-          # Build command args
-          KANIKO_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE}"
-          for DEST in ${KANIKO_DESTINATIONS}; do
-            KANIKO_ARGS=" --destination ${DEST}"
-          done
-          KANIKO_ARGS="$KANIKO_ARGS --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+          # Combine final args
+          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
 
           echo "Running Kaniko with:"
-          echo "$KANIKO_ARGS"
+          echo "$FINAL_ARGS"
 
           docker run --rm \
             -v "${{ needs.prep_kaniko_build.outputs.workspace-path }}:/workspace" \
             -v "$(pwd)/docker-config.json:/kaniko/.docker/config.json" \
             ${{ env.KANIKO_IMAGE }} \
-            $KANIKO_ARGS
+            $FINAL_ARGS
+            
+        env:
+          KANIKO_DOCKERFILE: ${{ env.KANIKO_DOCKERFILE }}
+          KANIKO_CONTEXT: ${{ env.KANIKO_CONTEXT }}
+          KANIKO_ARGS: ${{ env.KANIKO_ARGS }}
+          CI_REGISTRY_IMAGE: ${{ env.CI_REGISTRY_IMAGE }}
 
       
