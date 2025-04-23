@@ -137,16 +137,16 @@ jobs:
           [[ -z "${KANIKO_ARGS}" ]] && echo "KANIKO_ARGS must be set" && exit 1
 
           # Combine final args
-          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+          KANIKO_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
 
           echo "Running Kaniko with:"
-          echo "$FINAL_ARGS"
+          echo "$KANIKO_ARGS"
 
           docker run --rm \
             -v "${{ needs.prep_kaniko_build.outputs.workspace-path }}:/workspace" \
             -v "$(pwd)/docker-config.json:/kaniko/.docker/config.json" \
             ${{ env.KANIKO_IMAGE }} \
-            $FINAL_ARGS
+            $KANIKO_ARGS
             
         env:
           KANIKO_DOCKERFILE: ${{ env.KANIKO_DOCKERFILE }}
