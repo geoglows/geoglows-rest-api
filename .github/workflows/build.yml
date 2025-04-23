@@ -138,7 +138,7 @@ jobs:
           # Build command args
           KANIKO_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE}"
           for DEST in ${KANIKO_DESTINATIONS}; do
-            KANIKO_CMD+=" --destination ${DEST}"
+            KANIKO_ARGS=" --destination ${DEST}"
           done
           KANIKO_ARGS="$KANIKO_ARGS --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
 
