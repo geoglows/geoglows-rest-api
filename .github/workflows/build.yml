@@ -145,7 +145,6 @@ jobs:
           docker run --rm \
             -v "${{ needs.prep_kaniko_build.outputs.workspace-path }}:/workspace" \
             -v "$(pwd)/docker-config.json:/kaniko/.docker/config.json" \
-            -w /workspace \
             ${{ env.KANIKO_IMAGE }} \
             $KANIKO_ARGS
             
