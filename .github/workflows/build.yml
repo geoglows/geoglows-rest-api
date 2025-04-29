@@ -26,7 +26,7 @@ env:
   ECCR_PASSWORD: ${{ secrets.ECCR_PASSWORD }}
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
   KANIKO_CONTEXT: /workspace/gsp_rest_api
-  KANIKO_DOCKERFILE: /workspace/gsp_rest_api/Dockerfile
+  KANIKO_DOCKERFILE: Dockerfile
 
 
 jobs:
@@ -120,8 +120,7 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           if [[ "${{ matrix.build_type }}" == "tag" ]]; then
-            echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }}" >> $GITHUB_ENV
-            echo "KANIKO_ARGS+= --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
+            echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }} --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
           elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "main" ]]; then
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
           else
@@ -147,11 +146,5 @@ jobs:
             -v "$(pwd)/docker-config.json:/kaniko/.docker/config.json" \
             ${{ env.KANIKO_IMAGE }} \
             $KANIKO_ARGS
-            
-        env:
-          KANIKO_DOCKERFILE: ${{ env.KANIKO_DOCKERFILE }}
-          KANIKO_CONTEXT: ${{ env.KANIKO_CONTEXT }}
-          KANIKO_ARGS: ${{ env.KANIKO_ARGS }}
-          CI_REGISTRY_IMAGE: ${{ env.CI_REGISTRY_IMAGE }}
 
       
