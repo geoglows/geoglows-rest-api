@@ -141,6 +141,13 @@ jobs:
           echo "Running Kaniko with:"
           echo "$KANIKO_ARGS"
 
+          echo "==== Showing files under /workspace ===="
+          docker run --rm \
+            -v "${{ needs.prep_kaniko_build.outputs.workspace-path }}:/workspace" \
+            alpine \
+            sh -c "ls -lR /workspace"
+          echo "==== End workspace listing ===="
+
           docker run --rm \
             -v "${{ needs.prep_kaniko_build.outputs.workspace-path }}:/workspace" \
             -v "$(pwd)/docker-config.json:/kaniko/.docker/config.json" \
