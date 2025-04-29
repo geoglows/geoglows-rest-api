@@ -112,7 +112,7 @@ jobs:
           SHORT_SHA=${GITHUB_SHA::7}
           if [[ "${{ matrix.build_type }}" == "tag" ]]; then
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }} --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
-          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "main" ]]; then
+          elif [[ "${{ matrix.build_type }}" == "stable" && ("${{ github.ref_name }}" == "main" || ${{ github.ref_name }} == "ci-cd-pipeline" ) ]]; then
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
           else
             echo "No valid build type" >&2
