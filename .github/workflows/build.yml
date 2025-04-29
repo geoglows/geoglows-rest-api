@@ -92,6 +92,12 @@ jobs:
         id: export-path
         run: echo "workspace-path=${GITHUB_WORKSPACE}" >> $GITHUB_OUTPUT
 
+      - name: List files in workspace - debug
+        run: |
+          echo "=== Listing files in ${GITHUB_WORKSPACE} ==="
+          ls -Rlah ${GITHUB_WORKSPACE}
+          echo "=== End of File List ==="
+
 
   kaniko-build:
     runs-on: ubuntu-latest
