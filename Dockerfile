@@ -29,11 +29,11 @@ RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-t
 ENV PYGEOGLOWS_EXTRA_METADATA_TABLE_PATH=/app/extra-metadata-table.parquet
 
 # download the transformer table
-RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/transformers/transformer_table.parquet -O /app/transformer_table.parquet
-ENV PYGEOGLOWS_TRANSFORMER_TABLE_URI=/app/transformer_table.parquet
+# RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/transformers/transformer_table.parquet -O /app/transformer_table.parquet
+# ENV PYGEOGLOWS_TRANSFORMER_TABLE_URI=/app/transformer_table.parquet
 
 # download the return periods zarr to avoid network errors
-RUN aws s3 cp s3://geoglows-v2/retrospective/return-periods.zarr /app/return-periods.zarr --recursive --no-sign-request
+# RUN aws s3 cp s3://geoglows-v2/retrospective/return-periods.zarr /app/return-periods.zarr --recursive --no-sign-request
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int

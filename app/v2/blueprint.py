@@ -35,7 +35,6 @@ def rest_endpoints_v2(product: str, river_id: int = None):
         product,
         river_id,
     )
-    bias_corrected = False
 
     log_request(version="v2",
                 product=product,
