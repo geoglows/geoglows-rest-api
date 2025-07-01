@@ -15,7 +15,6 @@ from .response_formatters import (
     df_to_jsonify_response,
 )
 
-from .constants import PATH_TO_RETURN_PERIODS
 __all__ = [
     "retrospective",
     "daily_averages",
