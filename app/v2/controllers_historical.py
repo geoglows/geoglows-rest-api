@@ -109,7 +109,7 @@ def retrospective_monthly(
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         df = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
-        df[f"{river_id}_original"] = sim_data[river_id]
+        df[f"{river_id}_original"] = sim_data[river_id].resample("MS").mean()
     else:
         df = geoglows.data.retro_monthly(river_id, skip_log=True)
     df.columns = df.columns.astype(str)
@@ -151,7 +151,7 @@ def monthly_averages(river_id: int, return_format: str, bias_corrected: bool = F
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         data = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("MS").mean()
-        data[f"{river_id}_original"] = sim_data[river_id]
+        data[f"{river_id}_original"] = sim_data[river_id].resample("MS").mean()
     else:
         data = geoglows.data.retro_monthly(river_id)
     df = data.groupby(data.index.month).mean()
@@ -169,7 +169,7 @@ def yearly_averages(river_id, return_format, bias_corrected: bool = False):
     if bias_corrected:
         sim_data = geoglows.data.retro_daily(river_id, skip_log=True)
         df = geoglows.bias.sfdc_bias_correction(sim_data, river_id).resample("YS").mean()
-        df[f"{river_id}_original"] = sim_data[river_id]
+        df[f"{river_id}_original"] = sim_data[river_id].resample("YS").mean()
     else:
         df = geoglows.data.retro_yearly(river_id)
     df.columns = df.columns.astype(str)
