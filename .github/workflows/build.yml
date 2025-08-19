@@ -129,8 +129,6 @@ jobs:
           echo "KANIKO_DOCKERFILE=${KANIKO_DOCKERFILE}"
           echo "depth 3:"
           find "${{ github.workspace }}" -maxdepth 3 -type f -name Dockerfile -o -name environment.yaml -print
-          echo "Check Dockerfile:"
-          test -f "${{ github.workspace }}/${KANIKO_DOCKERFILE}" && echo "FOUND Dockerfile" || (echo "MISSING Dockerfile"; exit 1)
           
       - name: Find dockerfile
         shell: bash
