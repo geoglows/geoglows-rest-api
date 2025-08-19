@@ -126,6 +126,39 @@ jobs:
           echo "Contents of KANIKO_CONTEXT:"
           ls -lah /home/runner/work/gsp_rest_api/gsp_rest_api
 
+      - name: Debug Dockerfile and environment.yaml
+        run: |
+          echo "== GITHUB_WORKSPACE =="
+          echo "${GITHUB_WORKSPACE}"
+          echo
+          echo "== Tree (depth 3) =="
+          find "${GITHUB_WORKSPACE}" -maxdepth 3 -type f \( -name Dockerfile -o -name environment.yaml \) -print
+          echo
+          echo "== Looking for Dockerfile =="
+          if [[ -f "${GITHUB_WORKSPACE}/Dockerfile" ]]; then
+            echo "Found at repo root: ${GITHUB_WORKSPACE}/Dockerfile"
+            echo "KANIKO_DOCKERFILE=Dockerfile" >> $GITHUB_ENV
+            echo "KANIKO_CONTEXT=/workspace" >> $GITHUB_ENV
+          elif [[ -f "${GITHUB_WORKSPACE}/gsp_rest_api/gsp_rest_api/Dockerfile" ]]; then
+            echo "Found in subdir: ${GITHUB_WORKSPACE}/gsp_rest_api/gsp_rest_api/Dockerfile"
+            echo "KANIKO_DOCKERFILE=Dockerfile" >> $GITHUB_ENV
+            echo "KANIKO_CONTEXT=/workspace/gsp_rest_api/gsp_rest_api" >> $GITHUB_ENV
+          else
+            echo " No Dockerfile found"
+            exit 1
+          fi
+
+          echo
+          echo "== Looking for environment.yaml =="
+          if [[ -f "${GITHUB_WORKSPACE}/environment.yaml" ]]; then
+            echo "Found at repo root"
+          elif [[ -f "${GITHUB_WORKSPACE}/gsp_rest_api/gsp_rest_api/environment.yaml" ]]; then
+            echo "Found in subdir"
+          else
+            echo "environment.yaml not found"
+            exit 1
+          fi
+
       - name: Run Kaniko Build & Push
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master' || matrix.build_type == 'stable' && github.ref_name == 'ci-cd-pipeline'
         run: |
