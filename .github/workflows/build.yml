@@ -114,6 +114,8 @@ jobs:
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }} --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
           elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "master" ]]; then
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
+          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "ci-cd-pipeline" ]]; then
+            echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:ci-cd-pipeline" >> $GITHUB_ENV
           else
             echo "No valid build type" >&2
             exit 1
