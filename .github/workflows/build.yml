@@ -26,7 +26,7 @@ env:
   ECCR_PASSWORD: ${{ secrets.ECCR_PASSWORD }}
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
   KANIKO_CONTEXT: /workspace
-  KANIKO_DOCKERFILE: gsp_rest_api/gsp_rest_api/Dockerfile
+  KANIKO_DOCKERFILE: Dockerfile
 
 
 jobs:
@@ -78,7 +78,7 @@ jobs:
           chmod +x ./check_helm_chart
           ./check_helm_chart $HELM_CHART --upload
 
-
+          
   kaniko-build:
     runs-on: ubuntu-latest
     strategy:
@@ -118,44 +118,6 @@ jobs:
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:ci-cd-pipeline" >> $GITHUB_ENV
           else
             echo "No valid build type" >&2
-            exit 1
-          fi
-
-      - name: Debug context contents
-        run: |
-          echo "Contents of KANIKO_CONTEXT:"
-          ls -lah /home/runner/work/gsp_rest_api/gsp_rest_api
-
-      - name: Debug Dockerfile and environment.yaml
-        run: |
-          echo "== GITHUB_WORKSPACE =="
-          echo "${GITHUB_WORKSPACE}"
-          echo
-          echo "== Tree (depth 3) =="
-          find "${GITHUB_WORKSPACE}" -maxdepth 3 -type f \( -name Dockerfile -o -name environment.yaml \) -print
-          echo
-          echo "== Looking for Dockerfile =="
-          if [[ -f "${GITHUB_WORKSPACE}/Dockerfile" ]]; then
-            echo "Found at repo root: ${GITHUB_WORKSPACE}/Dockerfile"
-            echo "KANIKO_DOCKERFILE=Dockerfile" >> $GITHUB_ENV
-            echo "KANIKO_CONTEXT=/workspace" >> $GITHUB_ENV
-          elif [[ -f "${GITHUB_WORKSPACE}/gsp_rest_api/gsp_rest_api/Dockerfile" ]]; then
-            echo "Found in subdir: ${GITHUB_WORKSPACE}/gsp_rest_api/gsp_rest_api/Dockerfile"
-            echo "KANIKO_DOCKERFILE=Dockerfile" >> $GITHUB_ENV
-            echo "KANIKO_CONTEXT=/workspace/gsp_rest_api/gsp_rest_api" >> $GITHUB_ENV
-          else
-            echo " No Dockerfile found"
-            exit 1
-          fi
-
-          echo
-          echo "== Looking for environment.yaml =="
-          if [[ -f "${GITHUB_WORKSPACE}/environment.yaml" ]]; then
-            echo "Found at repo root"
-          elif [[ -f "${GITHUB_WORKSPACE}/gsp_rest_api/gsp_rest_api/environment.yaml" ]]; then
-            echo "Found in subdir"
-          else
-            echo "environment.yaml not found"
             exit 1
           fi
 
