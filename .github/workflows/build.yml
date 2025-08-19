@@ -28,7 +28,6 @@ env:
   KANIKO_CONTEXT: /workspace/
   KANIKO_DOCKERFILE: gsp_rest_api/gsp_rest_api/Dockerfile
 
-  
 
 jobs:
   check-helm: 
@@ -121,6 +120,17 @@ jobs:
             echo "No valid build type" >&2
             exit 1
           fi
+
+      - name: Verify paths before Kaniko
+        shell: bash
+        run: |
+          echo "GITHUB_WORKSPACE=${{ github.workspace }}"
+          echo "KANIKO_CONTEXT=${KANIKO_CONTEXT}"
+          echo "KANIKO_DOCKERFILE=${KANIKO_DOCKERFILE}"
+          echo "depth 3:"
+          find "${{ github.workspace }}" -maxdepth 3 -type f -name Dockerfile -o -name environment.yaml -print
+          echo "Check Dockerfile:"
+          test -f "${{ github.workspace }}/${KANIKO_DOCKERFILE}" && echo "FOUND Dockerfile" || (echo "MISSING Dockerfile"; exit 1)
 
       - name: Run Kaniko Build & Push
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master' || matrix.build_type == 'stable' && github.ref_name == 'ci-cd-pipeline'
