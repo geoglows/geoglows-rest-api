@@ -1,44 +1,42 @@
-FROM continuumio/miniconda3:latest
+FROM mambaorg/micromamba
 
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/envs/gsp_api/bin:$PATH API_PREFIX=/api
+USER root
 
-# For Development On Analytics Only:
-# ENV AWS_ACCESS_KEY_ID=
-# ENV AWS_SECRET_ACCESS_KEY=
-# ENV AWS_LOG_GROUP_NAME=
-# ENV AWS_LOG_STREAM_NAME=
-# ENV AWS_REGION=
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PATH=/opt/conda/envs/app-env/bin:$PATH
+ENV API_PREFIX=/api
+ENV PYTHONPATH=$PYTHONPATH:/app
 
-RUN mkdir /var/uwsgi
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yaml /environment.yaml
+COPY startup.sh /startup.sh
+COPY app /app
 
-RUN apt-get update -qq && apt-get install -yqq supervisor vim
+WORKDIR /
 
-COPY ./environment.yml ./startup.sh ./
-
-RUN conda config --set channel_priority strict && \
-    conda config --add channels conda-forge && \
-    conda env create -f environment.yml && \
-    echo "conda activate gsp_api" >> ~/.bashrc
-
-RUN mkdir -p /mnt/output/forecasts && \
-    mkdir -p /mnt/output/era-interim && \
-    mkdir -p /mnt/output/era-5 && \
-    mkdir -p /mnt/output/forecast-records
-
-# COPY ./sample_data/forecasts /mnt/output/forecasts
-# COPY ./sample_data/era-interim /mnt/output/era-interim
-# COPY ./sample_data/era-5 /mnt/output/era-5
-# COPY ./sample_data/forecast-records /mnt/output/forecast-records
-
-# Copy API code
-COPY ./GSP_API /app/GSP_API/
-COPY ./supervisord.conf /etc/supervisor/conf.d/uwsgi.conf
+RUN mkdir -p /var/log/uwsgi
+RUN apt-get update && apt-get install -y --no-install-recommends curl vim awscli && rm -rf /var/lib/apt/lists/*
 
 # startup.sh is a helper script
 RUN chmod +x /startup.sh
+RUN micromamba create -n app-env --yes --file "environment.yaml" && micromamba clean --all --yes
+
+# download a copy of the package metadata table
+RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/v2-model-table.parquet -O /app/package-metadata-table.parquet
+ENV PYGEOGLOWS_METADATA_TABLE_PATH=/app/package-metadata-table.parquet
+
+# download a copy of the package metadata table with extra attributes
+RUN wget http://geoglows-v2.s3-us-west-2.amazonaws.com/tables/package-metadata-table.parquet -O /app/extra-metadata-table.parquet
+ENV PYGEOGLOWS_EXTRA_METADATA_TABLE_PATH=/app/extra-metadata-table.parquet
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+ENV AWS_LOG_GROUP_NAME=geoglows.ecmwf.int
+ENV AWS_LOG_STREAM_NAME=rest_api_metrics
+ENV AWS_REGION=eu-central-1
 
 # Expose the port that is to be used when calling your API
 EXPOSE 80
+
 HEALTHCHECK --interval=1m --timeout=3s --start-period=20s \
   CMD curl -f http://localhost/ || exit 1
+
 ENTRYPOINT [ "/startup.sh" ]

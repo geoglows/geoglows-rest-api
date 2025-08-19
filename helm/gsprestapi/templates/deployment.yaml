@@ -24,72 +24,72 @@ spec:
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+      {{- toYaml . | nindent 6 }}
     {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-            - name: "AWS_ACCESS_KEY_ID"
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_ACCESS_KEY_ID
-                  name: aws-auth
-            - name: "AWS_SECRET_ACCESS_KEY"
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_SECRET_ACCESS_KEY
-                  name: aws-auth
-            - name: "AWS_REGION"
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_REGION
-                  name: aws-auth
-            - name: "AWS_LOG_GROUP_NAME"
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_LOG_GROUP_NAME
-                  name: aws-auth
-            - name: "AWS_LOG_STREAM_NAME"
-              valueFrom:
-                secretKeyRef:
-                  key: AWS_LOG_STREAM_NAME
-                  name: aws-auth
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: "AWS_ACCESS_KEY_ID"
+          valueFrom:
+            secretKeyRef:
+              key: AWS_ACCESS_KEY_ID
+              name: aws-auth
+        - name: "AWS_SECRET_ACCESS_KEY"
+          valueFrom:
+            secretKeyRef:
+              key: AWS_SECRET_ACCESS_KEY
+              name: aws-auth
+        - name: "AWS_REGION"
+          valueFrom:
+            secretKeyRef:
+              key: AWS_REGION
+              name: aws-auth
+        - name: "AWS_LOG_GROUP_NAME"
+          valueFrom:
+            secretKeyRef:
+              key: AWS_LOG_GROUP_NAME
+              name: aws-auth
+        - name: "AWS_LOG_STREAM_NAME"
+          valueFrom:
+            secretKeyRef:
+              key: AWS_LOG_STREAM_NAME
+              name: aws-auth
 
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-              httpHeaders:
-                - name: Host
-                  value: localhost
-            timeoutSeconds: 15
-            initialDelaySeconds: 300
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-              httpHeaders:
-                - name: Host
-                  value: localhost
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-            {{- range $key, $value := .Values.persistentVolumes }}
-            - mountPath: {{ $value.mountPath }}
-              name: {{ $key }}
-            {{- end }}
-      volumes:
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: localhost
+          timeoutSeconds: 15
+          initialDelaySeconds: 300
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: localhost
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
         {{- range $key, $value := .Values.persistentVolumes }}
-        - name: {{ $key }}
-          persistentVolumeClaim:
-            claimName: {{ $value.claimName }}
+        - mountPath: {{ $value.mountPath }}
+          name: {{ $key }}
         {{- end }}
+      volumes:
+      {{- range $key, $value := .Values.persistentVolumes }}
+      - name: {{ $key }}
+        persistentVolumeClaim:
+          claimName: {{ $value.claimName }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

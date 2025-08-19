@@ -1,0 +1,22 @@
+name: app-env
+channels:
+  - conda-forge
+  - cf-staging
+dependencies:
+  - python==3.12.8
+  - boto3
+  - flask
+  - flask-cors
+  - hydrostats
+  - geoglows>=2.0.2
+  - natsort
+  - netCDF4
+  - pandas
+  - requests
+  - shapely
+  - s3fs>=2024
+  - dask>=2024
+  - xarray>=2024
+  - uwsgi
+  - wget
+  - zarr

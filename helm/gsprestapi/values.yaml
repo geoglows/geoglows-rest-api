@@ -9,7 +9,7 @@ image:
   pullPolicy: Always
 
 imagePullSecrets:
-  - name: gitlab-registry
+- name: eccr-ecmwf-int
 nameOverride: ""
 fullnameOverride: ""
 
@@ -18,21 +18,30 @@ service:
   port: 80
 
 ingress:
-  enabled: false
-  annotations: {}
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production-issuer
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    nginx.org/proxy-connect-timeout: 300s
+    nginx.org/proxy-read-timeout: 300s
+    nginx.org/proxy-send-timeout: 300s
   hosts:
-    - host: chart-example.local
-      paths: []
-
-  tls: []
+  - host: geoglows.ecmwf.int
+    paths:
+    - path: /
+      pathType: Prefix
+      portName: http
+  tls:
+  - hosts:
+    - geoglows.ecmwf.int
+    secretName: geoglows-tls
 
 resources:
   requests:
     cpu: 1
-    memory: 512Mi
+    memory: 3Gi
   limits:
-    cpu: 4
-    memory: 1Gi
+    memory: 6Gi
 
 nodeSelector: {}
 tolerations: []
