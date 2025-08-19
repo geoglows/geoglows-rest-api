@@ -28,6 +28,7 @@ env:
   KANIKO_CONTEXT: /workspace/
   KANIKO_DOCKERFILE: gsp_rest_api/gsp_rest_api/Dockerfile
 
+  
 
 jobs:
   check-helm: 
