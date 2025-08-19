@@ -131,6 +131,10 @@ jobs:
           find "${{ github.workspace }}" -maxdepth 3 -type f -name Dockerfile -o -name environment.yaml -print
           echo "Check Dockerfile:"
           test -f "${{ github.workspace }}/${KANIKO_DOCKERFILE}" && echo "FOUND Dockerfile" || (echo "MISSING Dockerfile"; exit 1)
+          
+      - name: Find dockerfile
+        shell: bash
+        run: find ${{ github.workspace }} -type f -name Dockerfile
 
       - name: Run Kaniko Build & Push
         if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master' || matrix.build_type == 'stable' && github.ref_name == 'ci-cd-pipeline'
