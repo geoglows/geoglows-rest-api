@@ -8,11 +8,13 @@ from flask_cors import cross_origin
 from .analytics import log_request
 from .controllers_forecasts import (forecast,
                                     forecast_stats,
-                                    forecast_ensembles,
+                                    forecast_ensemble,
                                     forecast_records,
                                     forecast_dates,
                                     hydroviewer, )
-from .controllers_historical import (retrospective,
+from .controllers_historical import (retrospective_hourly,
+                                     retrospective_daily,
+                                     retrospective_monthly,
                                      daily_averages,
                                      monthly_averages,
                                      yearly_averages,
@@ -44,17 +46,21 @@ def rest_endpoints_v2(product: str, river_id: int = None):
     if product == 'dates':
         return forecast_dates(return_format=return_format)
     elif product == 'forecast':
-        return forecast(river_id, date, return_format=return_format)
+        return forecast(river_id, date, return_format=return_format, bias_corrected=bias_corrected)
     elif product in 'forecaststats':
-        return forecast_stats(river_id, date, return_format=return_format)
-    elif product == 'forecastensembles':
-        return forecast_ensembles(river_id, date, return_format=return_format)
+        return forecast_stats(river_id, date, return_format=return_format, bias_corrected=bias_corrected)
+    elif product == 'forecastensemble':
+        return forecast_ensemble(river_id, date, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'forecastrecords':
         return forecast_records(river_id, start_date, end_date, return_format=return_format)
 
     # retrospective data products
-    elif product == 'retrospective':
-        return retrospective(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
+    elif product == 'retrospectivedaily':
+        return retrospective_daily(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
+    elif product == 'retrospectivehourly':
+        return retrospective_hourly(river_id, return_format=return_format, start_date=start_date, end_date=end_date)
+    elif product == 'retrospectivemonthly':
+        return retrospective_monthly(river_id, return_format=return_format, start_date=start_date, end_date=end_date, bias_corrected=bias_corrected)
     elif product == 'returnperiods':
         return return_periods(river_id, return_format=return_format, bias_corrected=bias_corrected)
     elif product == 'dailyaverages':
@@ -69,7 +75,7 @@ def rest_endpoints_v2(product: str, river_id: int = None):
         return get_river_id(request.args.get('lat'), request.args.get('lon'))
 
     elif product == "hydroviewer":
-        return hydroviewer(river_id, date, start_date)
+        return hydroviewer(river_id, date, start_date, bias_corrected=bias_corrected)
 
     else:
         return jsonify({'error': f'data product "{product}" not available'}), 201
@@ -103,10 +109,12 @@ def handle_request(request, product, river_id):
         'dates',
         'forecast',
         'forecaststats',
-        'forecastensembles',
+        'forecastensemble',
         'forecastrecords',
 
-        'retrospective',
+        'retrospectivehourly',
+        'retrospectivedaily',
+        'retrospectivemonthly',
         'monthlyaverages',
         'dailyaverages',
         'annualaverages',
@@ -122,15 +130,17 @@ def handle_request(request, product, river_id):
 
         # forecast products
         'stats': 'forecaststats',
-        'ensembles': 'forecastensembles',
-        'ens': 'forecastensembles',
+        'ensembles': 'forecastensemble',
+        'ens': 'forecastensemble',
         'records': 'forecastrecords',
+        'forecastensembles': 'forecastensemble',
 
         # aliases for retrospective
-        'historical': 'retrospective',
-        'historicalsimulation': 'retrospective',
-        'hindcast': 'retrospective',
-        'historicsimulation': 'retrospective',
+        'historical': 'retrospectivedaily',
+        'historicalsimulation': 'retrospectivedaily',
+        'hindcast': 'retrospectivedaily',
+        'historicsimulation': 'retrospectivedaily',
+        'retrospective': 'retrospectivedaily',
 
         # aliases for derived historical products
         'monavg': 'monthlyaverages',
