@@ -94,7 +94,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set Docker Config
-        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master' || matrix.build_type == 'stable' && github.ref_name == 'ci-cd-pipeline'
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master'
         run: |
           echo "{\"auths\":{
             \"$CI_REGISTRY\": {
@@ -108,22 +108,20 @@ jobs:
           }}" > docker-config.json
 
       - name: Set Kaniko Build Variables
-        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master' || matrix.build_type == 'stable' && github.ref_name == 'ci-cd-pipeline'
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master'
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           if [[ "${{ matrix.build_type }}" == "tag" ]]; then
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }} --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest" >> $GITHUB_ENV
           elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "master" ]]; then
             echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:stable" >> $GITHUB_ENV
-          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "ci-cd-pipeline" ]]; then
-            echo "KANIKO_ARGS=--destination eccr.ecmwf.int/geoglows_api/geoglows_api:ci-cd-pipeline" >> $GITHUB_ENV
           else
             echo "No valid build type" >&2
             exit 1
           fi
 
       - name: Run Kaniko Build & Push
-        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master' || matrix.build_type == 'stable' && github.ref_name == 'ci-cd-pipeline'
+        if: matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/') || matrix.build_type == 'stable' && github.ref_name == 'master'
         run: |
           [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
           [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
