@@ -18,6 +18,7 @@ env:
   HELM_REPO_USERNAME: ${{ secrets.HELM_REPO_USERNAME }}
   HELM_KEY_PASSPHRASE: ${{ secrets.HELM_KEY_PASSPHRASE }}
   HELM_REPO_PASSWORD: ${{ secrets.HELM_REPO_PASSWORD }}
+  CI_REGISTRY: docker.aquaveo.com
   CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
   CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
   CI_REGISTRY_IMAGE: docker.aquaveo.com/tethys/gsprestapi
@@ -25,8 +26,8 @@ env:
   ECCR_USER: ${{ secrets.ECCR_USER }}
   ECCR_PASSWORD: ${{ secrets.ECCR_PASSWORD }}
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
-  KANIKO_CONTEXT: /workspace/
-  KANIKO_DOCKERFILE: gsp_rest_api/gsp_rest_api/Dockerfile
+  KANIKO_CONTEXT: /workspace
+  KANIKO_DOCKERFILE: Dockerfile
 
 
 jobs:
@@ -78,7 +79,7 @@ jobs:
           chmod +x ./check_helm_chart
           ./check_helm_chart $HELM_CHART --upload
 
-
+          
   kaniko-build:
     runs-on: ubuntu-latest
     strategy:
