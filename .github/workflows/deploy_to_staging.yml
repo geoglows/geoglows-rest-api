@@ -4,6 +4,10 @@ name: Deploy to Staging
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 env:
   ECCR_GEOGLOWS_TOKEN: ${{ secrets.ECCR_GEOGLOWS_TOKEN }}
 
