@@ -4,6 +4,10 @@ name: Deploy to Staging
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 env:
   ECCR_GEOGLOWS_TOKEN: ${{ secrets.ECCR_GEOGLOWS_TOKEN }}
 
@@ -11,8 +15,6 @@ jobs:
   deploy:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    container: 
-      image: docker.aquaveo.com/tethys/kubernetes/helm-docker:2.0.0-rc1
     
     steps:
       - name: Deploy to Staging
