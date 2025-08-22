@@ -23,9 +23,6 @@ env:
   HELM_KEY_PASSPHRASE: ${{ secrets.HELM_KEY_PASSPHRASE }}
   HELM_REPO_PASSWORD: ${{ secrets.HELM_REPO_PASSWORD }}
 
-  CI_REGISTRY: ghcr.io
-  CI_REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
-
   CI_COMMIT_SHORT_SHA: ${{ github.sha }}
 
   ECCR_USER: ${{ secrets.ECCR_USER }}
@@ -112,6 +109,21 @@ jobs:
           username: ${{ env.ECCR_USER }}
           password: ${{ env.ECCR_PASSWORD }}
 
+      - name: Sanitize Registry for GHCR
+        run: |
+          OWNER_NAME_RAW="${{ github.repository_owner }}"
+          REPO_NAME_RAW="${{ github.event.repository.name }}"
+
+          # Convert to lower case
+          OWNER_LOWER=$(echo "$OWNER_NAME_RAW" | tr '[:upper:]' '[:lower:]')
+          REPO_LOWER=$(echo "$REPO_NAME_RAW"  | tr '[:upper:]' '[:lower:]')
+
+          # Replace invalid characters with '-'
+          OWNER_SAFE=$(echo "$OWNER_LOWER" | sed -E 's/[^a-z0-9._-]+/-/g')
+          REPO_SAFE=$(echo "$REPO_LOWER"  | sed -E 's/[^a-z0-9._-]+/-/g')
+
+          echo "CI_REGISTRY_IMAGE=ghcr.io/${OWNER_SAFE}/${REPO_SAFE}" >> "$GITHUB_ENV"
+  
       - name: Set Kaniko Build Variables
         if: (matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/')) || (matrix.build_type == 'stable' && github.ref_name == 'master')
         run: |
