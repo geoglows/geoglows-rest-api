@@ -15,11 +15,6 @@ jobs:
   deploy:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    container: 
-      image: ghcr.io/aquaveo/helm-docker:2.0.0-rc1
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ github.token }}
     
     steps:
       - name: Deploy to Staging

@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
   packages: read  
-  
+
 env:
   ECCR_GEOGLOWS_TOKEN: ${{ secrets.ECCR_GEOGLOWS_TOKEN }}
 
@@ -15,11 +15,6 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    container: 
-      image: ghcr.io/aquaveo/helm-docker:2.0.0-rc1
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ github.token }}
     
     steps:
       - name: Deploy to Production
