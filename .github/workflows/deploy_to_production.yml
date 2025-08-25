@@ -1,0 +1,23 @@
+# Deploy to Production Workflow
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read  
+
+env:
+  ECCR_GEOGLOWS_TOKEN: ${{ secrets.ECCR_GEOGLOWS_TOKEN }}
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to Production
+        run: |
+          echo ${{ github.ref_name }}
+          curl -X POST -H "Authorization: Bearer $ECCR_GEOGLOWS_TOKEN" -d "bamboo.COMMIT_TAG=${{ github.ref_name }}" https://bamboo.ecmwf.int/rest/api/latest/queue/GEOGLOWS-GSPRES1

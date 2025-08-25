@@ -1,0 +1,150 @@
+# CI Pipeline
+name: Build
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+  pull_request:
+    branches:
+      - "*"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  HELM_REPO_URL: https://eccr.ecmwf.int
+  HELM_CHART: ${{ github.workspace }}/helm/gsprestapi
+
+  HELM_REPO_USERNAME: ${{ secrets.HELM_REPO_USERNAME }}
+  HELM_KEY_PASSPHRASE: ${{ secrets.HELM_KEY_PASSPHRASE }}
+  HELM_REPO_PASSWORD: ${{ secrets.HELM_REPO_PASSWORD }}
+
+  CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+
+  ECCR_USER: ${{ secrets.ECCR_USER }}
+  ECCR_PASSWORD: ${{ secrets.ECCR_PASSWORD }}
+
+  KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
+  KANIKO_CONTEXT: /workspace
+  KANIKO_DOCKERFILE: Dockerfile
+
+jobs:
+  check-helm:
+    name: Check Helm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Ensure HELM_CHART is set
+        run: |
+          if [[ -z "${HELM_CHART}" ]]; then
+            echo "HELM_CHART must be set" >&2
+            exit 1
+          fi
+
+      - name: Lint Helm Chart
+        run: helm lint "$HELM_CHART"
+
+      - name: Run Check Helm Script
+        run: |
+          chmod +x ./check_helm_chart
+          ./check_helm_chart "$HELM_CHART"
+
+  update-helm:
+    runs-on: ubuntu-latest
+    needs: check-helm
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Ensure Required Variables Are Set
+        run: |
+          : "${HELM_CHART:?must be set}"
+          : "${HELM_KEY_PASSPHRASE:?must be set}"
+          : "${HELM_REPO_PASSWORD:?must be set}"
+
+      - name: Run Helm Lint
+        run: helm lint "$HELM_CHART"
+
+      - name: Run Check Helm Script and Upload
+        run: |
+          chmod +x ./check_helm_chart
+          ./check_helm_chart "$HELM_CHART" --upload
+
+  kaniko-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [tag, stable]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Login to GHCR
+        if: (matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/')) || (matrix.build_type == 'stable' && github.ref_name == 'master')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to ECCR Harbor
+        if: (matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/')) || (matrix.build_type == 'stable' && github.ref_name == 'master')
+        uses: docker/login-action@v3
+        with:
+          registry: eccr.ecmwf.int/harbor
+          username: ${{ env.ECCR_USER }}
+          password: ${{ env.ECCR_PASSWORD }}
+
+      - name: Add Registry to Env
+        run: echo "CI_REGISTRY_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+  
+      - name: Set Kaniko Build Variables
+        if: (matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/')) || (matrix.build_type == 'stable' && github.ref_name == 'master')
+        run: |
+          KANIKO_ARGS=""
+          if [[ "${{ matrix.build_type }}" == "tag" ]]; then
+            KANIKO_ARGS+=" --destination ${CI_REGISTRY_IMAGE}:${{ github.ref_name }}"
+            KANIKO_ARGS+=" --destination ${CI_REGISTRY_IMAGE}:latest"
+            KANIKO_ARGS+=" --destination eccr.ecmwf.int/geoglows_api/geoglows_api:${{ github.ref_name }}"
+            KANIKO_ARGS+=" --destination eccr.ecmwf.int/geoglows_api/geoglows_api:latest"
+          elif [[ "${{ matrix.build_type }}" == "stable" && "${{ github.ref_name }}" == "master" ]]; then
+            KANIKO_ARGS+=" --destination ${CI_REGISTRY_IMAGE}:stable"
+            # Uncomment to also push stable to ECCR:
+            # KANIKO_ARGS+=" --destination eccr.ecmwf.int/geoglows_api/geoglows_api:stable"
+          else
+            echo "No valid build type" >&2
+            exit 1
+          fi
+          echo "KANIKO_ARGS=${KANIKO_ARGS}" >> "$GITHUB_ENV"
+
+      - name: Run Kaniko Build & Push
+        if: (matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/')) || (matrix.build_type == 'stable' && github.ref_name == 'master')
+        run: |
+          [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
+          [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
+          [[ -z "${KANIKO_ARGS}" ]] && echo "KANIKO_ARGS must be set" && exit 1
+
+          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+
+          echo "Running Kaniko with:"
+          echo "${FINAL_ARGS}"
+
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -v "$HOME/.docker:/kaniko/.docker:ro" \
+            ${{ env.KANIKO_IMAGE }} \
+            ${FINAL_ARGS}
