@@ -82,7 +82,7 @@ jobs:
           ./check_helm_chart "$HELM_CHART" --upload
 
   kaniko-build:
-    if: (matrix.build_type == 'tag' && startsWith(github.ref, 'refs/tags/')) || (matrix.build_type == 'stable' && github.ref_name == 'master')
+    if: startsWith(github.ref, 'refs/tags/') || github.ref_name == 'master'
     runs-on: ubuntu-latest
     strategy:
       matrix:
