@@ -6,6 +6,7 @@ on:
     workflows: ["Build"]
     types:
       - completed
+    ref_type: tag
 
 permissions:
   contents: read
@@ -17,7 +18,7 @@ env:
 jobs:
   deploy:
     name: Deploy to Staging
-    if: github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.ref, 'refs/tags/')
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     
     steps:
