@@ -23,7 +23,7 @@ jobs:
         with:
           script: |
             const tag = '${{ github.ref_name }}';
-            const workflows = ['Build', 'Deploy to Staging'];
+            const workflows = ['build.yml', 'deploy_to_staging.yml'];;
             const results = await Promise.all(workflows.map(async (workflow) => {
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
