@@ -12,35 +12,9 @@ env:
   ECCR_GEOGLOWS_TOKEN: ${{ secrets.ECCR_GEOGLOWS_TOKEN }}
 
 jobs:
-  verify-prerequisites:
-    runs-on: ubuntu-latest
-    outputs:
-      can-deploy: ${{ steps.check.outputs.can_deploy }}
-    steps:
-      - name: Check build and staging status
-        id: check
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const tag = '${{ github.ref_name }}';
-            const workflows = ['build.yml', 'deploy_to_staging.yml'];;
-            const results = await Promise.all(workflows.map(async (workflow) => {
-              const runs = await github.rest.actions.listWorkflowRuns({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflow,
-                per_page: 5
-              });
-              return runs.data.workflow_runs.some(run =>
-                run.head_branch === tag && run.conclusion === 'success'
-              );
-            }));
-            core.setOutput('can_deploy', results.every(result => result) ? 'true' : 'false');
-
   deploy:
-    needs: verify-prerequisites
-    if: needs.verify-prerequisites.outputs.can_deploy == 'true'
     name: Deploy to Production
+    if: startswith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     
     steps:
