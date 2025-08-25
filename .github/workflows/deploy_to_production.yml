@@ -3,6 +3,10 @@ name: Deploy to Production
 
 on:
   workflow_dispatch:
+    inputs:
+        tag:
+          description: The tag to deploy
+          required: true
 
 permissions:
   contents: read
@@ -12,7 +16,34 @@ env:
   ECCR_GEOGLOWS_TOKEN: ${{ secrets.ECCR_GEOGLOWS_TOKEN }}
 
 jobs:
+  verify-prerequisites:
+    runs-on: ubuntu-latest
+    outputs:
+      can-deploy: ${{ steps.check.outputs.can_deploy }}
+    steps:
+      - name: Check build and staging status
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = core.getInput('tag');
+            const workflows = ['Build', 'Deploy to Staging'];
+            const results = await Promise.all(workflows.map(async (workflow) => {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflow,
+                per_page: 5
+              });
+              return runs.data.workflow_runs.some(run =>
+                run.head_branch === tag && run.conclusion === 'success'
+              );
+            }));
+            core.setOutput('can_deploy', results.every(result => result) ? 'true' : 'false');
+
   deploy:
+    needs: verify-prerequisites
+    if: needs.verify-prerequisites.outputs.can_deploy == 'true'
     name: Deploy to Production
     runs-on: ubuntu-latest
     
