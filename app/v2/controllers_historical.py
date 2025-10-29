@@ -188,7 +188,7 @@ def return_periods(river_id: int, return_format: str, bias_corrected: bool = Fal
         df = geoglows.bias.discharge_transform(sim_data = sim_data, river_id=river_id)
         rps = [2, 5, 10, 25, 50, 100]
         results = []
-        df = df.rename(columns={str(river_id): 'return_periods'})
+        df = df.rename(columns={river_id: 'return_periods'})
         df['return_periods_original'] = sim_data[river_id]
         for column in ["return_periods_original", "return_periods"]:
             annual_max_flow_list = df.groupby(df.index.strftime('%Y'))[column].max().values.flatten()
