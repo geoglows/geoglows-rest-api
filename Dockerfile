@@ -7,6 +7,9 @@ ENV PATH=/opt/conda/envs/app-env/bin:$PATH
 ENV API_PREFIX=/api
 ENV PYTHONPATH=$PYTHONPATH:/app
 
+ARG BANNED_IPS
+ENV BANNED_IPS=$BANNED_IPS
+
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yaml /environment.yaml
 COPY startup.sh /startup.sh
 COPY app /app

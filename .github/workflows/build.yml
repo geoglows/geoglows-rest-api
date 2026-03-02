@@ -33,6 +33,8 @@ env:
   KANIKO_CONTEXT: /workspace
   KANIKO_DOCKERFILE: Dockerfile
 
+  BANNED_IPS: ${{ secrets.BANNED_IPS }}\
+
 jobs:
   check-helm:
     name: Check Helm
@@ -133,8 +135,8 @@ jobs:
           [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
           [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
           [[ -z "${KANIKO_ARGS}" ]] && echo "KANIKO_ARGS must be set" && exit 1
-
-          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+           
+          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --build-arg BANNED_IPS='${BANNED_IPS}' --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
 
           echo "Running Kaniko with:"
           echo "${FINAL_ARGS}"

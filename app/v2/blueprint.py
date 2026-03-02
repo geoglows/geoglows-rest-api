@@ -1,10 +1,11 @@
 
 import logging
+import os
 import traceback
 import pandas as pd
 
 import geoglows
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort
 from flask_cors import cross_origin
 
 from .analytics import log_request
@@ -27,6 +28,23 @@ from datetime import datetime
 logger = logging.getLogger("DEBUG")
 
 app = Blueprint('rest-endpoints-v2', __name__)
+
+BANNED_IPS = {
+    ip.strip() for ip in os.getenv("BANNED_IPS", "").split(",") if ip.strip()
+}
+
+@app.before_app_request
+def block_bad_ips():
+    if not BANNED_IPS:
+        return
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip:
+        ip = ip.split(",")[0].strip()
+
+    if ip in BANNED_IPS:
+        logger.warning(f"Blocked banned IP: {ip}")
+        return jsonify({"error": "Access denied", "message": "Access to this service has been restricted for your network. If you believe this is an error, please contact us at michael.souffront@geoglows.org."}), 403
 
 
 @app.route(f'/api/v2/<product>/', methods=['GET'])
