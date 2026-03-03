@@ -17,7 +17,7 @@ permissions:
   packages: write
 
 env:
-  HELM_REPO_URL: https://eccr.ecmwf.int
+  HELM_REPO_URL: eccr.ecmwf.int
   HELM_CHART: ${{ github.workspace }}/helm/gsprestapi
 
   HELM_REPO_USERNAME: ${{ secrets.HELM_REPO_USERNAME }}

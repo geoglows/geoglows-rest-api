@@ -21,22 +21,32 @@ CHARTDIR=$(realpath "$1")
 cd ${TMPDIR}
 helm dep up "${CHARTDIR}"
 helm package "${CHARTDIR}"
+
 LOCAL_PACKAGE=$(ls *.tgz | head -n1)
 REMOTE_PACKAGE=${LOCAL_PACKAGE%%.tgz}.remote.tgz
+CHART_NAME=$(echo "${LOCAL_PACKAGE}" | sed -E 's/(.*)-[0-9].*/\1/')
+CHART_VERSION=$(echo "${LOCAL_PACKAGE}" | sed -E 's/.*-([0-9][^.]*(\.[0-9]+)*)\.tgz/\1/')
 
-RESULT=$(curl ${HELM_REPO_URL}/chartrepo/${HELM_REPO_CHANNEL}/charts/${LOCAL_PACKAGE} -so ${REMOTE_PACKAGE} -u ${ECCR_USER}:${ECCR_PASSWORD} -w '%{http_code}\n')
-if [ ${RESULT} -eq  404 ]; then
+helm registry login ${HELM_REPO_URL} --username "${ECCR_USER}" --password "${ECCR_PASSWORD}"
+
+
+set +e
+helm pull oci://${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/${CHART_NAME} --version ${CHART_VERSION} --destination .
+PULL_RESULT=$?
+set -e
+
+if [ $PULL_RESULT -ne 0 ]; then
     echo "Chart not found on remote" >&2
-    if [[ "$2" == "--upload" ]]; then
+    if [ "$2" = "--upload" ]; then
         echo "Uploading chart..."
-        curl -F "chart=@${LOCAL_PACKAGE}" ${HELM_REPO_URL}/api/chartrepo/${HELM_REPO_CHANNEL}/charts -u ${ECCR_USER}:${ECCR_PASSWORD}
+        helm push "${LOCAL_PACKAGE}" "oci://${HELM_REPO_URL}/${HELM_REPO_CHANNEL}"
         echo -e "\nDone."
     fi
     exit 0
-elif [ ${RESULT} -ne 200 ]; then
-    echo "Unknown error while trying to retrieve chart from remote" >&2
-    exit -2
 fi
+
+mv ${CHART_NAME}-${CHART_VERSION}.tgz "${REMOTE_PACKAGE}"
+
 mkdir local remote
 tar xf ${LOCAL_PACKAGE} -C local
 tar xf ${REMOTE_PACKAGE} -C remote
