@@ -19,6 +19,7 @@ permissions:
 env:
   HELM_REPO_URL: eccr.ecmwf.int
   HELM_CHART: ${{ github.workspace }}/helm/gsprestapi
+  HELM_REPO_CHANNEL: geoglows_api
 
   HELM_REPO_USERNAME: ${{ secrets.HELM_REPO_USERNAME }}
   HELM_KEY_PASSPHRASE: ${{ secrets.HELM_KEY_PASSPHRASE }}
@@ -105,7 +106,7 @@ jobs:
       - name: Login to ECCR Harbor
         uses: docker/login-action@v3
         with:
-          registry: eccr.ecmwf.int/harbor
+          registry: eccr.ecmwf.int/
           username: ${{ env.ECCR_USER }}
           password: ${{ env.ECCR_PASSWORD }}
 
