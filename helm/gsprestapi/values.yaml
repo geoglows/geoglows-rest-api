@@ -19,17 +19,53 @@ service:
 
 ingress:
   enabled: true
+
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
+    nginx.org/mergeable-ingress-type: "master"
     nginx.org/proxy-connect-timeout: 300s
     nginx.org/proxy-read-timeout: 300s
     nginx.org/proxy-send-timeout: 300s
+
+  rootAnnotations:
+    nginx.org/mergeable-ingress-type: "minion"
+
+  rateLimitAnnotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/limit-req-rate: "5r/m"
+    nginx.org/limit-req-key: "${binary_remote_addr}"
+    nginx.org/limit-req-zone-size: "10m"
+    nginx.org/limit-req-reject-code: "429"
+    nginx.org/limit-req-no-delay: "true"
+
   hosts:
   - host: geoglows.ecmwf.int
     paths:
     - path: /
       pathType: Prefix
       portName: http
+
+  rateLimitedPaths:
+    - path: /api/v1/
+    - path: /api/Forecast
+    - path: /api/HistoricSimulation
+    - path: /api/ReturnPeriods
+    - path: /api/DailyAverages
+    - path: /api/MonthlyAverages
+    - path: /api/Available
+    - path: /api/GetReachID
+    - path: /api/v2/forecast
+    - path: /api/v2/hydroviewer
+    - path: /api/v2/retrospective
+    - path: /api/v2/dailyaverages
+    - path: /api/v2/monthlyaverages
+    - path: /api/v2/annualaverages
+    - path: /api/v2/returnperiods
+
+  rateLimitedPathDetails:
+    pathType: Prefix
+    portName: http
+
   tls:
   - hosts:
     - geoglows.ecmwf.int

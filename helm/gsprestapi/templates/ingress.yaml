@@ -1,5 +1,6 @@
-{{- if .Values.ingress.enabled -}}
-{{- $fullName := include "gsprestapi.fullname" . -}}
+{{ if .Values.ingress.enabled }}
+{{ $fullName := include "gsprestapi.fullname" . }}
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -7,29 +8,53 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "gsprestapi.labels" . | indent 4 }}
-  {{- with .Values.ingress.annotations }}
+  {{ with .Values.ingress.annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+{{ toYaml . | indent 4 }}
+  {{ end }}
 {{ include "gsprestapi.annotations" . | indent 4 }}
 spec:
   ingressClassName: nginx
-{{- if .Values.ingress.tls }}
+{{ if .Values.ingress.tls }}
   tls:
-  {{- range .Values.ingress.tls }}
+{{ range .Values.ingress.tls }}
   - hosts:
-    {{- range .hosts }}
+{{ range .hosts }}
     - {{ . }}
-    {{- end }}
+{{ end }}
     secretName: {{ .secretName }}
-  {{- end }}
-{{- end }}
+{{ end }}
+{{ end }}
   rules:
-  {{- range .Values.ingress.hosts }}
+{{ range .Values.ingress.hosts }}
+  - host: {{ .host }}
+{{ end }}
+{{ end }}
+
+---
+
+{{ if .Values.ingress.enabled }}
+{{ $fullName := include "gsprestapi.fullname" . }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-root
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "gsprestapi.labels" . | indent 4 }}
+  {{ with .Values.ingress.rootAnnotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+  {{ end }}
+spec:
+  ingressClassName: nginx
+  rules:
+{{ range .Values.ingress.hosts }}
   - host: {{ .host }}
     http:
       paths:
-      {{- range .paths }}
+{{ range .paths }}
       - path: {{ .path }}
         pathType: {{ .pathType }}
         backend:
@@ -37,6 +62,41 @@ spec:
             name: {{ $fullName }}
             port:
               name: {{ .portName }}
-      {{- end }}        
-  {{- end }}
-{{- end }}
+{{ end }}
+{{ end }}
+{{ end }}
+
+---
+
+{{ if .Values.ingress.enabled }}
+{{ $fullName := include "gsprestapi.fullname" . }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-ratelimit
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "gsprestapi.labels" . | indent 4 }}
+  {{ with .Values.ingress.rateLimitAnnotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+  {{ end }}
+spec:
+  ingressClassName: nginx
+  rules:
+{{ range .Values.ingress.hosts }}
+  - host: {{ .host }}
+    http:
+      paths:
+{{ range $.Values.ingress.rateLimitedPaths }}
+      - path: {{ .path }}
+        pathType: {{ $.Values.ingress.rateLimitedPathDetails.pathType }}
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: {{ $.Values.ingress.rateLimitedPathDetails.portName }}
+{{ end }}
+{{ end }}
+{{ end }}
