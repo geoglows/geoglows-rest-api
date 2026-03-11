@@ -43,9 +43,11 @@ def block_banned_ips():
         ip = ip.split(",")[0].strip()
 
     if ip in BANNED_IPS:
-        logger.warning(f"Blocked banned IP: {ip}")
-        # TESTING ONLY
-        return jsonify({"error": "Your IP address has been blocked from accessing this service."}), 403
+        logger.warning(f"Blocked access to banned IP: {ip}")
+        return jsonify({
+            "error": "Access to this service has been restricted for your network. If you believe this "
+                    "is an error, please contact us at michael.souffront@geoglows.org."
+        }), 403
 
 
 @app.route(f'/api/v2/<product>/', methods=['GET'])
