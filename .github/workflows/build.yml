@@ -34,7 +34,7 @@ env:
   KANIKO_CONTEXT: /workspace
   KANIKO_DOCKERFILE: Dockerfile
 
-  BANNED_IPS: ${{ secrets.BANNED_IPS }}\
+  BANNED_IPS: ${{ secrets.BANNED_IPS }}
 
 jobs:
   check-helm:
