@@ -1,9 +1,13 @@
+
 import logging
 import traceback
+import pandas as pd
+import os
 
 import geoglows
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
+
 
 from .analytics import log_request
 from .controllers_forecasts import (forecast,
@@ -25,6 +29,26 @@ logger = logging.getLogger("DEBUG")
 
 app = Blueprint('rest-endpoints-v2', __name__)
 
+BANNED_IPS = {
+    ip.strip().strip("'").strip('"') for ip in os.getenv("BANNED_IPS", "").split(",") if ip.strip()
+}
+
+@app.before_app_request
+def block_banned_ips():
+    if not BANNED_IPS:
+        return
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip:
+        ip = ip.split(",")[0].strip()
+
+    if ip in BANNED_IPS:
+        logger.warning(f"Blocked access to banned IP: {ip}")
+        return jsonify({
+            "error": "Access to this service has been restricted for your network. If you believe this "
+                    "is an error, please contact us at michael.souffront@geoglows.org."
+        }), 403
+
 
 @app.route(f'/api/v2/<product>/', methods=['GET'])
 @app.route(f'/api/v2/<product>/<river_id>', methods=['GET'])
@@ -41,6 +65,25 @@ def rest_endpoints_v2(product: str, river_id: int = None):
                 river_id=river_id,
                 return_format=return_format,
                 source=request.args.get('source', 'other'), )
+
+    if 'retrospective' in product:
+        if start_date is None and end_date is None:
+            message = "start_date and end_date are both required. Earliest available data is from 19400101. Latest available data is from 7 days ago."
+            return jsonify({'error': message}), 400
+        
+        elif start_date is None:
+            message = "start_date is required. Earliest available data is from 19400101."
+            return jsonify({'error': message}), 400
+    
+        elif end_date is None:
+            message = "end_date is required. Latest available data is from 7 days ago."
+            return jsonify({'error': message}), 400
+        
+        else:
+            year_difference = get_year_difference(start_date, end_date)
+            if year_difference > 10:
+                return jsonify({'error': f'Please limit the date range to 10 years or less.'}), 400
+
 
     # forecast data products
     if product == 'dates':
@@ -207,3 +250,20 @@ def errors_value_error(e: ValueError):
 def errors_general_exception(e: Exception):
     logger.debug(traceback.format_exc())
     return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
+
+def get_year_difference(start_date, end_date):
+    """ Calculate the difference in years between two dates in YYYYMMDD format.
+    If the format is invalid, raises a ValueError. """
+    try:
+        start = pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date)
+        
+        year_diff = end.year - start.year
+        
+        # If end date hasn't reached the same month/day as start date, subtract 1
+        if (end.month, end.day) < (start.month, start.day):
+            year_diff -= 1
+        
+        return year_diff
+    except Exception:
+        raise ValueError('Invalid date format for start_date or end_date. Use YYYYMMDD format.')

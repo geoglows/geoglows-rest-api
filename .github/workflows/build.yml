@@ -7,6 +7,7 @@ on:
       - '*'
     branches:
       - 'master'
+  workflow_dispatch:
   pull_request:
     branches:
       - 'master'
@@ -16,8 +17,9 @@ permissions:
   packages: write
 
 env:
-  HELM_REPO_URL: https://eccr.ecmwf.int
+  HELM_REPO_URL: eccr.ecmwf.int
   HELM_CHART: ${{ github.workspace }}/helm/gsprestapi
+  HELM_REPO_CHANNEL: geoglows_api
 
   HELM_REPO_USERNAME: ${{ secrets.HELM_REPO_USERNAME }}
   HELM_KEY_PASSPHRASE: ${{ secrets.HELM_KEY_PASSPHRASE }}
@@ -31,6 +33,8 @@ env:
   KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
   KANIKO_CONTEXT: /workspace
   KANIKO_DOCKERFILE: Dockerfile
+
+  BANNED_IPS: ${{ secrets.BANNED_IPS }}
 
 jobs:
   check-helm:
@@ -102,7 +106,7 @@ jobs:
       - name: Login to ECCR Harbor
         uses: docker/login-action@v3
         with:
-          registry: eccr.ecmwf.int/harbor
+          registry: eccr.ecmwf.int/
           username: ${{ env.ECCR_USER }}
           password: ${{ env.ECCR_PASSWORD }}
 
@@ -132,8 +136,8 @@ jobs:
           [[ -z "${KANIKO_DOCKERFILE}" ]] && echo "KANIKO_DOCKERFILE must be set" && exit 1
           [[ -z "${KANIKO_CONTEXT}" ]] && echo "KANIKO_CONTEXT must be set" && exit 1
           [[ -z "${KANIKO_ARGS}" ]] && echo "KANIKO_ARGS must be set" && exit 1
-
-          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
+           
+          FINAL_ARGS="--context ${KANIKO_CONTEXT} --dockerfile ${KANIKO_DOCKERFILE} ${KANIKO_ARGS} --build-arg BANNED_IPS='${BANNED_IPS}' --cache=true --cache-repo ${CI_REGISTRY_IMAGE}/cache --force"
 
           echo "Running Kaniko with:"
           echo "${FINAL_ARGS}"
