@@ -1,12 +1,13 @@
 
 import logging
-import os
 import traceback
 import pandas as pd
+import os
 
 import geoglows
-from flask import Blueprint, request, jsonify, abort
+from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
+
 
 from .analytics import log_request
 from .controllers_forecasts import (forecast,
@@ -23,18 +24,17 @@ from .controllers_historical import (retrospective_hourly,
                                      yearly_averages,
                                      return_periods)
 from .controllers_misc import get_river_id
-from datetime import datetime
 
 logger = logging.getLogger("DEBUG")
 
 app = Blueprint('rest-endpoints-v2', __name__)
 
 BANNED_IPS = {
-    ip.strip() for ip in os.getenv("BANNED_IPS", "").split(",") if ip.strip()
+    ip.strip().strip("'").strip('"') for ip in os.getenv("BANNED_IPS", "").split(",") if ip.strip()
 }
 
 @app.before_app_request
-def block_bad_ips():
+def block_banned_ips():
     if not BANNED_IPS:
         return
 
@@ -44,7 +44,8 @@ def block_bad_ips():
 
     if ip in BANNED_IPS:
         logger.warning(f"Blocked banned IP: {ip}")
-        return jsonify({"error": "Access denied", "message": "Access to this service has been restricted for your network. If you believe this is an error, please contact us at michael.souffront@geoglows.org."}), 403
+        # TESTING ONLY
+        return jsonify({"error": "Your IP address has been blocked from accessing this service."}), 403
 
 
 @app.route(f'/api/v2/<product>/', methods=['GET'])
@@ -80,7 +81,6 @@ def rest_endpoints_v2(product: str, river_id: int = None):
             year_difference = get_year_difference(start_date, end_date)
             if year_difference > 10:
                 return jsonify({'error': f'Please limit the date range to 10 years or less.'}), 400
-        
 
 
     # forecast data products
