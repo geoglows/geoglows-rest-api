@@ -23,7 +23,10 @@ helm dep up "${CHARTDIR}"
 helm package "${CHARTDIR}"
 
 LOCAL_PACKAGE=$(ls *.tgz | head -n1)
-REMOTE_PACKAGE=${LOCAL_PACKAGE%%.tgz}.remote.tgz
+LOCAL_COPY="local.${LOCAL_PACKAGE}"
+REMOTE_PACKAGE="remote.${LOCAL_PACKAGE}"
+mv "${LOCAL_PACKAGE}" "${LOCAL_COPY}"
+
 CHART_NAME=$(echo "${LOCAL_PACKAGE}" | sed -E 's/(.*)-[0-9].*/\1/')
 CHART_VERSION=$(echo "${LOCAL_PACKAGE}" | sed -E 's/.*-([0-9][^.]*(\.[0-9]+)*)\.tgz/\1/')
 
@@ -31,7 +34,7 @@ helm registry login ${HELM_REPO_URL} --username "${ECCR_USER}" --password "${ECC
 
 
 set +e
-helm pull oci://${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/${CHART_NAME} --version ${CHART_VERSION} --destination .
+PULL_OUTPUT=$(helm pull oci://${HELM_REPO_URL}/${HELM_REPO_CHANNEL}/${CHART_NAME} --version ${CHART_VERSION} --destination .)
 PULL_RESULT=$?
 set -e
 
@@ -39,17 +42,23 @@ if [ $PULL_RESULT -ne 0 ]; then
     echo "Chart not found on remote" >&2
     if [ "$2" = "--upload" ]; then
         echo "Uploading chart..."
-        helm push "${LOCAL_PACKAGE}" "oci://${HELM_REPO_URL}/${HELM_REPO_CHANNEL}"
+        helm push "${LOCAL_COPY}" "oci://${HELM_REPO_URL}/${HELM_REPO_CHANNEL}"
         echo -e "\nDone."
     fi
     exit 0
 fi
 
-mv ${CHART_NAME}-${CHART_VERSION}.tgz "${REMOTE_PACKAGE}"
+if [ ! -f "${LOCAL_PACKAGE}" ]; then
+    echo "Pulled chart archive not found!" >&2
+    ls -lah
+    exit 2
+fi
+
+mv "${LOCAL_PACKAGE}" "${REMOTE_PACKAGE}"
 
 mkdir local remote
-tar xf ${LOCAL_PACKAGE} -C local
-tar xf ${REMOTE_PACKAGE} -C remote
+tar xf "${LOCAL_COPY}" -C local
+tar xf "${REMOTE_PACKAGE}" -C remote
 for DIR in local remote; do
     rm -f ${DIR}/**/*.lock
 done
