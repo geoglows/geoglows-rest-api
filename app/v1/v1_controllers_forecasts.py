@@ -9,6 +9,8 @@ from flask import jsonify, make_response
 from .constants import PATH_TO_FORECASTS, PATH_TO_FORECAST_RECORDS, M3_TO_FT3
 from .v1_functions import get_units_title, ecmwf_find_most_current_files, handle_parameters
 
+from .deprecation_utilities import add_deprecation_warning_json
+
 __all__ = ['forecast_stats', 'forecast_ensembles', 'forecast_warnings', 'forecast_records', 'available_dates']
 
 
@@ -101,6 +103,7 @@ def forecast_stats(request):
     context['time_series'].update(df.to_dict(orient='list'))
 
     if return_format == "json":
+        context = add_deprecation_warning_json(context)
         return jsonify(context)
 
     else:
@@ -204,6 +207,7 @@ def forecast_ensembles(request):
     }
 
     if return_format == 'json':
+        context = add_deprecation_warning_json(context)
         return jsonify(context)
 
     else:
@@ -269,7 +273,7 @@ def forecast_warnings(request):
         return response
 
     elif return_format == 'json':
-        return jsonify(warnings.to_dict(orient='index'))
+        return jsonify(warnings.to_dict(orient='records'))
     else:
         raise ValueError('Invalid return_format')
 
@@ -320,7 +324,7 @@ def forecast_records(request):
         return response
 
     elif return_format == 'json':
-        return {
+        response_data = {
             'region': region,
             'comid': reach_id,
             'gendate': dt.utcnow().isoformat() + 'Z',
@@ -336,7 +340,8 @@ def forecast_records(request):
                 'flow': df[f'streamflow_{units_title}^3/s'].tolist(),
             }
         }
-
+        response_data = add_deprecation_warning_json(response_data)
+        return response_data
     else:
         raise ValueError(f'Invalid return_format "{return_format}"')
 
@@ -357,6 +362,8 @@ def available_dates(request):
     dates = [d for d in os.listdir(region_path) if d.split('.')[0].isdigit()]
 
     if len(dates) > 0:
-        return jsonify({"available_dates": dates})
+        response_data = add_deprecation_warning_json({"available_dates": dates})
+        return jsonify(response_data)
     else:
-        return jsonify({"message": "No dates available."}), 204
+        response_data = add_deprecation_warning_json({"message": "No dates available."})
+        return jsonify(response_data), 204

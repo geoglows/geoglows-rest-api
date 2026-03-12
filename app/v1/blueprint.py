@@ -1,3 +1,4 @@
+from app.v1.deprecation_utilities import add_deprecation_warning_json, add_deprecation_warning_header
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 
@@ -15,6 +16,11 @@ from .v1_utilities import (get_available_data_handler,
                            get_reach_id_from_latlon_handler)
 
 app = Blueprint('rest-endpoints-v1', __name__)
+
+
+@app.after_request
+def add_v1_deprecation_header(response):
+    return add_deprecation_warning_header(response)
 
 
 @app.route(f'/api/<product>', methods=['GET'])
@@ -57,4 +63,6 @@ def rest_endpoints_v1(product: str):
         return get_reach_id_from_latlon_handler(request)
 
     else:
-        return jsonify({'status': f'data product "{product}" not available'}), 201
+        return jsonify(add_deprecation_warning_json(
+            {"status": f'data product "{product}" not available'}
+        )), 201

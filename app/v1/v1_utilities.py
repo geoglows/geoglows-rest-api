@@ -1,5 +1,6 @@
 import os
 
+from app.v1.deprecation_utilities import add_deprecation_warning_json
 from flask import jsonify
 
 from .constants import PATH_TO_FORECASTS
@@ -29,7 +30,7 @@ def get_available_data_handler():
         else:
             available_data[region] = 'No Dates Discovered'
 
-    return jsonify(available_data)
+    return jsonify(add_deprecation_warning_json(available_data))
 
 
 def get_region_handler():
@@ -37,11 +38,13 @@ def get_region_handler():
     Controller that returns available regions.
     """
     regions = os.listdir(PATH_TO_FORECASTS)
-
+    
     if len(regions) > 0:
-        return jsonify({"available_regions": regions})
+        response_data = add_deprecation_warning_json({"available_regions": regions})
+        return jsonify(response_data)
     else:
-        return jsonify({"message": "No regions found."}), 204
+        response_data = add_deprecation_warning_json({"message": "No regions found."})
+        return jsonify(response_data), 204
 
 
 def get_reach_id_from_latlon_handler(request):
@@ -53,4 +56,5 @@ def get_reach_id_from_latlon_handler(request):
     lat = request.args.get('lat', '')
     lon = request.args.get('lon', '')
     reach_id, region, dist_error = latlon_to_reach(lat, lon)
-    return jsonify(dict(reach_id=reach_id, region=region, dist_error=dist_error))
+    response_data = add_deprecation_warning_json(dict(reach_id=reach_id, region=region, dist_error=dist_error))
+    return jsonify(response_data)
