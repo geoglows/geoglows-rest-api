@@ -3,6 +3,7 @@ import glob
 import json
 import os
 
+from app.v1.deprecation_utilities import add_deprecation_warning_json
 import hydrostats.data as hd
 import pandas as pd
 import xarray
@@ -37,7 +38,7 @@ def historical(request):
     # if you wanted json out, create and return json
     #  era_interim or era_5
     if return_format == "json":
-        return {
+        context = {
             'region': region,
             'simulation_forcing': forcing,
             'forcing_fullname': forcing.replace('era_', 'ERA ').title(),
@@ -55,9 +56,12 @@ def historical(request):
                 'long': f'Cubic {units_title_long} per Second'
             }
         }
+        context = add_deprecation_warning_json(context)
+        return context
 
     else:
-        return jsonify({"error": "Invalid return_format."}), 422
+        response_data = add_deprecation_warning_json({"error": "Invalid return_format."})
+        return jsonify(response_data), 422
 
 
 def historical_averages(request, average_type):
@@ -87,7 +91,7 @@ def historical_averages(request, average_type):
         return response
 
     if return_format == "json":
-        return jsonify({
+        response_data = {
             'region': region,
             'simulation_forcing': forcing,
             'forcing_fullname': forcing.replace('era_', 'ERA ').title(),
@@ -102,7 +106,9 @@ def historical_averages(request, average_type):
                 'short': f'{units_title}3/s',
                 'long': f'Cubic {units_title_long} per Second'
             }
-        })
+        }
+        response_data = add_deprecation_warning_json(response_data)
+        return jsonify(response_data)
 
     else:
         raise ValueError(f'Invalid return_format: {return_format}')
@@ -170,10 +176,11 @@ def return_periods(request):
             'long': f'Cubic {units_title_long} per Second'
         }
     }
-
+    
     # if you wanted json out, return json
     if return_format == "json":
-        return jsonify(json_output)
+        return jsonify(add_deprecation_warning_json(json_output))
 
     else:
-        return jsonify({"error": "Invalid return_format."}), 422
+        response_data = add_deprecation_warning_json({"error": "Invalid return_format."})
+        return jsonify(response_data), 422
