@@ -37,6 +37,7 @@ ingress:
     nginx.org/limit-req-key: "${binary_remote_addr}"
     nginx.org/limit-req-zone-size: "10m"
     nginx.org/limit-req-reject-code: "429"
+    nginx.org/limit-req-no-delay: "true"
 
   hosts:
   - host: geoglows.ecmwf.int
