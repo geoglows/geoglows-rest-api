@@ -32,11 +32,11 @@ ingress:
 
   rateLimitAnnotations:
     nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/limit-req-rate: "5r/m"
+    nginx.org/limit-req-rate: "12r/m"
+    nginx.org/limit-req-burst: "3" 
     nginx.org/limit-req-key: "${binary_remote_addr}"
     nginx.org/limit-req-zone-size: "10m"
     nginx.org/limit-req-reject-code: "429"
-    nginx.org/limit-req-no-delay: "true"
 
   hosts:
   - host: geoglows.ecmwf.int
