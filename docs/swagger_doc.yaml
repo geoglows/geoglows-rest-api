@@ -236,7 +236,7 @@ paths:
           default: 19400101
         - name: end_date
           in: query
-          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. The most recent available date is seven days prior to the current date.
+          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. Defaults to the most recent date(seven days prior to the current date).
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
@@ -280,7 +280,7 @@ paths:
           default: 19400101
         - name: end_date
           in: query
-          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. The most recent available date is seven days prior to the current date.
+          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. Defaults to the most recent date(seven days prior to the current date).
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
@@ -324,7 +324,7 @@ paths:
           default: 19400101
         - name: end_date
           in: query
-          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. The most recent available date is seven days prior to the current date.
+          description: A date in YYYYMMDD format of the latest simulation date to retrieve. Simulated values on or before the specified date are returned. Defaults to the most recent date(seven days prior to the current date).
           type: string
           pattern: '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$'
       produces:
